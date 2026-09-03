@@ -1,6 +1,6 @@
 # RTO Shield — AI Risk Manager for Merchant COD RTO Risk
 
-RTO Shield converts COD order risk prediction into financially optimal intervention decisions for Indian e-commerce merchants. Every claim in this README traces to a frozen artifact in `reports/`, backed by 40 passing automated tests and 11/11 pre-registered checks on a strictly held-out test set.
+RTO Shield converts COD order risk prediction into financially optimal intervention decisions for Indian e-commerce merchants. Every claim in this README traces to a frozen artifact in `reports/`, backed by 57 passing automated tests (generator contract, split integrity, preprocessing leakage, metric correctness, dominance regression, adversarial robustness, serving-path equivalence, UI logic) and 11/11 pre-registered checks on a strictly held-out test set.
 
 ## Executive Summary — Final Results (Held-Out Test Set)
 
@@ -28,7 +28,7 @@ The multi-action policy earns **2.0× the savings** of the best single-threshold
 
 **The policy defends unit economics, not volume.** DEPOSIT share by order-value quartile on validation: 91.1% → 43.7% → 12.5% → 0.7% — deposits demanded on cheap risky orders (where ₹150 reverse logistics dwarfs the margin), while high-value orders stay frictionless.
 
-Full numbers: `reports/stage5_test_results.md`, `reports/stage4_financial_results.md`, threshold curve: `reports/stage4/threshold_vs_loss_curve.png`
+Full numbers: [reports/stage5_test_results.md](reports/stage5_test_results.md), [reports/stage4_financial_results.md](reports/stage4_financial_results.md), threshold curve: [reports/stage4/threshold_vs_loss_curve.png](reports/stage4/threshold_vs_loss_curve.png)
 
 ---
 
@@ -94,6 +94,8 @@ Split by calendar time (strict inequality verified, exact timestamps recorded):
 
 ```
 rto-shield/
+├── app.py # Streamlit UI
+├── run_app.bat # Windows launcher
 ├── README.md
 ├── requirements.txt
 ├── configs/
@@ -114,6 +116,9 @@ rto-shield/
 │   │   └── tree_model.py # Stage 3 LightGBM (grid on val_cal only)
 │   ├── policy/
 │   │   └── cost_engine.py # Stage 4 expected loss + router
+│   ├── serve/
+│   │   ├── lookup.py # pincode statistics rebuild
+│   │   └── scorer.py # serving entrypoint, SHAP extraction, guardrails
 │   └── eval/
 │       ├── evaluate.py # Stage 2 comparison (closed-form rule AP, matched-recall)
 │       ├── calibration.py # Stage 3 reliability + isotonic (val_cal)
@@ -124,7 +129,9 @@ rto-shield/
 │       ├── stage5_test_reveal.py # one-shot held-out evaluation
 │       ├── verify_calibration.py # bin-MAE artifact investigation
 │       └── stress_test_noise.py # oracle-feature σ=0.04 stress test
-├── tests/ # 40 tests across 5 stage files
+├── tests/ # 57 tests across 7 test files
+├── scripts/
+│   └── verify_shap_sign.py # SHAP class 1 verification
 ├── reports/
 │   ├── stage2_baseline_results.md
 │   ├── stage3_results.md # incl. bin-MAE decomposition footnote
@@ -132,10 +139,10 @@ rto-shield/
 │   ├── stage5_test_results.md # transfer table + pre-registered checks
 │   ├── stage4/threshold_vs_loss_curve.png
 │   └── eda/ stage3/ # plots
-└── models/ # gitignored; reproducible via commands below
+└── models/ # committed for one-command demo
 ```
 
-Model artifacts and datasets are gitignored by design; all final numbers live in `reports/`, and the full chain below reproduces every artifact deterministically.
+Model artifacts and the synthetic dataset are committed (synthetic, no privacy concern — and committing them fixes the Stage 5 SHA-256 value for any clone, strengthening the hash assertion). Every number remains reproducible via the chain below.
 
 ---
 
@@ -164,15 +171,20 @@ python src/eval/stage4_evaluate.py
 # Stage 5 — one-shot held-out test reveal (frozen artifacts)
 python src/eval/stage5_test_reveal.py
 
-# Full test suite (40 tests)
+# Full test suite (57 tests)
 python -m pytest tests/ -q
+
+# Serving layer + demo (artifacts are committed — no generation needed)
+python src/serve/lookup.py        # rebuild pincode lookup from TRAIN only
+python -m pytest tests/ -q        # expect: 57 passed
+streamlit run app.py              # scorer UI; sidebar demo buttons: DEPOSIT / ALLOW / VERIFY
 ```
 
 ## Honest Limitations
 - **Synthetic data.** Metrics are upper bounds on a known generator; real-world drift, labeling noise, and adversarial adaptation are not simulated (and stated where it matters).
 - **Oracle feature (disclosed above):** `hist_rate` is ground truth, not an estimate — optimism measured at Δ PR-AUC ≈ 0.003.
 - **One-order cost model.** The expected-loss model prices a single order; customer lifetime value of dropped good customers is not modeled.
-- **No live serving layer.** This repository is the measured analytics core; the decision logic is tested and deterministic, but there is no production API.
+- **No hosted API/deployment.** There is a tested serving module (`src/serve/`, ~20–30ms per order including SHAP) and a Streamlit demo UI (`app.py`), but no hosted production endpoint — the measured analytics core is the deliverable, not an always-on service.
 - **Isotonic tradeoff is real:** the calibrated primary gives up ₹10.8k of test savings vs the uncalibrated router (disclosed, pre-registered).
 
 ## License
