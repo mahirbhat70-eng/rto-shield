@@ -27,13 +27,10 @@ share/python-wheels/
 MANIFEST
 
 # Data files
-data/raw/
-data/processed/
-*.csv
+# data/raw/ removed for demo
 
 # Model Artifacts
-models/
-*.pkl
+# models/ removed to allow pushing for demo
 
 # Environments
 .env

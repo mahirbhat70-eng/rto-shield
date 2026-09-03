@@ -62,19 +62,22 @@ def test_temporal_split_no_overlap(small_dataset, tmp_path):
     small_dataset.to_csv(input_path, index=False)
 
     from src.data.split import temporal_split
-    train, val, test = temporal_split(
+    train, val_cal, val_rep, test = temporal_split(
         input_path=input_path,
         output_dir=str(tmp_path / "processed")
     )
 
     train_max = pd.to_datetime(train['timestamp']).max()
-    val_min = pd.to_datetime(val['timestamp']).min()
-    val_max = pd.to_datetime(val['timestamp']).max()
+    val_cal_min = pd.to_datetime(val_cal['timestamp']).min()
+    val_cal_max = pd.to_datetime(val_cal['timestamp']).max()
+    val_rep_min = pd.to_datetime(val_rep['timestamp']).min()
+    val_rep_max = pd.to_datetime(val_rep['timestamp']).max()
     test_min = pd.to_datetime(test['timestamp']).min()
 
-    assert train_max < val_min, "Train/val temporal overlap"
-    assert val_max < test_min, "Val/test temporal overlap"
-    assert len(train) + len(val) + len(test) == len(small_dataset)
+    assert train_max < val_cal_min, "Train/val_cal temporal overlap"
+    assert val_cal_max < val_rep_min, "val_cal/val_rep temporal overlap"
+    assert val_rep_max < test_min, "val_rep/test temporal overlap"
+    assert len(train) + len(val_cal) + len(val_rep) + len(test) == len(small_dataset)
 
 
 # ── Test: Rule Baseline ──────────────────────────────────────────────
