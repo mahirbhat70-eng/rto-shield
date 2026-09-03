@@ -1,0 +1,30 @@
+raw_data_path: data/raw/synthetic_orders.csv
+
+target_col: rto_label
+
+id_cols:
+  - order_id
+  - customer_id
+
+timestamp_col: timestamp
+
+numerical_features:
+  - order_value
+  - quantity
+  - discount_pct
+  - cod_charge
+  - account_age_days
+  - prior_orders
+  - prior_rto_count
+  - historical_pincode_rto_rate
+  - orders_last_24h
+  - device_cluster_size
+
+categorical_features:
+  - category
+  - payment_method
+  - pincode
+  - courier_id
+  - pincode_tier
+
+boolean_features: []

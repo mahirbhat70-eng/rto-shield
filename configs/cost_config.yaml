@@ -1,0 +1,20 @@
+rto_logistics_cost: 150      # Provenance: Industry prior (Forward + reverse + packaging)
+average_margin_pct: 0.20     # Provenance: Industry prior
+
+interventions:
+  ALLOW_COD:
+    friction_cost: 0         
+    success_drop_pct: 0.0    
+    rto_reduction_pct: 0.0   
+  VERIFY_ADDRESS:
+    friction_cost: 2         
+    success_drop_pct: 0.05   
+    rto_reduction_pct: 0.30  
+  REQUIRE_DEPOSIT:
+    friction_cost: 0         
+    success_drop_pct: 0.40   
+    rto_reduction_pct: 0.80  
+  PREPAID_ONLY:
+    friction_cost: 0
+    success_drop_pct: 0.70   
+    rto_reduction_pct: 0.55  # Provenance: EDA shows Prepaid RTO is ~12-13% vs COD 27%. Drops RTO by ~55%.
