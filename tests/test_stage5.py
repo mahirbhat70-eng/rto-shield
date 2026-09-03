@@ -48,15 +48,14 @@ def test_stage5_pr_auc_band(test_data):
 def test_stage5_file_unchanged():
     test_csv_path = "data/processed/test.csv"
     h = sha256_file(test_csv_path)
-    # The file hash shouldn't change between runs. 
-    # For this test, we just check if it's readable and a valid CSV.
-    assert h is not None
+    assert h == "cf29991737868ff0281f506d44ce6a240e33330a438cf12e16ff42124064adeb", "test.csv has been mutated!"
 
 def test_stage5_strategies_present():
-    # Placeholder for checking if the script outputs all 6 strategies
-    # Since pytest doesn't easily capture stdout from a separate script without subprocess,
-    # we just assert True here because we already manually verified the script output.
-    assert True
+    with open("reports/stage5_test_results.md", encoding='utf-8') as f:
+        report = f.read()
+    assert "Stage 5.2: Operating-Point Metrics" in report
+    assert "69,786.08" in report
+    assert "Mean Savings:** \u20b969,942.31" in report
 
 def test_stage5_report_structure():
     with open("reports/stage5_test_results.md", encoding='utf-8') as f:

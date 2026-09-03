@@ -28,7 +28,14 @@ The multi-action policy earns **2.0× the savings** of the best single-threshold
 
 **The policy defends unit economics, not volume.** DEPOSIT share by order-value quartile on validation: 91.1% → 43.7% → 12.5% → 0.7% — deposits demanded on cheap risky orders (where ₹150 reverse logistics dwarfs the margin), while high-value orders stay frictionless.
 
-**Realized Performance (Test COD)**: Operating-point P/R is 0.2963 / 0.8555. Realized actual-label savings reached **₹69,786** (−2.7% vs expected loss, cleanly inside Monte Carlo noise). Per-action calibration is tight (Δ ≤ 0.0032 across all decision bands).
+**Realized Performance (Test COD):** Operating-point P/R is 0.2963 / 0.8555, and
+per-action calibration is tight (Δ ≤ 0.0032 across all three decision bands —
+DEPOSIT 0.3279 vs 0.3247, VERIFY 0.2733 vs 0.2734, ALLOW 0.2191 vs 0.2223).
+Realized actual-label savings reached **₹69,786** — within **−2.7%** of the EL
+forecast and inside Monte Carlo noise (5,000 draws: P5 ₹63,935, P95 ₹75,901,
+P(savings > 0) = 100%). The uncalibrated router tells the other story: its EL
+forecast of ₹82,580 collapsed to ₹69,902 against labels (**−15.3%**). In short:
+the ₹10.8k "cost" of calibration bought the only forecast that held up.
 
 Full numbers: [reports/stage5_test_results.md](reports/stage5_test_results.md), [reports/stage4_financial_results.md](reports/stage4_financial_results.md), threshold curve: [reports/stage4/threshold_vs_loss_curve.png](reports/stage4/threshold_vs_loss_curve.png)
 
