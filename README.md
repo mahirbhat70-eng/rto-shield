@@ -28,6 +28,8 @@ The multi-action policy earns **2.0× the savings** of the best single-threshold
 
 **The policy defends unit economics, not volume.** DEPOSIT share by order-value quartile on validation: 91.1% → 43.7% → 12.5% → 0.7% — deposits demanded on cheap risky orders (where ₹150 reverse logistics dwarfs the margin), while high-value orders stay frictionless.
 
+**Realized Performance (Test COD)**: Operating-point P/R is 0.2963 / 0.8555. Realized actual-label savings reached **₹69,786** (−2.7% vs expected loss, cleanly inside Monte Carlo noise). Per-action calibration is tight (Δ ≤ 0.0032 across all decision bands).
+
 Full numbers: [reports/stage5_test_results.md](reports/stage5_test_results.md), [reports/stage4_financial_results.md](reports/stage4_financial_results.md), threshold curve: [reports/stage4/threshold_vs_loss_curve.png](reports/stage4/threshold_vs_loss_curve.png)
 
 ---
@@ -136,7 +138,7 @@ rto-shield/
 │   ├── stage2_baseline_results.md
 │   ├── stage3_results.md # incl. bin-MAE decomposition footnote
 │   ├── stage4_financial_results.md
-│   ├── stage5_test_results.md # transfer table + pre-registered checks
+│   ├── stage5_test_results.md # transfer table + pre-registered checks + Stage 5.2 Realized P&L
 │   ├── stage4/threshold_vs_loss_curve.png
 │   └── eda/ stage3/ # plots
 └── models/ # committed for one-command demo

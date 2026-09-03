@@ -69,3 +69,41 @@
 - **Noisy Primary Savings:** 73,672.00
 - **Delta:** +1,930.98 (+2.7%)
 - *Pre-Registered Check:* Noisy savings within ±10% of clean: **PASS** (+2.7%)
+
+## Stage 5.2: Operating-Point Metrics & Realized P&L
+
+### 1. Policy Operating-Point P/R (Binary: VERIFY/DEPOSIT = Positive)
+- **Precision:** 0.2963
+- **Recall:** 0.8555
+- **F1:** 0.4401
+- **Confusion Matrix:**
+  - True Negative (ALLOW, actual 0): 1025
+  - False Positive (VERIFY/DEPOSIT, actual 0): 4121
+  - False Negative (ALLOW, actual 1): 293
+  - True Positive (VERIFY/DEPOSIT, actual 1): 1735
+
+### Per-Action Calibration
+| Action | n | Mean P | Empirical RTO | \|Diff\| |
+|---|---|---|---|---|
+| REQUIRE_DEPOSIT | 2612 | 0.3279 | 0.3247 | 0.0032 |
+| VERIFY_ADDRESS | 3244 | 0.2733 | 0.2734 | 0.0001 |
+| ALLOW_COD | 1318 | 0.2191 | 0.2223 | 0.0032 |
+
+### 2. Realized-Label Portfolio P&L
+*(Evaluated using actual `rto_label` in the cost engine, with expected intervention effects)*
+
+| Strategy | Realized Savings (INR) | EL(P) Savings (INR) | Delta (Realized - EL) |
+|---|---|---|---|
+| 1. Baseline | 0.00 | 0.00 | 0.00 |
+| 2. Binary PREPAID | -954.67 | 929.63 | -1,884.29 |
+| 3. Binary VERIFY | 36,018.74 | 35,919.42 | 99.32 |
+| 4. Primary Multi-Action | **69,786.08** | **71,741.02** | **-1,954.95** |
+| 5. Sensitivity: Uncal | 69,901.99 | 82,579.63 | -12,677.64 |
+| 6. Sensitivity: Clipped | 69,786.08 | 71,881.29 | -2,095.21 |
+
+### 3. Monte Carlo Simulation (5,000 draws)
+*(Bernoulli-sampling individual intervention drops & reductions on Primary Multi-Action)*
+- **Mean Savings:** ₹69,942.31
+- **P5:** ₹63,935.40
+- **P95:** ₹75,901.15
+- **P(savings > 0):** 100.0%
