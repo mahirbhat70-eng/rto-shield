@@ -101,7 +101,7 @@ and byte-level integrity of the frozen model file.
 
 ---
 
-## Bug 5: Flaky Latency Test in CI (v1.5)
+## Bug 5: Flaky Latency Test in CI (post-freeze)
 
 **When:** GitHub Actions CI (Ubuntu runner)  
 **Symptom:** `test_latency_under_100ms` passed locally (p99 ~15ms) but failed
@@ -127,9 +127,9 @@ Performance benchmarks require a controlled environment.
 | Calibration split contamination | High | Stage 3 | Suspiciously low W-Bin-MAE | v1.4 |
 | Pincode leakage | Critical | Feature engineering | Impossible PR-AUC | v1.2 |
 | Artifact byte mismatch | High | Deployment | SHA256 cross-check | Deployment |
-| Flaky latency CI test | Low | CI | Intermittent failure | v1.5 |
+| Flaky latency CI test | Low | CI | Intermittent failure | Post-freeze |
 
-All five bugs were caught **before** the test reveal. The frozen test results reflect a clean pipeline.
+All five bugs were caught and fixed across the project lifecycle. The frozen test results reflect a clean pipeline.
 
 ---
 

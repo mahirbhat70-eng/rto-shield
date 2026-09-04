@@ -17,7 +17,7 @@
 | **2. Clone & run tests** | `git clone https://github.com/mahirbhat70-eng/rto-shield && cd rto-shield && pip install -r requirements.txt && pytest tests/ -v` |
 | **3. Benchmark latency** | `python scripts/benchmark_latency.py` |
 | **4. Read the evidence** | [`claim-matrix.md`](claim-matrix.md) — every number → its artifact → its command |
-| **5. Read failure story** | [`WHAT_BROKE.md`](WHAT_BROKE.md) — 5 bugs found & fixed before test reveal |
+| **5. Read failure story** | [`WHAT_BROKE.md`](WHAT_BROKE.md) — 5 bugs found & fixed across the project lifecycle |
 | **6. Hard questions** | [`docs/JUDGE_QA.md`](docs/JUDGE_QA.md) — 10 questions with evidence-backed answers |
 
 All frozen model artifacts and reports are committed. **No data download needed to run tests.**

@@ -13,7 +13,7 @@
 | **0:00 – 0:20** | **The Bleed** | COD checkout animation; ₹120 RTO logistics loss vs ₹49 shipping margin | Hook with the real merchant pain: COD cancellation economics. |
 | **0:20 – 0:45** | **The Flaw in Single Thresholds** | Binary threshold graph vs Multi-action cost matrix | Expose why 90% of solutions fail in production (false drop cost). |
 | **0:45 – 1:15** | **The Mathematics & Results** | PR-AUC curve (94.7% Bayes) + 5,000-draw Monte Carlo distribution | Concrete numbers: ₹71,741 savings, 2.0× vs single threshold, 100% P(savings > 0). |
-| **1:15 – 1:45** | **Live System Demo** | Live Streamlit UI + Real-time SHAP factors + JSONL Audit Export | Proof of execution: sub-15ms scoring, deterministic replay fingerprint. |
+| **1:15 – 1:45** | **Live System Demo** | Live Streamlit UI + Real-time SHAP factors + JSONL Audit Export | Proof of execution: sub-100ms real-time scoring (full path incl. TreeSHAP), deterministic replay fingerprint. |
 | **1:45 – 2:00** | **The Razorpay Impact** | Razorpay Magic Checkout integration architecture | Close on instant merchant ROI with zero customer checkout friction. |
 
 ---
