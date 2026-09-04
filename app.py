@@ -5,6 +5,8 @@ warnings.filterwarnings("ignore", category=UserWarning)
 import streamlit as st
 import pandas as pd
 import time
+import json
+import datetime
 from src.serve.scorer import score_order
 
 # Page config
@@ -126,6 +128,17 @@ if st.button("Score this order", type="primary"):
         for name, shap_val in res['shap_top_factors']:
             direction = "↑ increases risk" if shap_val > 0 else "↓ reduces risk"
             st.write(f"- **{name}**: {shap_val:+.4f} ({direction})")
+
+        # Record into audit trail
+        entry = {
+            "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "payload": payload,
+            "probability": round(float(res['probability']), 4),
+            "recommended_action": res['recommended_action'],
+            "expected_losses": {k: round(float(v), 2) for k, v in res['el_table'].items()} if 'el_table' in res else {},
+            "top_factors": [{"feature": name, "shap_val": round(float(val), 4)} for name, val in res['shap_top_factors']]
+        }
+        st.session_state.setdefault("audit_log", []).append(entry)
             
     except ValueError as e:
         msg = str(e)
@@ -134,6 +147,25 @@ if st.button("Score this order", type="primary"):
             st.caption(msg)
         else:
             st.error(msg)
+
+# Audit Trail Export
+if st.session_state.get("audit_log"):
+    st.markdown("---")
+    st.subheader(f"📋 Decision Audit Trail ({len(st.session_state['audit_log'])} logged)")
+    jsonl_str = "\n".join(json.dumps(item) for item in st.session_state["audit_log"])
+    col_dl, col_clr = st.columns([3, 1])
+    with col_dl:
+        st.download_button(
+            label="📥 Download Audit Trail (.jsonl)",
+            data=jsonl_str,
+            file_name="rto_audit_trail.jsonl",
+            mime="application/x-ndjson",
+            use_container_width=True
+        )
+    with col_clr:
+        if st.button("🗑️ Clear Log", use_container_width=True):
+            st.session_state["audit_log"] = []
+            st.rerun()
             
 st.markdown("---")
 st.caption("Frozen v1.0 artifacts · calibrated LightGBM · expected-loss argmin · all numbers reproducible via reports/")

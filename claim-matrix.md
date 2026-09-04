@@ -36,6 +36,7 @@
 | Inference latency p99 | ~15ms | `scripts/benchmark_latency.py` | `python scripts/benchmark_latency.py` |
 | PREPAID threshold | 0.48 | `reports/stage4_financial_results.md` | `pytest tests/test_stage4.py -v` |
 | VERIFY threshold | 0.20 | `reports/stage4_financial_results.md` | `pytest tests/test_stage4.py -v` |
+| Decision audit trail export | JSONL format | `app.py` session state | Streamlit UI export (`rto_audit_trail.jsonl`) |
 
 ---
 
