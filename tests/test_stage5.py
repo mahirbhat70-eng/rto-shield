@@ -45,10 +45,12 @@ def test_stage5_pr_auc_band(test_data):
     pr_auc = average_precision_score(test['rto_label'], proba)
     assert 0.29 <= pr_auc <= 0.37
 
+TEST_CSV_SHA256_LF = "aaa36a2bbe9b1a4293251b016a6193a662d4fb7b4b60209af03df5120d7f56f5"
+
 def test_stage5_file_unchanged():
-    test_csv_path = "data/processed/test.csv"
-    h = sha256_file(test_csv_path)
-    assert h == "cf29991737868ff0281f506d44ce6a240e33330a438cf12e16ff42124064adeb", "test.csv has been mutated!"
+    raw = open("data/processed/test.csv", "rb").read()
+    h = hashlib.sha256(raw.replace(b"\r\n", b"\n")).hexdigest()
+    assert h == TEST_CSV_SHA256_LF, "test.csv content has mutated since the Stage 5 reveal"
 
 def test_stage5_strategies_present():
     with open("reports/stage5_test_results.md", encoding='utf-8') as f:
