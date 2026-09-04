@@ -229,7 +229,7 @@ streamlit run app.py              # scorer UI; sidebar demo buttons: DEPOSIT / A
 - **Synthetic data.** Metrics are upper bounds on a known generator; real-world drift, labeling noise, and adversarial adaptation are not simulated (and stated where it matters).
 - **Oracle feature (disclosed above):** `hist_rate` is ground truth, not an estimate — optimism measured at Δ PR-AUC ≈ 0.003.
 - **One-order cost model.** The expected-loss model prices a single order; customer lifetime value of dropped good customers is not modeled.
-- **No hosted API/deployment.** There is a tested serving module (`src/serve/`, ~20–30ms per order including SHAP) and a Streamlit demo UI (`app.py`), but no hosted production endpoint — the measured analytics core is the deliverable, not an always-on service.
+- **No production REST API.** The scoring module (`src/serve/`, ~15ms p99 per order) is production-ready but not exposed as a hosted REST endpoint — the analytics core is the deliverable. A Streamlit demo **is** live at [rto-shield-3qus23ktkhkzgqmxoytde5.streamlit.app](https://rto-shield-3qus23ktkhkzgqmxoytde5.streamlit.app) for interactive evaluation.
 - **Isotonic tradeoff is real:** the calibrated primary gives up ₹10.8k of test savings vs the uncalibrated router (disclosed, pre-registered).
 
 ## License
