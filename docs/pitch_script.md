@@ -12,7 +12,7 @@
 |---|---|---|---|
 | **0:00 – 0:20** | **The Bleed** | COD checkout animation; ₹120 RTO logistics loss vs ₹49 shipping margin | Hook with the real merchant pain: COD cancellation economics. |
 | **0:20 – 0:45** | **The Flaw in Single Thresholds** | Binary threshold graph vs Multi-action cost matrix | Expose why 90% of solutions fail in production (false drop cost). |
-| **0:45 – 1:15** | **The Mathematics & Results** | PR-AUC curve (94.7% Bayes) + 1,000-run Monte Carlo distribution | Concrete numbers: ₹71,741 savings, 2.0× vs single threshold, 100% P(savings > 0). |
+| **0:45 – 1:15** | **The Mathematics & Results** | PR-AUC curve (94.7% Bayes) + 5,000-draw Monte Carlo distribution | Concrete numbers: ₹71,741 savings, 2.0× vs single threshold, 100% P(savings > 0). |
 | **1:15 – 1:45** | **Live System Demo** | Live Streamlit UI + Real-time SHAP factors + JSONL Audit Export | Proof of execution: sub-15ms scoring, deterministic replay fingerprint. |
 | **1:45 – 2:00** | **The Razorpay Impact** | Razorpay Magic Checkout integration architecture | Close on instant merchant ROI with zero customer checkout friction. |
 
@@ -30,7 +30,7 @@
 ---
 
 ### 0:20 – 0:45 | Act 2: Why Binary Thresholds Fail
-**Visual:** *Switch to the Decision Architecture diagram (`docs/decision_architecture.png`). Highlight the 4 distinct intervention tiers: ALLOW_COD, REQUIRE_DEPOSIT, VERIFY_ADDRESS, FORCE_PREPAID.*
+**Visual:** *Switch to the Decision Architecture diagram (`docs/decision_architecture.png`). Highlight the 4 distinct intervention tiers: ALLOW_COD, REQUIRE_DEPOSIT, VERIFY_ADDRESS, PREPAID_ONLY.*
 
 > *"A ₹2,000 apparel order with a 30% risk of RTO shouldn't be blocked — because the 70% chance of a completed sale is worth far more than the delivery risk.  
 > 
@@ -48,7 +48,7 @@
 > The results speak for themselves:*
 > - *We achieved **94.7% of the theoretical Bayes ceiling** on PR-AUC.*
 > - *Our multi-action policy delivers **₹71,741 net savings** on our test cohort — **exactly 2.0 times higher** than the best tuned single-threshold baseline.*
-> - *Across a 1,000-run Monte Carlo bootstrap with noisy parameters, the probability of positive savings was **100%**.*
+> - *Across a 5,000-draw Monte Carlo simulation with noisy parameters, the probability of positive savings was **100%**.*
 > - *All 60 automated tests in our suite pass with zero regressions.*"
 
 ---
@@ -58,7 +58,7 @@
 
 > *"Here it is running live on Streamlit Cloud.  
 > 
-> Notice how when an order comes in — say a ₹852 Home order with a 39% RTO probability — the engine doesn't blindly block it. The Expected Loss table reveals that automated address verification yields the lowest expected loss of -₹67.72.  
+> Notice how when an order comes in — say a ₹852 Home order with a 39% RTO probability — the engine doesn't blindly block it. The Expected Loss table reveals that automated address verification yields the lowest expected loss of -₹54.60.  
 > 
 > Each decision is scored in under 15 milliseconds, with local SHAP feature attributions explaining the exact drivers.  
 > 
