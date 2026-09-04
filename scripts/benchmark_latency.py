@@ -14,6 +14,9 @@ import time
 import statistics
 import sys
 import os
+import warnings
+
+warnings.filterwarnings("ignore")
 
 # ── path setup ──────────────────────────────────────────────────────────────
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -33,8 +36,8 @@ SAMPLE_ORDER = {
     "prior_orders": 3,
     "prior_rto_count": 0,
     "orders_last_24h": 1,
-    "device_cluster": 1,
-    "pincode": "400001",
+    "device_cluster_size": 1,
+    "pincode": "597542",
     "courier_id": "Courier_A",
 }
 
@@ -59,17 +62,17 @@ def run_benchmark(n: int = 10_000, warmup: int = 1_000) -> None:
     p99  = latencies_ms[int(n * 0.99)]
     mean = statistics.mean(latencies_ms)
 
-    print(f"\n{'─' * 42}")
-    print(f"  RTO Shield — Decision Engine Latency")
+    print(f"\n{'-' * 42}")
+    print(f"  RTO Shield - Decision Engine Latency")
     print(f"  n={n:,} iterations  |  warmup={warmup:,}")
-    print(f"{'─' * 42}")
+    print(f"{'-' * 42}")
     print(f"  {'Percentile':<12} {'Latency':>10}")
-    print(f"  {'─'*12} {'─'*10}")
+    print(f"  {'-'*12} {'-'*10}")
     print(f"  {'p50':<12} {p50:>9.2f}ms")
     print(f"  {'p95':<12} {p95:>9.2f}ms")
     print(f"  {'p99':<12} {p99:>9.2f}ms")
     print(f"  {'mean':<12} {mean:>9.2f}ms")
-    print(f"{'─' * 42}\n")
+    print(f"{'-' * 42}\n")
 
 
 if __name__ == "__main__":

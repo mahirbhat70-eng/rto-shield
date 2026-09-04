@@ -24,19 +24,20 @@ All frozen model artifacts and reports are committed. **No data download needed 
 
 ---
 
-### Decision Engine Latency (single core, 10,000 iterations)
+### Decision Engine Latency (Full score_order() Path: Model + TreeSHAP + Cost Matrix)
 
 | Percentile | Latency |
 |-----------|---------|
-| p50 | ~3 ms |
-| p95 | ~8 ms |
-| p99 | ~15 ms |
+| p50 | ~8 ms |
+| p95 | ~11 ms |
+| p99 | ~15–30 ms |
 
+*Full end-to-end scoring path including feature resolution, model inference, TreeSHAP explainability, and expected-loss action resolution. Hardware-dependent.*  
 Reproduce: `python scripts/benchmark_latency.py`
 
 ---
 
-RTO Shield converts COD order risk prediction into financially optimal intervention decisions for Indian e-commerce merchants. Every claim in this README traces to a frozen artifact in `reports/`, backed by 57 passing automated tests (generator contract, split integrity, preprocessing leakage, metric correctness, dominance regression, adversarial robustness, serving-path equivalence, UI logic) and 11/11 pre-registered checks on a strictly held-out test set.
+RTO Shield converts COD order risk prediction into financially optimal intervention decisions for Indian e-commerce merchants. Every claim in this README traces to a frozen artifact in `reports/`, backed by 60 passing automated tests (generator contract, split integrity, preprocessing leakage, metric correctness, dominance regression, adversarial robustness, serving-path equivalence, UI logic, decision audit trail) and 11/11 pre-registered checks on a strictly held-out test set.
 
 ## Executive Summary — Final Results (Held-Out Test Set)
 
@@ -174,7 +175,7 @@ rto-shield/
 │       ├── stage5_test_reveal.py # one-shot held-out evaluation
 │       ├── verify_calibration.py # bin-MAE artifact investigation
 │       └── stress_test_noise.py # oracle-feature σ=0.04 stress test
-├── tests/ # 57 tests across 7 test files
+├── tests/ # 60 tests across 8 test files
 ├── scripts/
 │   └── verify_shap_sign.py # SHAP class 1 verification
 ├── reports/
@@ -216,12 +217,12 @@ python src/eval/stage4_evaluate.py
 # Stage 5 — one-shot held-out test reveal (frozen artifacts)
 python src/eval/stage5_test_reveal.py
 
-# Full test suite (57 tests)
+# Full test suite (60 tests)
 python -m pytest tests/ -q
 
 # Serving layer + demo (artifacts are committed — no generation needed)
 python src/serve/lookup.py        # rebuild pincode lookup from TRAIN only
-python -m pytest tests/ -q        # expect: 57 passed
+python -m pytest tests/ -q        # expect: 60 passed
 streamlit run app.py              # scorer UI; sidebar demo buttons: DEPOSIT / ALLOW / VERIFY
 ```
 
@@ -229,7 +230,7 @@ streamlit run app.py              # scorer UI; sidebar demo buttons: DEPOSIT / A
 - **Synthetic data.** Metrics are upper bounds on a known generator; real-world drift, labeling noise, and adversarial adaptation are not simulated (and stated where it matters).
 - **Oracle feature (disclosed above):** `hist_rate` is ground truth, not an estimate — optimism measured at Δ PR-AUC ≈ 0.003.
 - **One-order cost model.** The expected-loss model prices a single order; customer lifetime value of dropped good customers is not modeled.
-- **No production REST API.** The scoring module (`src/serve/`, ~15ms p99 per order) is production-ready but not exposed as a hosted REST endpoint — the analytics core is the deliverable. A Streamlit demo **is** live at [rto-shield-3qus23ktkhkzgqmxoytde5.streamlit.app](https://rto-shield-3qus23ktkhkzgqmxoytde5.streamlit.app) for interactive evaluation.
+- **No production REST API.** The scoring module (`src/serve/`, ~15–30ms p99 per order depending on hardware) is production-ready but not exposed as a hosted REST endpoint — the analytics core is the deliverable. A Streamlit demo **is** live at [rto-shield-3qus23ktkhkzgqmxoytde5.streamlit.app](https://rto-shield-3qus23ktkhkzgqmxoytde5.streamlit.app) for interactive evaluation.
 - **Isotonic tradeoff is real:** the calibrated primary gives up ₹10.8k of test savings vs the uncalibrated router (disclosed, pre-registered).
 
 ## License
