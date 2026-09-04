@@ -8,6 +8,7 @@ import time
 import json
 import datetime
 from src.serve.scorer import score_order
+from src.serve.audit import build_audit_record, to_jsonl
 
 # Page config
 st.set_page_config(page_title="Order Risk Scorer", layout="wide")
@@ -104,7 +105,8 @@ if st.button("Score this order", type="primary"):
     start_time = time.time()
     try:
         res = score_order(payload)
-        st.caption(f"Scored in {time.time() - start_time:.3f}s")
+        latency_ms = (time.time() - start_time) * 1000.0
+        st.caption(f"Scored in {latency_ms:.1f}ms")
         
         st.header(f"P(RTO): {res['probability']*100:.1f}%")
         
@@ -129,15 +131,8 @@ if st.button("Score this order", type="primary"):
             direction = "↑ increases risk" if shap_val > 0 else "↓ reduces risk"
             st.write(f"- **{name}**: {shap_val:+.4f} ({direction})")
 
-        # Record into audit trail
-        entry = {
-            "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-            "payload": payload,
-            "probability": round(float(res['probability']), 4),
-            "recommended_action": res['recommended_action'],
-            "expected_losses": {k: round(float(v), 2) for k, v in res['el_table'].items()} if 'el_table' in res else {},
-            "top_factors": [{"feature": name, "shap_val": round(float(val), 4)} for name, val in res['shap_top_factors']]
-        }
+        # Record into audit trail with deterministic replay fingerprint (decision_id)
+        entry = build_audit_record(payload, res, latency_ms=latency_ms)
         st.session_state.setdefault("audit_log", []).append(entry)
             
     except ValueError as e:
@@ -152,7 +147,7 @@ if st.button("Score this order", type="primary"):
 if st.session_state.get("audit_log"):
     st.markdown("---")
     st.subheader(f"📋 Decision Audit Trail ({len(st.session_state['audit_log'])} logged)")
-    jsonl_str = "\n".join(json.dumps(item) for item in st.session_state["audit_log"])
+    jsonl_str = to_jsonl(st.session_state["audit_log"])
     col_dl, col_clr = st.columns([3, 1])
     with col_dl:
         st.download_button(
