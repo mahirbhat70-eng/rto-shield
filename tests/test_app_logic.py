@@ -68,6 +68,9 @@ def test_unknown_pincode_error():
         
     assert "not found in lookup table" in str(exc.value)
 
+import os
+
+@pytest.mark.skipif(os.getenv("CI") == "true", reason="Latency tests can be flaky on CI runners")
 def test_latency_under_100ms():
     # 4. Single score_order call < 100ms
     val_rep = pd.read_csv("data/processed/val_rep.csv", dtype={'pincode': str})

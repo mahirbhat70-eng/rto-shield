@@ -1,5 +1,7 @@
 # RTO Shield — AI Risk Manager for Merchant COD RTO Risk
 
+[![CI](https://github.com/mahirbhat70-eng/rto-shield/actions/workflows/ci.yml/badge.svg)](https://github.com/mahirbhat70-eng/rto-shield/actions/workflows/ci.yml)
+
 RTO Shield converts COD order risk prediction into financially optimal intervention decisions for Indian e-commerce merchants. Every claim in this README traces to a frozen artifact in `reports/`, backed by 57 passing automated tests (generator contract, split integrity, preprocessing leakage, metric correctness, dominance regression, adversarial robustness, serving-path equivalence, UI logic) and 11/11 pre-registered checks on a strictly held-out test set.
 
 ## Executive Summary — Final Results (Held-Out Test Set)
