@@ -1,10 +1,40 @@
 # RTO Shield — AI Risk Manager for Merchant COD RTO Risk
 
 [![CI](https://github.com/mahirbhat70-eng/rto-shield/actions/workflows/ci.yml/badge.svg)](https://github.com/mahirbhat70-eng/rto-shield/actions/workflows/ci.yml)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Streamlit-FF4B4B?logo=streamlit)](https://rto-shield-3qus23ktkhkzgqmxoytde5.streamlit.app)
 
 ![Decision Architecture](docs/decision_architecture.png)
 
 > 📄 **[Executive Brief (PDF)](docs/executive_brief.pdf)** — key numbers, architecture narrative, and calibration story in one page.
+
+---
+
+## ⚡ Judge Quickstart — 5 Minutes
+
+| Step | Command / Link |
+|------|----------------|
+| **1. Try the live demo** | [rto-shield-3qus23ktkhkzgqmxoytde5.streamlit.app](https://rto-shield-3qus23ktkhkzgqmxoytde5.streamlit.app) |
+| **2. Clone & run tests** | `git clone https://github.com/mahirbhat70-eng/rto-shield && cd rto-shield && pip install -r requirements.txt && pytest tests/ -v` |
+| **3. Benchmark latency** | `python scripts/benchmark_latency.py` |
+| **4. Read the evidence** | [`claim-matrix.md`](claim-matrix.md) — every number → its artifact → its command |
+| **5. Read failure story** | [`WHAT_BROKE.md`](WHAT_BROKE.md) — 5 bugs found & fixed before test reveal |
+| **6. Hard questions** | [`docs/JUDGE_QA.md`](docs/JUDGE_QA.md) — 10 questions with evidence-backed answers |
+
+All frozen model artifacts and reports are committed. **No data download needed to run tests.**
+
+---
+
+### Decision Engine Latency (single core, 10,000 iterations)
+
+| Percentile | Latency |
+|-----------|---------|
+| p50 | ~3 ms |
+| p95 | ~8 ms |
+| p99 | ~15 ms |
+
+Reproduce: `python scripts/benchmark_latency.py`
+
+---
 
 RTO Shield converts COD order risk prediction into financially optimal intervention decisions for Indian e-commerce merchants. Every claim in this README traces to a frozen artifact in `reports/`, backed by 57 passing automated tests (generator contract, split integrity, preprocessing leakage, metric correctness, dominance regression, adversarial robustness, serving-path equivalence, UI logic) and 11/11 pre-registered checks on a strictly held-out test set.
 
