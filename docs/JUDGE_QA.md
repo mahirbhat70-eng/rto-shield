@@ -125,3 +125,11 @@ for interactive transparency: judges see the full decision surface (expected-los
 calibrated P) in real time without reading code.
 
 **Live demo:** https://rto-shield-nlthpydtndpkupyfgfl3yy.streamlit.app
+
+---
+
+## Q11: Your "realized savings of ₹69,786 (−2.7% vs forecast)" — since no order was actually intervened upon, what exactly did you validate?
+
+**A:** Forecast consistency, not intervention efficacy. "Realized" = each held-out order's actual, un-intervened outcome label scored through the same cost model and the routed action's assumed effects (`src/eval/stage5_2_realized_pl.py`). No counterfactual outcome exists for intervened orders, so no offline evaluation can validate efficacy — that requires the randomized pilot in our roadmap. What the −2.7% gap does prove: the calibrated forecast held on real outcomes under the model's own assumptions, while the uncalibrated router's forecast failed the identical test at −15.3% — which is why calibration was non-negotiable even at a ₹10.8k headline cost.
+
+**Artifact:** `src/eval/stage5_2_realized_pl.py`, `reports/stage5_test_results.md` § Stage 5.2, per-action calibration |Δ| ≤ 0.0032
