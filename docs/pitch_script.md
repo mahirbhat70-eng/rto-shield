@@ -6,7 +6,7 @@ Setup: app warmed 10 min prior · 1440×900 · bookmarks hidden · cursor enlarg
 ## BEAT 1 · 0:00–0:22 · COLD OPEN — View 01 (hero)
 🎙 **SAY (verbatim):**
 
-Every year, Indian e-commerce burns thousands of crores on Cash-on-Delivery returns. The package comes back — the courier cost doesn't. Every team, every vendor, is fighting to predict one coin flip: will this order come back? We stopped predicting the coin flip. We price it. This is RTO Shield.
+Every year, Indian e-commerce burns thousands of crores on Cash-on-Delivery returns. The package comes back — the courier cost doesn't. Every team, every vendor, is fighting to predict one coin flip: will this order come back? We stopped predicting the coin flip. We price it. This is RTO Shield, our submission for Track 02: AI Risk Manager.
 
 🖥 **SHOW:**
 - View 01 hero: "We don't predict the coin flip. We price it." centered.
@@ -93,4 +93,7 @@ We don't predict the coin flip. We price it.
 - Nav back to View 01 hero during the first sentence.
 - Steady on the hero through "drop behind checkout" — no hovers.
 - Final line: hold the hero 3 full seconds in silence → fade to end card.
-- End card: github.com/mahirbhat70-eng/rto-shield (large, centered, ≥3s readable).
+- End card: 
+  - RTO Shield — Track 02: AI Risk Manager
+  - github.com/mahirbhat70-eng/rto-shield
+  (large, centered, ≥3s readable).
