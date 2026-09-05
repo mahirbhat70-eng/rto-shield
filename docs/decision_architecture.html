@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RTO Shield — Decision Architecture</title>
+<style>
+ body{font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#f6f8fa;color:#1a2332;margin:0;padding:40px 20px;}
+ .wrap{max-width:900px;margin:0 auto;}
+ h1{text-align:center;font-size:30px;margin:0 0 6px;}
+ .sub{text-align:center;color:#5a6b7f;font-size:14px;margin:0 0 30px;line-height:1.5;}
+ .card{background:#fff;border:1px solid #e3e8ee;border-radius:12px;padding:22px 26px;}
+ .stage-label{font-size:11px;letter-spacing:2px;color:#8195a8;font-weight:700;margin-bottom:4px;}
+ .stage-title{font-size:19px;font-weight:700;margin:0 0 14px;}
+ .item{border:1px solid #e9edf2;border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:13.5px;color:#33475b;}
+ .item b{color:#1a2332;}
+ .chip{display:inline-block;background:#eef2f6;border-radius:5px;padding:3px 8px;font-family:Consolas,monospace;font-size:12px;margin:2px 3px 2px 0;color:#33475b;}
+ .arrow{text-align:center;font-size:22px;color:#9fb0c0;margin:12px 0;}
+ .dark{background:#1c2733;color:#dfe7ee;border-radius:14px;padding:26px 30px;}
+ .dark .stage-label{color:#8fa5ba;} .dark .stage-title{color:#fff;}
+ .code{background:#121a24;border:1px solid #2c3a4a;border-radius:8px;padding:14px 18px;font-family:Consolas,monospace;font-size:14px;color:#e8eef4;margin:12px 0 6px;}
+ .code .rupee{color:#e8c46a;font-weight:700;}
+ .muted{color:#93a6b8;font-size:12.5px;font-family:Consolas,monospace;}
+ .route{display:inline-block;border:1px solid #4d637a;border-radius:6px;padding:4px 10px;font-family:Consolas,monospace;font-size:13px;color:#cfe0ef;margin-top:8px;}
+ .actions{display:flex;gap:14px;margin-top:6px;}
+ .action{flex:1;border:1px solid #e3e8ee;border-top:3px solid #2e6e8e;border-radius:8px;padding:12px 14px;font-size:12.5px;color:#33475b;background:#fff;}
+ .action h3{margin:0 0 2px;font-size:14.5px;color:#1a2332;}
+ .action .band{font-size:10.5px;letter-spacing:1px;color:#8195a8;font-weight:700;margin-bottom:6px;}
+ .note{border:1px dashed #c6d2dd;border-radius:8px;padding:10px 16px;font-size:12.5px;color:#4b5f73;margin-top:14px;background:#fbfcfd;}
+ .stats{display:flex;border:1px solid #e3e8ee;border-radius:12px;background:#fff;margin-top:26px;}
+ .stat{flex:1;text-align:center;padding:18px 8px;border-right:1px solid #eef2f6;}
+ .stat:last-child{border-right:none;}
+ .stat .v{font-size:26px;font-weight:800;color:#1a2332;}
+ .stat .l{font-size:10.5px;letter-spacing:1px;color:#8195a8;font-weight:700;margin-top:4px;}
+ footer{text-align:center;color:#8195a8;font-size:12px;margin-top:26px;line-height:1.7;}
+ a{color:#2e6e8e;text-decoration:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+ <h1>RTO Shield — Decision Architecture</h1>
+ <p class="sub">From COD order to financially optimal action — every stage measured, frozen, and covered by 60 automated tests.<br>Prediction is not the product; the decision layer is.</p>
+
+ <div class="card">
+  <div class="stage-label">STAGE 1 · SIGNAL INTAKE</div>
+  <div class="stage-title">COD order placed at checkout</div>
+  <div class="item"><b>1 · 13 merchant inputs</b> — all knowable at the moment of checkout, nothing from the future<br>
+   <span class="chip">order_value</span><span class="chip">quantity</span><span class="chip">category</span><span class="chip">discount_pct</span><span class="chip">payment_method</span><span class="chip">cod_charge</span><span class="chip">account_age_days</span><span class="chip">prior_orders</span><span class="chip">prior_rto_count</span><span class="chip">orders_last_24h</span><span class="chip">device_cluster_size</span><span class="chip">pincode</span><span class="chip">courier_id</span>
+  </div>
+  <div class="item"><b>2 · Pincode lookup</b> (rebuilt from TRAIN data only) → historical_pincode_rto_rate + pincode_tier &nbsp;<span class="muted">= 15 model features total</span></div>
+  <div class="item"><b>3 · Guardrails</b> — range validation, logical constraints, unknown-pincode &amp; unknown-courier rejection</div>
+ </div>
+ <div class="arrow">↓</div>
+
+ <div class="card">
+  <div class="stage-label">STAGE 2 · RISK SCORING</div>
+  <div class="stage-title">Calibrated probability of Return-to-Origin</div>
+  <div class="item"><b>4 · Calibrated LightGBM → P(RTO)</b> — isotonic calibration fitted on val_cal; artifact frozen before test reveal</div>
+  <div class="item"><b>5 · Calibration held on test</b> — per-action-band error |mean P − empirical RTO| ≤ 0.0032</div>
+  <div class="item"><b>6 · SHAP TreeExplainer</b> — top-3 risk factors returned with every score (explanation integrity is test-covered)</div>
+ </div>
+ <div class="arrow">↓</div>
+
+ <div class="dark">
+  <div class="stage-label">STAGE 3 · DECISION LAYER — THE CORE</div>
+  <div class="stage-title">Expected-loss engine routes every order</div>
+  <div class="muted">EVERY INTERVENTION IS PRICED, PER ORDER</div>
+  <div class="code">EL(action) = friction_cost + P_rto_after × <span class="rupee">₹150</span> − P_success × margin</div>
+  <div class="muted">margin = order_value × 20% &nbsp;·&nbsp; ₹150 = forward + reverse logistics (industry prior)</div>
+  <div class="route">route to → argmin EL over { ALLOW · VERIFY · DEPOSIT }</div>
+ </div>
+ <div class="arrow">↓</div>
+
+ <div class="card">
+  <div class="stage-label">STAGE 4 · ROUTED ACTION</div>
+  <div class="stage-title">Decision bands emerge from order economics</div>
+  <div class="actions">
+   <div class="action"><h3>ALLOW_COD</h3><div class="band">LOW-RISK BAND</div>Frictionless path. High-value orders stay untouched — DEPOSIT share falls 91% → 1% across order-value quartiles.</div>
+   <div class="action"><h3>VERIFY_ADDRESS</h3><div class="band">MID BAND · ₹2 FRICTION</div>Cheap call, meaningful cover: −30% RTO for −5% success drop. Best single action on its own (₹35,919 savings).</div>
+   <div class="action"><h3>REQUIRE_DEPOSIT</h3><div class="band">RISKY + CHEAP ORDERS</div>−80% RTO, 40% success drop — reserved for orders where ₹150 reverse logistics dwarfs the margin.</div>
+  </div>
+  <div class="note"><b>PREPAID_ONLY is proven dominated</b> by the menu — 0.0% share on the held-out test set; prepaid orders pass through untouched. The multi-action policy earns <b>2.0×</b> the savings of the best single-threshold policy: <b>13.1% portfolio profit uplift</b> (₹71,741 expected / ₹69,786 realized, −2.7% vs forecast).</div>
+ </div>
+
+ <div class="stats">
+  <div class="stat"><div class="v">94.7%</div><div class="l">OF BAYES CEILING</div></div>
+  <div class="stat"><div class="v">13.1%</div><div class="l">PROFIT UPLIFT</div></div>
+  <div class="stat"><div class="v">₹69,786</div><div class="l">REALIZED SAVINGS</div></div>
+  <div class="stat"><div class="v">~11 ms</div><div class="l">P95 · FULL PATH INCL. SHAP</div></div>
+  <div class="stat"><div class="v">60/60</div><div class="l">TESTS PASSING</div></div>
+ </div>
+
+ <footer>Frozen pipeline artifacts · synthetic-data study with disclosed oracle-feature optimism<br>
+ <a href="https://github.com/mahirbhat70-eng/rto-shield">github.com/mahirbhat70-eng/rto-shield</a> &nbsp;·&nbsp; <a href="https://rto-shield-nlthpydtndpkupyfgfl3yy.streamlit.app">Live Decision Console</a></footer>
+</div>
+</body>
+</html>

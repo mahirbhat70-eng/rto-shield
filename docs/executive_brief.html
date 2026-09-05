@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RTO Shield — Executive Brief</title>
+<style>
+ @page{size:A4;margin:14mm;}
+ body{font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1f2a35;background:#fafaf7;margin:0;padding:34px 44px;}
+ .head{display:flex;justify-content:space-between;font-size:11px;letter-spacing:2px;color:#5a6b7f;border-bottom:1px solid #d8dee4;padding-bottom:10px;font-weight:600;}
+ h1{font-size:52px;line-height:1.02;margin:34px 0 16px;letter-spacing:-1px;}
+ h1 .accent{color:#2e6e8e;}
+ .intro{font-size:15px;color:#33475b;max-width:640px;line-height:1.55;}
+ .intro b{color:#1a2332;}
+ .rule{width:64px;height:3px;background:#2e6e8e;margin:24px 0;}
+ .box{border:1px solid #d8dee4;background:#fff;border-radius:6px;padding:24px 28px;max-width:720px;}
+ .label{font-size:11px;letter-spacing:2px;color:#2e6e8e;font-weight:700;margin:16px 0 5px;}
+ .box p{font-size:13.5px;line-height:1.6;margin:0 0 10px;color:#2b3a49;}
+ .code{font-family:Consolas,monospace;background:#eef1f4;border-radius:4px;padding:1px 6px;font-size:12.5px;}
+ .stats{display:flex;margin:34px 0 8px;}
+ .stat{flex:1;padding:0 18px;border-left:1px solid #d8dee4;}
+ .stat:first-child{border-left:none;padding-left:0;}
+ .stat .v{font-size:44px;font-weight:800;color:#1a2332;letter-spacing:-1px;}
+ .stat .v .u{font-size:22px;color:#2e6e8e;}
+ .stat .l{font-size:10px;letter-spacing:1.5px;color:#7a8a99;font-weight:700;margin-top:2px;line-height:1.5;}
+ .bars{margin-top:28px;}
+ .bars .t{font-size:10.5px;letter-spacing:2px;color:#7a8a99;font-weight:700;margin-bottom:10px;}
+ .barrow{display:flex;align-items:center;margin-bottom:8px;font-size:12.5px;}
+ .barrow .n{width:170px;color:#33475b;}
+ .barrow .b{height:16px;border-radius:2px;background:#d8dee4;}
+ .barrow .b.hi{background:#2e6e8e;}
+ .barrow .v{margin-left:10px;font-family:Consolas,monospace;color:#1f2a35;}
+ footer{margin-top:40px;border-top:1px solid #d8dee4;padding-top:12px;font-size:11px;letter-spacing:1.5px;color:#5a6b7f;line-height:2;font-weight:600;}
+ footer a{color:#2e6e8e;text-decoration:none;}
+</style>
+</head>
+<body>
+ <div class="head"><span>RTO SHIELD — EXECUTIVE BRIEF</span><span>COD RISK DECISIONS · SEPT 2026</span></div>
+
+ <h1>PREDICTION IS<br>NOT THE <span class="accent">PRODUCT.</span></h1>
+ <p class="intro">RTO Shield converts COD order risk prediction into <b>financially optimal intervention decisions</b> for Indian e-commerce merchants — a measured, frozen, independently reproduced decision engine.</p>
+ <div class="rule"></div>
+
+ <div class="box">
+  <div class="label">THE PROBLEM</div>
+  <p>Cash-on-delivery dominates Indian e-commerce, and <b>28.27% of test COD orders</b> came back as Return-to-Origin — each costing <b>₹150</b> in reverse logistics. Low-value risky orders are economically unsalvageable; high-value ones deserve a frictionless path.</p>
+
+  <div class="label">THE SYSTEM</div>
+  <p>A calibrated LightGBM scores P(RTO) from <b>15 order-time features</b> — 13 merchant inputs plus 2 fields resolved from a train-only pincode lookup. An expected-loss engine prices every intervention per order — <span class="code">EL(action) = friction + P_rto_after × ₹150 − P_success × margin</span> — and routes each order to the argmin: <b>ALLOW</b>, <b>VERIFY</b> (₹2 friction, −30% RTO), or <b>DEPOSIT</b> (−80% RTO). A fourth option, PREPAID_ONLY, is proven mathematically dominated and never selected.</p>
+
+  <div class="label">THE PROOF</div>
+  <p>On a strictly held-out test window (7,174 COD orders), the multi-action policy earned <b>₹71,741 expected savings</b> and <b>₹69,786 realized</b> against actual labels — −2.7% vs forecast, inside Monte Carlo noise. The uncalibrated router's forecast collapsed <b>−15.3%</b> against the same labels: calibration bought the only forecast that held up.</p>
+ </div>
+
+ <div class="stats">
+  <div class="stat"><div class="v">13.1<span class="u">%</span></div><div class="l">COD PORTFOLIO<br>PROFIT UPLIFT</div></div>
+  <div class="stat"><div class="v">2.0<span class="u">×</span></div><div class="l">SAVINGS VS BEST<br>SINGLE THRESHOLD</div></div>
+  <div class="stat"><div class="v">94.7<span class="u">%</span></div><div class="l">OF MEASURED<br>BAYES CEILING</div></div>
+  <div class="stat"><div class="v">100<span class="u">%</span></div><div class="l">P(SAVINGS &gt; 0)<br>5,000 DRAWS</div></div>
+ </div>
+
+ <div class="bars">
+  <div class="t">SAVINGS VS ALWAYS-ALLOW — HELD-OUT TEST WINDOW</div>
+  <div class="barrow"><span class="n">Always allow (baseline)</span><span class="b" style="width:8px;"></span><span class="v">₹0</span></div>
+  <div class="barrow"><span class="n">Best single threshold</span><span class="b" style="width:300px;"></span><span class="v">₹35,919</span></div>
+  <div class="barrow"><span class="n">Multi-action policy</span><span class="b hi" style="width:600px;"></span><span class="v">₹71,741 expected · ₹69,786 realized</span></div>
+ </div>
+
+ <footer>
+  60/60 TESTS PASSING &nbsp;·&nbsp; 11/11 PRE-REGISTERED CHECKS &nbsp;·&nbsp; COLD-CLONE REPRODUCED<br>
+  LIVE DEMO: <a href="https://rto-shield-nlthpydtndpkupyfgfl3yy.streamlit.app">rto-shield-nlthpydtndpkupyfgfl3yy.streamlit.app</a> &nbsp;·&nbsp; <a href="https://github.com/mahirbhat70-eng/rto-shield">github.com/mahirbhat70-eng/rto-shield</a> &nbsp;·&nbsp; MIT
+ </footer>
+</body>
+</html>

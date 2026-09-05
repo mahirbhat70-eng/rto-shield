@@ -21,7 +21,7 @@ within the Monte Carlo P5–P95 band of ₹63,935–₹75,901).
 **A:** Three mechanical guarantees:
 1. Temporal split — all splits are ordered by `order_date`; test = the chronologically final window.
 2. Threshold tuning used `val_cal` only (`val_rep` and `test` were sealed); see `src/policy/` for the argmin loop.
-3. Cold-clone verification: after force-pushing the frozen artifacts, CI runs `pytest` from a fresh checkout on every push. All 57 tests pass — including `test_split_integrity` which explicitly checks date monotonicity.
+3. Cold-clone verification: after force-pushing the frozen artifacts, CI runs `pytest` from a fresh checkout on every push. All 60 tests pass — including `test_split_integrity` which explicitly checks date monotonicity.
 
 **Artifact:** `.github/workflows/ci.yml`, `tests/test_stage3.py::test_split_date_monotonicity`
 
