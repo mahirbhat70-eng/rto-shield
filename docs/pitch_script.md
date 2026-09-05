@@ -1,82 +1,96 @@
-# RTO Shield — Pitch & Promo Video Script
+# RTO SHIELD — 5:00 FINAL PITCH (Recording Master)
 
-> **Target Duration:** 2 minutes (120 seconds)  
-> **Audience:** Razorpay Hackathon Judges / Senior FinTech & Risk Leadership  
-> **Key Thesis:** Classification thresholds throw away merchant profit. RTO Shield is an expected-loss decision engine that delivers **2.0× higher savings** and **13.1% portfolio profit uplift** at **94.7% of the Bayes ceiling**.
+**All numbers verified against frozen artifacts (93f1157) AND the live deployed app.**
+Setup: app warmed 10 min prior · 1440×900 · bookmarks hidden · cursor enlarged · repo URL ready.
 
----
+## BEAT 1 · 0:00–0:22 · COLD OPEN — View 01 (hero)
+🎙 **SAY (verbatim):**
 
-## Video Storyboard & Timing Overview
+Every year, Indian e-commerce burns thousands of crores on Cash-on-Delivery returns. The package comes back — the courier cost doesn't. Every team, every vendor, is fighting to predict one coin flip: will this order come back? We stopped predicting the coin flip. We price it. This is RTO Shield.
 
-| Time | Section | On-Screen Visual | Audio Goal |
-|---|---|---|---|
-| **0:00 – 0:20** | **The Bleed** | COD checkout animation; ₹120 RTO logistics loss vs ₹49 shipping margin | Hook with the real merchant pain: COD cancellation economics. |
-| **0:20 – 0:45** | **The Flaw in Single Thresholds** | Binary threshold graph vs Multi-action cost matrix | Expose why 90% of solutions fail in production (false drop cost). |
-| **0:45 – 1:15** | **The Mathematics & Results** | PR-AUC curve (94.7% Bayes) + 5,000-draw Monte Carlo distribution | Concrete numbers: ₹71,741 savings, 2.0× vs single threshold, 100% P(savings > 0). |
-| **1:15 – 1:45** | **Live System Demo** | Live Streamlit UI + Real-time SHAP factors + JSONL Audit Export | Proof of execution: sub-100ms real-time scoring (full path incl. TreeSHAP), deterministic replay fingerprint. |
-| **1:45 – 2:00** | **The Razorpay Impact** | Razorpay Magic Checkout integration architecture | Close on instant merchant ROI with zero customer checkout friction. |
+🖥 **SHOW:**
+- View 01 hero: "We don't predict the coin flip. We price it." centered.
+- Cursor completely still. No scroll, no hover — let the line land.
+- Lower-third: RTO Shield — COD Decision Console
 
----
+## BEAT 2 · 0:22–1:05 · ECONOMICS + COMPETITOR KILL — View 01 (pan)
+🎙 **SAY (verbatim):**
 
-## Word-for-Word Voiceover Script
+Here's the economics. A returned COD order costs about ₹150 in forward, reverse, and packaging, against a 20% margin — and roughly one in four COD orders comes back. So blocking every "risky" order destroys good revenue, and allowing everything burns cash.
+Some teams will pitch you COD intelligence. Great — intelligence is table stakes. A risk score doesn't make a decision. RTO Shield prices four moves for every order — allow it, verify the address for ₹2, take a deposit, or push prepaid — computes the expected loss of each in rupees, and always ships with the cheapest. Not a threshold. An argmin.
 
-### 0:00 – 0:20 | Act 1: The Indian E-Commerce Paradox
-**Visual:** *Show title card: "RTO Shield — AI Risk Engine for Indian E-Commerce". Cut to an abandoned delivery package illustration or logistics tracking graphic.*
+🖥 **SHOW:**
+- Slow pan down the KPI cards. Hover in THIS order, synced to speech:
+- ₹71,741 as you say "costs about ₹150" region → expected-savings card
+- ₹69,786 → realized card
+- 2.0× → routing uplift card
+- 94.7% → Bayes-ceiling card
+- On "four moves": rest cursor on the panel "How a decision is priced — four moves, one argmin".
+- On "An argmin": one final hover on the hero line. Stop.
+- Lower-third: EL = friction + p_rto_after × ₹150 − p_success × (20% × order value)
+⚠️ *Only hover numbers you actually name. Never hover something you don't say.*
 
-> *"In Indian e-commerce, Cash on Delivery is unavoidable — over 60% of consumers demand it. But for merchants, every Return-to-Origin is a direct financial loss: double shipping costs, reverse logistics, and dead inventory — averaging ₹120 to ₹180 per failed order.*  
-> 
-> *Most fraud detection systems treat this as a standard classification problem. If probability is above 0.5, they block the order. But doing that burns your highest-value customers."*
+## BEAT 3 · 1:05–2:45 · LIVE DEMO — View 02 (centerpiece — rehearse most)
+🎙 **SAY (verbatim):**
 
----
+Let me show you — live, not a mock-up.
+(click) A ₹852 Home order, Cash on Delivery. Watch the pincode panel — Tier 3, 28.5% historical RTO in that area. Account is 65 days old, third order in 24 hours. I hit Score.
+(click, pause 1 beat) 39.4% return probability — calibrated — in about 40 milliseconds, full path, SHAP included. Now the price menu. Allow it: minus ₹44 expected. Verify: minus ₹54.60. Deposit: minus ₹50. Minus means expected profit — and the engine routes to the cheapest: VERIFY, saving ₹10.59 per order versus always-allow. Multiply that by thousands of orders a day.
+And it shows its work: TreeSHAP says the COD charge and pincode history push risk up; account age pulls it back. Every decision gets a tamper-evident SHA-256 fingerprint — replayable, auditable.
+(click) A random order from the untouched holdout — scored instantly — and there's the ground truth. That's the frozen production artifact, scoring in your browser, right now.
 
-### 0:20 – 0:45 | Act 2: Why Binary Thresholds Fail
-**Visual:** *Switch to the Decision Architecture diagram (`docs/decision_architecture.png`). Highlight the 4 distinct intervention tiers: ALLOW_COD, REQUIRE_DEPOSIT, VERIFY_ADDRESS, PREPAID_ONLY.*
+🖥 **SHOW (exact sequence):**
+- Click Try it live → View 02 (nav) while saying "Let me show you".
+- Click the VERIFY ₹852 preset. Let the form fill; cursor to the "Input intelligence" panel as you narrate pincode/age/orders.
+- Click SCORE THIS ORDER → PAUSE one full beat on the verdict. Don't talk over the landing.
+- Hover the rows of "Expected-loss price menu · all four moves, one argmin" in spoken order: Allow −₹44 → Verify −₹54.60 → Deposit −₹50. Then point at the ROUTED / argmin VERIFY badge and the ₹10.59 saved line.
+- On "shows its work": scroll to "Why this price · TreeSHAP on frozen model" — point at the up-bars (COD charge, pincode) then the down-bar (account age).
+- On "SHA-256": scroll to "Audit receipt" — hover the ✓ verified line once.
+- On "random order": click 🎲 Random holdout order. Let the new verdict render fully.
+- Cursor: circle the verdict block + ROUTED badge (slow, one loop).
+- Lower-third: P(RTO) 39.4% · argmin: VERIFY_ADDRESS (−₹54.60) — use the ON-SCREEN millisecond figure if you overlay latency; don't hardcode 39.9 ms if the live run shows different.
+🎲 *If the random order's ground truth is a MISS (~27% of draws), say, without breaking pace:*
+*"Missed — and that's exactly why we price in distributions, not certainties."*
+*Then continue to Beat 4. Do NOT re-roll on camera.*
 
-> *"A ₹2,000 apparel order with a 30% risk of RTO shouldn't be blocked — because the 70% chance of a completed sale is worth far more than the delivery risk.  
-> 
-> That’s why we built **RTO Shield**. Instead of a blunt binary cutoff, RTO Shield calculates the **mathematical expected financial loss** across four granular interventions: Allow, Require a partial deposit, Verify the address via automated IVR/WhatsApp, or Convert to prepaid.*  
-> 
-> *By choosing the intervention that strictly minimizes expected loss, we protect the merchant's margin without alienating good buyers."*
+## BEAT 4 · 2:45–3:30 · NOTHING BEATS THE LINE — View 03
+🎙 **SAY (verbatim):**
 
----
+The obvious question: why not just pick a threshold? So we swept every cutoff on 3,673 calibration-window orders. The best single line you could ever find — a VERIFY cutoff at 0.20 — still loses to per-order pricing by ₹18,326. That's 6% better than the best threshold, ever. And it generalizes: on the untouched test window, argmin routing earns 2.0× the savings of the best single-threshold policy.
+High-value, low-risk orders get allowed. Small risky orders get a ₹2 phone call. Big risky orders get a deposit. A single line can't do all three at once. A price menu can — because risk isn't a label, it's a surface.
 
-### 0:45 – 1:15 | Act 3: Proven Numbers, Zero Leaks
-**Visual:** *Display the Stage 5 benchmark charts and the Claim Matrix (`claim-matrix.md`). Pan across PR-AUC = 0.3313 (94.7% of Bayes Ceiling 0.3497) and Monte Carlo savings histogram.*
+🖥 **SHOW:**
+- Nav to View 03 — Policy Frontier ("Why no threshold").
+- Cursor traces the amber curve to its lowest point as you say "best single line… 0.20".
+- Move to the argmin routing line on "still loses… ₹18,326".
+- Point at the annotation EDGE OF THE LINE +₹18,326 / 6.0% on "6% better".
+- On the final sentence ("risk isn't a label, it's a surface"): sweep the cursor slowly ACROSS the whole curve — one pass, low to high value. Then freeze.
+- No clicks except nav. Slow hands.
 
-> *"We validated RTO Shield on a frozen, leak-free temporal split using calibrated LightGBM.  
-> 
-> The results speak for themselves:*
-> - *We achieved **94.7% of the theoretical Bayes ceiling** on PR-AUC.*
-> - *Our multi-action policy delivers **₹71,741 net savings** on our test cohort — **exactly 2.0 times higher** than the best tuned single-threshold baseline.*
-> - *Across a 5,000-draw Monte Carlo simulation with noisy parameters, the probability of positive savings was **100%**.*
-> - *All 60 automated tests in our suite pass with zero regressions.*"
+## BEAT 5 · 3:30–4:25 · PROOF IT'S REAL — View 04
+🎙 **SAY (verbatim):**
 
----
+Forecasts are cheap — so we paid for evidence. On 7,174 test COD orders, expected savings: ₹71,741. Realized savings — scoring actual outcomes through the same cost engine: ₹69,786. Within 2.7% of forecast. And in 5,000 Monte Carlo draws, every single draw stayed profitable — the worst 5th percentile is ₹63,935. Profit uplift: 13.1%, inside the pass band we pre-registered before looking: 8 to 18.
+Now, precision at the operating point is 0.30 — and that's fine, because a false positive here is a ₹2 phone call, not a lost customer. Recall is 0.86 — we catch 86% of returns. And the model itself? It extracts 94.7% of the Bayes ceiling — the theoretical maximum signal on this problem. No model family does meaningfully better. The value lives in the decision layer. So that's where we built ours.
 
-### 1:15 – 1:45 | Act 4: Live Demonstration & Auditability
-**Visual:** *Screen recording of the live Streamlit demo (`rto-shield-nlthpydtndpkupyfgfl3yy.streamlit.app`). Click the preset "VERIFY", show the green highlighted argmin in the Expected Loss table, show real-time SHAP waterfall drivers, then click 'Download Audit Trail (.jsonl)'.*
+🖥 **SHOW (hover chain, no clicks):**
+- Expected ₹71,741 card → 2. Realized ₹69,786 card (rest on "2.7%") →
+- Panel "Monte Carlo · 5,000 draws on intervention effects" — point at the P5 ₹63,935 band →
+- Panel "Operating point · VERIFY + DEPOSIT = positive" — rest here for 13.1% / pre-registered [8, 18] →
+- Panel "Per-action calibration · the price is honest per shelf" — rest for precision 0.30 / recall 0.86.
+- "94.7% of the Bayes ceiling" is said VERBALLY here — don't navigate back to View 01 mid-beat; stay on calibration table.
+- If time feels tight: the provenance panel is NOT spoken — skip it, don't scroll it.
 
-> *"Here it is running live on Streamlit Cloud.  
-> 
-> Notice how when an order comes in — say a ₹852 Home order with a 39% RTO probability — the engine doesn't blindly block it. The Expected Loss table reveals that automated address verification yields the lowest expected loss of -₹54.60.  
-> 
-> Each decision is scored in under 15 milliseconds, with local SHAP feature attributions explaining the exact drivers.  
-> 
-> And for compliance and dispute resolution, every single decision generates an immutable, tamper-evident SHA-256 replay fingerprint exported to a streaming JSONL audit trail."*
+## BEAT 6 · 4:25–5:00 · CLOSE + THE ASK — View 01 (hero)
+🎙 **SAY (verbatim):**
 
----
+Under the hood: a calibrated LightGBM, an 18-signal contract where every feature is knowable at order time — no leakage — 60 tests green in CI, median latency 8 milliseconds. And every number I've said today is reproducible from the repo — each claim maps to a test.
+Razorpay — this is a routing layer you can drop behind checkout. Order comes in. A rupee-priced decision goes out. An audit trail goes to the ledger.
+Everyone else will tell you which orders are risky. We tell you what to do with each one — and what it's worth.
+We don't predict the coin flip. We price it.
 
-### 1:45 – 2:00 | Act 5: The Closing Proposition
-**Visual:** *Return to presentation summary slide with GitHub link, live demo badge, and Razorpay logo overlay.*
-
-> *"RTO Shield turns RTO management from an anxious guessing game into an exact financial optimization. It's ready to plug directly into Razorpay Magic Checkout or custom merchant gateways today.*  
-> 
-> *Explore our live app, inspect every number in our claim matrix, and run our test suite yourself. Thank you."*
-
----
-
-## Technical Highlights for Judge Q&A / Accompanying Notes
-
-- **Live Demo Link:** [https://rto-shield-nlthpydtndpkupyfgfl3yy.streamlit.app/](https://rto-shield-nlthpydtndpkupyfgfl3yy.streamlit.app/)
-- **Full Q&A Repository:** [`docs/JUDGE_QA.md`](./JUDGE_QA.md) (covers all 10 toughest questions including leakage prevention, calibration error, and cost sensitivity).
-- **Claim Matrix:** [`claim-matrix.md`](../claim-matrix.md) (maps every single metric to its exact pytest command).
+🖥 **SHOW:**
+- Nav back to View 01 hero during the first sentence.
+- Steady on the hero through "drop behind checkout" — no hovers.
+- Final line: hold the hero 3 full seconds in silence → fade to end card.
+- End card: github.com/mahirbhat70-eng/rto-shield (large, centered, ≥3s readable).
