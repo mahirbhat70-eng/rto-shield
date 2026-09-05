@@ -124,4 +124,4 @@ Production would expose `src/serve/` as a REST endpoint (FastAPI, ~20 lines). St
 for interactive transparency: judges see the full decision surface (expected-loss table, SHAP features,
 calibrated P) in real time without reading code.
 
-**Live demo:** https://rto-shield-3qus23ktkhkzgqmxoytde5.streamlit.app
+**Live demo:** https://rto-shield-nlthpydtndpkupyfgfl3yy.streamlit.app

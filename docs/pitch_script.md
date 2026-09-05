@@ -54,7 +54,7 @@
 ---
 
 ### 1:15 – 1:45 | Act 4: Live Demonstration & Auditability
-**Visual:** *Screen recording of the live Streamlit demo (`rto-shield-3qus23ktkhkzgqmxoytde5.streamlit.app`). Click the preset "VERIFY", show the green highlighted argmin in the Expected Loss table, show real-time SHAP waterfall drivers, then click 'Download Audit Trail (.jsonl)'.*
+**Visual:** *Screen recording of the live Streamlit demo (`rto-shield-nlthpydtndpkupyfgfl3yy.streamlit.app`). Click the preset "VERIFY", show the green highlighted argmin in the Expected Loss table, show real-time SHAP waterfall drivers, then click 'Download Audit Trail (.jsonl)'.*
 
 > *"Here it is running live on Streamlit Cloud.  
 > 
@@ -77,6 +77,6 @@
 
 ## Technical Highlights for Judge Q&A / Accompanying Notes
 
-- **Live Demo Link:** [https://rto-shield-3qus23ktkhkzgqmxoytde5.streamlit.app/](https://rto-shield-3qus23ktkhkzgqmxoytde5.streamlit.app/)
+- **Live Demo Link:** [https://rto-shield-nlthpydtndpkupyfgfl3yy.streamlit.app/](https://rto-shield-nlthpydtndpkupyfgfl3yy.streamlit.app/)
 - **Full Q&A Repository:** [`docs/JUDGE_QA.md`](./JUDGE_QA.md) (covers all 10 toughest questions including leakage prevention, calibration error, and cost sensitivity).
 - **Claim Matrix:** [`claim-matrix.md`](../claim-matrix.md) (maps every single metric to its exact pytest command).

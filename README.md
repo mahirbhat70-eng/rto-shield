@@ -1,7 +1,7 @@
 # RTO Shield — AI Risk Manager for Merchant COD RTO Risk
 
 [![CI](https://github.com/mahirbhat70-eng/rto-shield/actions/workflows/ci.yml/badge.svg)](https://github.com/mahirbhat70-eng/rto-shield/actions/workflows/ci.yml)
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Streamlit-FF4B4B?logo=streamlit)](https://rto-shield-3qus23ktkhkzgqmxoytde5.streamlit.app)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Streamlit-FF4B4B?logo=streamlit)](https://rto-shield-nlthpydtndpkupyfgfl3yy.streamlit.app)
 
 ![Decision Architecture](docs/decision_architecture.png)
 
@@ -13,7 +13,7 @@
 
 | Step | Command / Link |
 |------|----------------|
-| **1. Try the live demo** | [rto-shield-3qus23ktkhkzgqmxoytde5.streamlit.app](https://rto-shield-3qus23ktkhkzgqmxoytde5.streamlit.app) |
+| **1. Try the live demo** | [rto-shield-nlthpydtndpkupyfgfl3yy.streamlit.app](https://rto-shield-nlthpydtndpkupyfgfl3yy.streamlit.app) |
 | **2. Clone & run tests** | `git clone https://github.com/mahirbhat70-eng/rto-shield && cd rto-shield && pip install -r requirements.txt && pytest tests/ -v` |
 | **3. Benchmark latency** | `python scripts/benchmark_latency.py` |
 | **4. Read the evidence** | [`claim-matrix.md`](claim-matrix.md) — every number → its artifact → its command |
@@ -230,7 +230,7 @@ streamlit run app.py              # scorer UI; sidebar demo buttons: DEPOSIT / A
 - **Synthetic data.** Metrics are upper bounds on a known generator; real-world drift, labeling noise, and adversarial adaptation are not simulated (and stated where it matters).
 - **Oracle feature (disclosed above):** `hist_rate` is ground truth, not an estimate — optimism measured at Δ PR-AUC ≈ 0.003.
 - **One-order cost model.** The expected-loss model prices a single order; customer lifetime value of dropped good customers is not modeled.
-- **No production REST API.** The scoring module (`src/serve/`, ~15–30ms p99 per order depending on hardware) is production-ready but not exposed as a hosted REST endpoint — the analytics core is the deliverable. A Streamlit demo **is** live at [rto-shield-3qus23ktkhkzgqmxoytde5.streamlit.app](https://rto-shield-3qus23ktkhkzgqmxoytde5.streamlit.app) for interactive evaluation.
+- **No production REST API.** The scoring module (`src/serve/`, ~15–30ms p99 per order depending on hardware) is production-ready but not exposed as a hosted REST endpoint — the analytics core is the deliverable. A Streamlit demo **is** live at [rto-shield-nlthpydtndpkupyfgfl3yy.streamlit.app](https://rto-shield-nlthpydtndpkupyfgfl3yy.streamlit.app) for interactive evaluation.
 - **Isotonic tradeoff is real:** the calibrated primary gives up ₹10.8k of test savings vs the uncalibrated router (disclosed, pre-registered).
 
 ## License
