@@ -3,9 +3,9 @@
 [![CI](https://github.com/mahirbhat70-eng/rto-shield/actions/workflows/ci.yml/badge.svg)](https://github.com/mahirbhat70-eng/rto-shield/actions/workflows/ci.yml)
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Streamlit-FF4B4B?logo=streamlit)](https://rto-shield-nlthpydtndpkupyfgfl3yy.streamlit.app)
 
-[Decision Architecture (Interactive HTML)](https://htmlpreview.github.io/?https://github.com/mahirbhat70-eng/rto-shield/blob/main/docs/decision_architecture.html)
+[![Decision Architecture](docs/decision_architecture.png)](https://htmlpreview.github.io/?https://github.com/mahirbhat70-eng/rto-shield/blob/main/docs/decision_architecture.html)
 
-> 📄 **[Executive Brief (PDF)](docs/executive_brief.pdf)** — key numbers, architecture narrative, and calibration story in one page.
+> 📄 **[Executive Brief (PDF)](docs/executive_brief.pdf)** · **[Interactive HTML](https://htmlpreview.github.io/?https://github.com/mahirbhat70-eng/rto-shield/blob/main/docs/executive_brief.html)** — key numbers, architecture narrative, and calibration story in one page.
 
 ---
 
