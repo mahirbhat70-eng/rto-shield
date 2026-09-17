@@ -26,6 +26,17 @@ import datetime
 import numpy as np
 import pandas as pd
 import streamlit as st
+
+DEFAULTS = {
+    "order_value": 852.0, "category": "Home", "payment_method": "COD", "quantity": 3,
+    "discount_pct": 19.8, "cod_charge": 59.0, "account_age_days": 65, "prior_orders": 2,
+    "prior_rto_count": 0, "orders_last_24h": 3, "device_cluster_size": 1, 
+    "pincode": "253407", "courier_id": "Courier_E"
+}
+for k, v in DEFAULTS.items():
+    if k not in st.session_state:
+        st.session_state[k] = v
+
 import altair as alt
 
 from src.serve.scorer import score_order, PINCODE_LOOKUP
@@ -915,21 +926,21 @@ def sidebar_inputs():
     st.sidebar.text_input("Courier ID", value=str(get_val("courier_id", "Courier_E")), key="ti_courier_id")
 
 def payload_from_state():
-    pm = st.session_state["sb_payment_method"]
+    pm = st.session_state["payment_method"]
     return {
-        "order_value": float(st.session_state["ni_order_value"]),
-        "category": st.session_state["sb_category"],
+        "order_value": float(st.session_state["order_value"]),
+        "category": st.session_state["category"],
         "payment_method": pm,
-        "quantity": int(st.session_state["ni_quantity"]),
-        "discount_pct": float(st.session_state["ni_discount_pct"]),
-        "cod_charge": float(st.session_state["ni_cod_charge"]) if pm == "COD" else 0.0,
-        "account_age_days": int(st.session_state["ni_account_age_days"]),
-        "prior_orders": int(st.session_state["ni_prior_orders"]),
-        "prior_rto_count": int(st.session_state["sl_prior_rto_count"]),
-        "orders_last_24h": int(st.session_state["ni_orders_last_24h"]),
-        "device_cluster_size": int(st.session_state["ni_device_cluster_size"]),
-        "pincode": str(st.session_state["ti_pincode"]),
-        "courier_id": str(st.session_state["ti_courier_id"]),
+        "quantity": int(st.session_state["quantity"]),
+        "discount_pct": float(st.session_state["discount_pct"]),
+        "cod_charge": float(st.session_state["cod_charge"]) if pm == "COD" else 0.0,
+        "account_age_days": int(st.session_state["account_age_days"]),
+        "prior_orders": int(st.session_state["prior_orders"]),
+        "prior_rto_count": int(st.session_state["prior_rto_count"]),
+        "orders_last_24h": int(st.session_state["orders_last_24h"]),
+        "device_cluster_size": int(st.session_state["device_cluster_size"]),
+        "pincode": str(st.session_state["pincode"]),
+        "courier_id": str(st.session_state["courier_id"]),
     }
 
 def shap_html(pairs):
