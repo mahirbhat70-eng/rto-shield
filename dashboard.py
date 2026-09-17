@@ -597,6 +597,23 @@ def html_block(s):
 # ----------------------------------------------------------------------------
 # Presets & Singletons
 # ----------------------------------------------------------------------------
+
+WIDGET_KEYS = {
+    "order_value": "ni_order_value",
+    "category": "category",
+    "payment_method": "payment_method",
+    "quantity": "ni_quantity",
+    "discount_pct": "ni_discount_pct",
+    "cod_charge": "ni_cod_charge",
+    "account_age_days": "ni_account_age_days",
+    "prior_orders": "ni_prior_orders",
+    "prior_rto_count": "prior_rto_count",
+    "orders_last_24h": "ni_orders_last_24h",
+    "device_cluster_size": "ni_device_cluster_size",
+    "pincode": "ti_pincode",
+    "courier_id": "ti_courier_id",
+}
+
 PRESETS = {
     "DEPOSIT": {
         "order_value": 186.0, "category": "Beauty", "payment_method": "COD", "quantity": 1,
@@ -823,7 +840,7 @@ def sidebar_inputs():
 
     def load_preset(name):
         for k, v in PRESETS[name].items():
-            st.session_state[k] = v
+            st.session_state[WIDGET_KEYS[k]] = v
         st.session_state["active_preset"] = name
         st.session_state["holdout_label"] = None
         st.session_state["score_requested"] = True
@@ -831,12 +848,13 @@ def sidebar_inputs():
     def sample_random_holdout():
         if HOLDOUT_COD_DF is not None and len(HOLDOUT_COD_DF) > 0:
             sample = HOLDOUT_COD_DF.sample(n=1).iloc[0]
-            for col in ['order_value', 'quantity', 'category', 'discount_pct',
-                        'payment_method', 'cod_charge', 'account_age_days',
-                        'prior_orders', 'prior_rto_count', 'orders_last_24h',
-                        'device_cluster_size', 'pincode', 'courier_id']:
+            for col in WIDGET_KEYS:
                 if col in sample:
-                    st.session_state[col] = sample[col]
+                    st.session_state[WIDGET_KEYS[col]] = sample[col]
+            st.session_state[WIDGET_KEYS["prior_rto_count"]] = min(
+                int(sample.get("prior_rto_count", 0)),
+                max(1, int(sample.get("prior_orders", 0)))
+            )
             st.session_state["active_preset"] = "RANDOM"
             st.session_state["holdout_label"] = int(sample.get("rto_label", 0))
             st.session_state["score_requested"] = True
@@ -924,21 +942,20 @@ def sidebar_inputs():
     st.sidebar.text_input("Courier ID", value=str(get_val("courier_id", "Courier_E")), key="ti_courier_id")
 
 def payload_from_state():
-    pm = st.session_state["payment_method"]
     return {
-        "order_value": float(st.session_state["order_value"]),
-        "category": st.session_state["category"],
-        "payment_method": pm,
-        "quantity": int(st.session_state["quantity"]),
-        "discount_pct": float(st.session_state["discount_pct"]),
-        "cod_charge": float(st.session_state["cod_charge"]) if pm == "COD" else 0.0,
-        "account_age_days": int(st.session_state["account_age_days"]),
-        "prior_orders": int(st.session_state["prior_orders"]),
-        "prior_rto_count": int(st.session_state["prior_rto_count"]),
-        "orders_last_24h": int(st.session_state["orders_last_24h"]),
-        "device_cluster_size": int(st.session_state["device_cluster_size"]),
-        "pincode": str(st.session_state["pincode"]),
-        "courier_id": str(st.session_state["courier_id"]),
+        "payment_method": st.session_state.get(WIDGET_KEYS["payment_method"], "COD"),
+        "order_value": float(st.session_state.get(WIDGET_KEYS["order_value"], 852.0)),
+        "category": st.session_state.get(WIDGET_KEYS["category"], "Home"),
+        "quantity": int(st.session_state.get(WIDGET_KEYS["quantity"], 3)),
+        "discount_pct": float(st.session_state.get(WIDGET_KEYS["discount_pct"], 19.8)),
+        "cod_charge": float(st.session_state.get(WIDGET_KEYS["cod_charge"], 59.0)),
+        "account_age_days": int(st.session_state.get(WIDGET_KEYS["account_age_days"], 65)),
+        "prior_orders": int(st.session_state.get(WIDGET_KEYS["prior_orders"], 2)),
+        "prior_rto_count": int(st.session_state.get(WIDGET_KEYS["prior_rto_count"], 0)),
+        "orders_last_24h": int(st.session_state.get(WIDGET_KEYS["orders_last_24h"], 3)),
+        "device_cluster_size": int(st.session_state.get(WIDGET_KEYS["device_cluster_size"], 1)),
+        "pincode": str(st.session_state.get(WIDGET_KEYS["pincode"], "253407")),
+        "courier_id": str(st.session_state.get(WIDGET_KEYS["courier_id"], "Courier_E"))
     }
 
 def shap_html(pairs):

@@ -22,6 +22,23 @@ def load_scorer_assets():
 load_scorer_assets()
 
 # Preset Demo Configurations
+
+WIDGET_KEYS = {
+    "order_value": "ni_order_value",
+    "category": "category",
+    "payment_method": "payment_method",
+    "quantity": "ni_quantity",
+    "discount_pct": "ni_discount_pct",
+    "cod_charge": "ni_cod_charge",
+    "account_age_days": "ni_account_age_days",
+    "prior_orders": "ni_prior_orders",
+    "prior_rto_count": "prior_rto_count",
+    "orders_last_24h": "ni_orders_last_24h",
+    "device_cluster_size": "ni_device_cluster_size",
+    "pincode": "ti_pincode",
+    "courier_id": "ti_courier_id",
+}
+
 PRESETS = {
     "DEPOSIT": {
         "order_value": 186.0, "category": "Beauty", "payment_method": "COD", "quantity": 1,
