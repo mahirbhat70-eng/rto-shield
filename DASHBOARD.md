@@ -1,6 +1,6 @@
 # RTO Shield — Live Decision Console
 
-An interactive, video-ready decision console built for the **Razorpay AI Buildathon (Track 02: AI Risk Manager)**.
+An interactive, production-grade decision console for autonomous COD risk management.
 
 ---
 
@@ -82,16 +82,16 @@ ALL-PASS: All 7 acceptance gates passed successfully!
 And full CI test suite:
 ```bash
 python -m pytest tests/ -q
-# 60 passed
+# 217 passed
 ```
 
 ---
 
 ## 5. Deployment Guide (Streamlit Community Cloud)
 
-1. Ensure changes are pushed to branch `dashboard-v2`.
+1. Ensure changes are pushed to branch `main`.
 2. Go to **share.streamlit.io** → Select repository `mahirbhat70-eng/rto-shield`.
-3. Set **Branch**: `dashboard-v2`.
+3. Set **Branch**: `main`.
 4. Set **Main file path**: `dashboard.py`.
-5. Under **Advanced settings**: Select Python 3.12.
+5. Under **Advanced settings**: Select Python 3.12 or 3.13.
 6. Click **Deploy**.

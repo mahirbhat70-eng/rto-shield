@@ -140,7 +140,8 @@ Split by calendar time (strict inequality verified, exact timestamps recorded):
 
 ```
 rto-shield/
-├── app.py # Streamlit UI
+├── app.py # Streamlit UI (Single-Order Scorer)
+├── dashboard.py # Streamlit UI (4-View Decision Console)
 ├── run_app.bat # Windows launcher
 ├── README.md
 ├── requirements.txt
@@ -175,7 +176,7 @@ rto-shield/
 │       ├── stage5_test_reveal.py # one-shot held-out evaluation
 │       ├── verify_calibration.py # bin-MAE artifact investigation
 │       └── stress_test_noise.py # oracle-feature σ=0.04 stress test
-├── tests/ # 216 tests across 8 test files
+├── tests/ # 217 tests across 8 test files
 ├── scripts/
 │   ├── benchmark_latency.py # Latency benchmarking
 │   ├── deposit_effectiveness_sensitivity.py # Stage 6 bounds
@@ -228,13 +229,13 @@ python scripts/stage6_uplift_ope.py
 python scripts/deposit_effectiveness_sensitivity.py
 python scripts/freeze_artifact_hashes.py
 
-# Full test suite (216 tests)
+# Full test suite (217 tests)
 python -m pytest tests/ -q
 
 # Serving layer + demo (artifacts are committed — no generation needed)
 python src/serve/lookup.py        # rebuild pincode lookup from TRAIN only
-python -m pytest tests/ -q        # expect: 216 passed
-streamlit run app.py              # scorer UI; sidebar demo buttons: DEPOSIT / ALLOW / VERIFY
+python -m pytest tests/ -q        # expect: 217 passed
+streamlit run dashboard.py        # 4-view decision console (Command Center, Live Engine, Frontier, Evidence)
 ```
 
 ## Honest Limitations
