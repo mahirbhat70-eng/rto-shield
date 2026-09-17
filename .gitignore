@@ -29,6 +29,10 @@ MANIFEST
 # Data files
 # data/raw/ removed for demo
 
+# Simulator v2 outputs — 24MB, deterministically regenerable via:
+# python src/data/generator_v2.py --seed 42
+data/raw_v2/
+
 # Model Artifacts
 # models/ removed to allow pushing for demo
 

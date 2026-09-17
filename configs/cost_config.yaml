@@ -1,20 +1,29 @@
-rto_logistics_cost: 150      # Provenance: Industry prior (Forward + reverse + packaging)
-average_margin_pct: 0.20     # Provenance: Industry prior
+"""
+configs/cost_config.yaml
+WHY: Frozen industry-prior constants governing the COD intervention cost model.
+     Every EL(a) = friction(a) + p*(1-r)*150 - (1-p)*(1-d)*(0.20*V) computation
+     reads from this file. Changing these values changes every downstream number.
+     The r,d sensitivity scan (Phase 5) quantifies how sensitive the headline
+     2.0x savings claim is to these unvalidated priors.
+"""
+
+rto_logistics_cost: 150      # industry prior: forward + reverse + packaging (₹)
+average_margin_pct: 0.20     # industry prior: gross margin fraction
 
 interventions:
   ALLOW_COD:
-    friction_cost: 0         
-    success_drop_pct: 0.0    
-    rto_reduction_pct: 0.0   
+    friction_cost: 0
+    success_drop_pct: 0.00
+    rto_reduction_pct: 0.00
   VERIFY_ADDRESS:
-    friction_cost: 2         
-    success_drop_pct: 0.05   
-    rto_reduction_pct: 0.30  
+    friction_cost: 2
+    success_drop_pct: 0.05
+    rto_reduction_pct: 0.30
   REQUIRE_DEPOSIT:
-    friction_cost: 0         
-    success_drop_pct: 0.40   
-    rto_reduction_pct: 0.80  
+    friction_cost: 0
+    success_drop_pct: 0.40
+    rto_reduction_pct: 0.80
   PREPAID_ONLY:
     friction_cost: 0
-    success_drop_pct: 0.70   
-    rto_reduction_pct: 0.55  # Provenance: EDA shows Prepaid RTO is ~12-13% vs COD 27%. Drops RTO by ~55%.
+    success_drop_pct: 0.70
+    rto_reduction_pct: 0.55

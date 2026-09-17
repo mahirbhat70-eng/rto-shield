@@ -1,30 +1,80 @@
-raw_data_path: data/raw/synthetic_orders.csv
+"""
+configs/data_config.yaml
+WHY: Central configuration for all data generation and splitting parameters.
+     Placing these here (not in code) allows regeneration with different seeds/sizes
+     without touching source files. Seed 42 is mandatory for determinism.
+"""
 
-target_col: rto_label
+# v1 synthetic generator settings
+v1:
+  seed: 42
+  n_rows: 50000
+  output_path: data/raw/synthetic_orders.csv
+  order_value:
+    distribution: lognormal
+    mu: 6.4
+    sigma: 0.8
+    clip_min: 50
+    clip_max: 15000
+  quantity:
+    distribution: poisson
+    lam: 1.2
+    clip_min: 1
+    clip_max: 10
+  discount:
+    zero_prob: 0.5
+    beta_alpha: 2
+    beta_beta: 5
+    scale: 70
+  categories:
+    values: [Electronics, Apparel, Footwear, Beauty, Home, Jewelry]
+    probs: [0.20, 0.30, 0.15, 0.15, 0.12, 0.08]
+  payment_methods:
+    values: [COD, UPI, Credit Card, Debit Card, Net Banking]
+    probs: [0.48, 0.28, 0.12, 0.08, 0.04]
+  couriers:
+    values: [Courier_A, Courier_B, Courier_C, Courier_D, Courier_E]
+    probs: [0.30, 0.25, 0.20, 0.15, 0.10]
+  cod_charges: [20, 29, 39, 49, 59, 79, 99]
 
-id_cols:
-  - order_id
-  - customer_id
+# Data splitting
+splits:
+  train_frac: 0.64
+  val_frac: 0.16
+  test_frac: 0.20
+  split_col: order_date
 
-timestamp_col: timestamp
-
-numerical_features:
-  - order_value
-  - quantity
-  - discount_pct
-  - cod_charge
-  - account_age_days
-  - prior_orders
-  - prior_rto_count
-  - historical_pincode_rto_rate
-  - orders_last_24h
-  - device_cluster_size
-
-categorical_features:
-  - category
-  - payment_method
-  - pincode
-  - courier_id
-  - pincode_tier
-
-boolean_features: []
+# v2 simulator settings
+v2:
+  seed: 42
+  n_rows: 120000
+  output_dir: data/raw_v2
+  n_customers: 30000
+  n_established_pincodes: 1000
+  n_new_area_pincodes: 200
+  cold_start_date: "2026-08-15"
+  date_range:
+    start: "2026-03-01"
+    end: "2026-11-30"
+  month_intensity:
+    3: 1.00   # March
+    4: 1.00
+    5: 1.00
+    6: 1.00
+    7: 1.00
+    8: 1.00
+    9: 1.20   # Sep
+    10: 1.60  # Oct (festive peak)
+    11: 1.30  # Nov
+  festive_logit_effect:
+    9: 0.15
+    10: 0.50
+    11: 0.30
+  label_delay:
+    distribution: gamma
+    shape: 6
+    scale: 2
+    clip_min: 5
+    clip_max: 28
+  risk_model:
+    beta_0: -2.30
