@@ -105,3 +105,12 @@ def test_stage3_artifact_check():
     ]
     for artifact in artifacts:
         assert os.path.exists(artifact), f"Artifact missing: {artifact}"
+
+    # Byte-level integrity is enforced separately in
+    # tests/test_artifact_integrity.py (SHA-256 pinned via
+    # models/artifact_hashes.json). Previously this check asserted existence
+    # only, while WHAT_BROKE.md Bug 4 claimed byte-level verification.
+    manifest = os.path.join(os.path.dirname(__file__), '..', 'models', 'artifact_hashes.json')
+    assert os.path.exists(manifest), (
+        "models/artifact_hashes.json missing — run scripts/freeze_artifact_hashes.py"
+    )

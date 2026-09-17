@@ -1,81 +1,51 @@
 """
-src/policy/cost_engine.py
-WHY: The core decision layer. Converts a calibrated P(RTO) probability into
-     an expected-loss table across all four intervention actions, then routes
-     each order to the argmin action.
+cost_engine.py — Expected-loss intervention pricing + batch policy router.
 
-     Design choices:
-     - is_cod() is the single source of truth for payment classification.
-       One centralized function prevents the v1 bug where 'UPI', 'Credit Card',
-       etc. were priced through the COD EL table.
-     - CostEngine is initialized from a config file (absolute path, env override)
-       so it works from any CWD.
-     - get_optimal_policy is fully vectorized (no iterrows). The length-match
-       validation raises immediately on mismatch — silent index misalignment
-       was a real bug in the original implementation.
+Changes vs v1 (see IMPROVEMENTS.md):
+  * `is_cod()` is the single source of truth for COD detection, shared by the
+    single-order scorer and the batch router (previously they disagreed:
+    score_order passthroughed only the literal 'PREPAID' while the batch API
+    passthroughed every non-COD payment).
+  * Default config path is now absolute (package-relative), so importing the
+    engine no longer depends on the process CWD.
+  * get_optimal_policy is fully vectorized (no iterrows) and validates that
+    the probability vector is row-aligned with the DataFrame. The old
+    positional `proba_series.iloc[i]` silently mispaired probabilities
+    whenever the caller passed a filtered frame without reset_index().
 """
 
 import os
-import yaml
 import numpy as np
 import pandas as pd
+import yaml
+
+DEFAULT_CONFIG_PATH = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..', '..', 'configs', 'cost_config.yaml')
+)
 
 
 def is_cod(payment_method) -> bool:
-    """
-    Single source of truth: normalized COD detection.
-    Handles None, whitespace, and case variants.
-    Returns True ONLY for the string 'COD' (case-insensitive, stripped).
-    """
+    """Single source of truth: normalized COD detection (strip + upper)."""
     if payment_method is None:
         return False
-    return str(payment_method).strip().upper() == "COD"
-
-
-def _default_config_path() -> str:
-    """Absolute package-relative path to the cost config yaml."""
-    here = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(here, "..", "..", "configs", "cost_config.yaml")
+    return str(payment_method).strip().upper() == 'COD'
 
 
 class CostEngine:
-    """
-    EL(a) = friction(a) + p * (1 - r_a) * C_logistics - (1 - p) * (1 - d_a) * margin * V
-    where C_logistics and margin come from the config file.
-    """
+    def __init__(self, config_path=None):
+        path = config_path or os.environ.get('RTO_SHIELD_COST_CONFIG', DEFAULT_CONFIG_PATH)
+        with open(path, 'r') as f:
+            self.config = yaml.safe_load(f)
 
-    def __init__(self, config_path: str = None):
+        self.rto_logistics_cost = self.config['rto_logistics_cost']
+        self.average_margin_pct = self.config['average_margin_pct']
+        self.interventions = self.config['interventions']
+
+    def evaluate_interventions(self, order_value, p_rto):
         """
-        Args:
-            config_path: Path to cost_config.yaml. Defaults to the package-relative
-                         configs/ directory. Can be overridden with the env var
-                         RTO_SHIELD_COST_CONFIG.
-        """
-        if config_path is None:
-            config_path = os.environ.get(
-                "RTO_SHIELD_COST_CONFIG", _default_config_path()
-            )
-        config_path = os.path.abspath(config_path)
-        with open(config_path, "r") as f:
-            cfg = yaml.safe_load(f)
-
-        self.rto_logistics_cost: float = float(cfg["rto_logistics_cost"])
-        self.average_margin_pct: float = float(cfg["average_margin_pct"])
-        self.interventions: dict = cfg["interventions"]
-        # Cache ordered action list for vectorized ops
-        self._action_names: list = list(self.interventions.keys())
-
-    # ------------------------------------------------------------------
-    # Single-order API
-    # ------------------------------------------------------------------
-
-    def evaluate_interventions(self, order_value: float, p_rto: float) -> dict:
-        """
-        Compute EL for every action for one order.
-
-        Returns:
-            dict mapping action name -> expected loss (float).
-            Lower EL = preferred action.
+        Single-order expected loss per intervention:
+        EL(a) = friction + P(rto after a) * logistics_cost
+                - P(success after a) * margin
         """
         order_value = float(order_value)
         p_rto = float(p_rto)
@@ -83,102 +53,78 @@ class CostEngine:
 
         results = {}
         for action, params in self.interventions.items():
-            friction = float(params["friction_cost"])
-            d = float(params["success_drop_pct"])
-            r = float(params["rto_reduction_pct"])
+            friction_cost = params['friction_cost']
+            success_drop_pct = params['success_drop_pct']
+            rto_reduction_pct = params['rto_reduction_pct']
 
-            p_rto_after = p_rto * (1.0 - r)
-            p_success = (1.0 - p_rto) * (1.0 - d)
-            el = friction + p_rto_after * self.rto_logistics_cost - p_success * margin
-            results[action] = float(el)
+            p_success = (1.0 - p_rto) * (1.0 - success_drop_pct)
+            p_rto_after = p_rto * (1.0 - rto_reduction_pct)
+
+            expected_loss = friction_cost + (p_rto_after * self.rto_logistics_cost) - (p_success * margin)
+            results[action] = expected_loss
 
         return results
 
-    # ------------------------------------------------------------------
-    # Vectorized API
-    # ------------------------------------------------------------------
-
-    def evaluate_interventions_vectorized(
-        self, order_values: np.ndarray, p_rto: np.ndarray
-    ):
+    def evaluate_interventions_vectorized(self, order_values, p_rto):
         """
-        Vectorized EL computation for all actions.
-
-        Args:
-            order_values: array shape (n,)
-            p_rto:        array shape (n,)
-
-        Returns:
-            (action_names: list[str], el_matrix: np.ndarray shape (n_actions, n))
+        Vectorized EL over arrays. Returns (action_names, el_matrix) where
+        el_matrix has shape (n_actions, n_orders) in config key order.
         """
-        order_values = np.asarray(order_values, dtype=float)
-        p_rto = np.asarray(p_rto, dtype=float)
-        n = len(order_values)
-        n_actions = len(self._action_names)
-        el_matrix = np.empty((n_actions, n), dtype=float)
-
-        margins = order_values * self.average_margin_pct
-
-        for i, action in enumerate(self._action_names):
-            params = self.interventions[action]
-            friction = float(params["friction_cost"])
-            d = float(params["success_drop_pct"])
-            r = float(params["rto_reduction_pct"])
-
-            p_rto_after = p_rto * (1.0 - r)
-            p_success = (1.0 - p_rto) * (1.0 - d)
-            el_matrix[i] = friction + p_rto_after * self.rto_logistics_cost - p_success * margins
-
-        return self._action_names, el_matrix
-
-    # ------------------------------------------------------------------
-    # Batch router (main production path)
-    # ------------------------------------------------------------------
-
-    def get_optimal_policy(
-        self, df: pd.DataFrame, proba_series: pd.Series
-    ):
-        """
-        Route each order to the argmin EL action.
-
-        Contract:
-            - len(proba_series) == len(df): enforced, raises on mismatch.
-            - Non-COD rows → ('PREPAID_PASSTHROUGH', 0.0) immediately.
-            - COD rows → vectorized EL evaluation → argmin action.
-            - No iterrows, no positional iloc[i] pairing.
-
-        Args:
-            df:           DataFrame with at least columns ['payment_method', 'order_value'].
-            proba_series: Aligned probability series (same index as df).
-
-        Returns:
-            (actions: np.ndarray[str], losses: np.ndarray[float])
-        """
-        if len(proba_series) != len(df):
+        names = list(self.interventions.keys())
+        V = np.asarray(order_values, dtype=float)
+        P = np.asarray(p_rto, dtype=float)
+        if V.shape != P.shape:
             raise ValueError(
-                f"Length mismatch: df has {len(df)} rows but proba_series has "
-                f"{len(proba_series)} elements. Alignment contract violated."
+                f"order_values shape {V.shape} != p_rto shape {P.shape}"
+            )
+        margin = V * self.average_margin_pct
+
+        cols = []
+        for name in names:
+            params = self.interventions[name]
+            friction = params['friction_cost']
+            drop = params['success_drop_pct']
+            red = params['rto_reduction_pct']
+            cols.append(
+                friction + (P * (1.0 - red)) * self.rto_logistics_cost
+                - ((1.0 - P) * (1.0 - drop)) * margin
+            )
+        return names, np.vstack(cols)
+
+    def get_optimal_policy(self, df, proba_series):
+        """
+        Vectorized batch router.
+
+        Applies the intervention menu ONLY to COD rows; every non-COD row is
+        assigned 'PREPAID_PASSTHROUGH' with 0 expected loss.
+
+        Contract: `proba_series` must be row-aligned with `df` (same length,
+        positional). A Series whose index differs from df's is accepted only
+        if it was reset/aligned — length mismatch raises immediately.
+
+        Returns (actions ndarray, expected_losses ndarray).
+        """
+        if len(df) == 0:
+            return np.array([], dtype=object), np.array([], dtype=float)
+
+        p = np.asarray(pd.Series(proba_series).to_numpy(), dtype=float).ravel()
+        if len(p) != len(df):
+            raise ValueError(
+                f"Length mismatch: proba_series has {len(p)} values but df has {len(df)} rows — "
+                "probabilities must be row-aligned (pass df.reset_index(drop=True) "
+                "and a matching probability vector)."
             )
 
-        actions = np.full(len(df), "PREPAID_PASSTHROUGH", dtype=object)
-        losses = np.zeros(len(df), dtype=float)
+        V = pd.to_numeric(df['order_value'], errors='coerce').to_numpy(dtype=float)
+        if np.isnan(V).any():
+            raise ValueError("df['order_value'] contains non-numeric or missing values.")
 
-        # Build aligned numpy arrays (reset-index safe)
-        pm_array = df["payment_method"].to_numpy()
-        ov_array = df["order_value"].to_numpy(dtype=float)
-        prob_array = np.asarray(proba_series, dtype=float)
+        cod_mask = df['payment_method'].map(is_cod).to_numpy(dtype=bool)
 
-        cod_mask = np.array([is_cod(pm) for pm in pm_array])
-
-        if cod_mask.any():
-            cod_ov = ov_array[cod_mask]
-            cod_prob = prob_array[cod_mask]
-            _, el_matrix = self.evaluate_interventions_vectorized(cod_ov, cod_prob)
-            best_indices = np.argmin(el_matrix, axis=0)
-            best_actions = np.array(self._action_names)[best_indices]
-            best_losses = el_matrix[best_indices, np.arange(len(cod_ov))]
-
-            actions[cod_mask] = best_actions
-            losses[cod_mask] = best_losses
-
+        names, mat = self.evaluate_interventions_vectorized(V, p)
+        action_names = np.asarray(names, dtype=object)
+        best_idx = np.argmin(mat, axis=0)  # first-min tie-break == config key order
+        col_idx = np.arange(len(df))
+        actions = np.where(cod_mask, action_names[best_idx], 'PREPAID_PASSTHROUGH')
+        losses = np.where(cod_mask, mat[best_idx, col_idx], 0.0)
         return actions, losses

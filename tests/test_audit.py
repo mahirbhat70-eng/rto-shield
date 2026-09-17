@@ -35,12 +35,14 @@ def sample_res():
             "ALLOW_COD": -50.12,
             "REQUIRE_DEPOSIT": -60.45,
             "VERIFY_ADDRESS": -67.72,
-            "FORCE_PREPAID": 0.0
+            "PREPAID_ONLY": 0.0
         },
         "shap_top_factors": [
             ("num_cod_charge", 0.4712),
             ("historical_pincode_rto_rate", -0.3211)
-        ]
+        ],
+        "model_version": "2e6b0c5198dd",
+        "warnings": []
     }
 
 
@@ -66,6 +68,21 @@ def test_audit_tamper_detection(sample_payload, sample_res):
     tampered_record["payload"] = dict(record["payload"])
     tampered_record["payload"]["order_value"] = 9999.0
     assert verify_audit_record(tampered_record) is False
+
+
+def test_audit_record_carries_model_version(sample_payload, sample_res):
+    record = build_audit_record(sample_payload, sample_res, latency_ms=9.9)
+    assert record["model_version"] == "2e6b0c5198dd"
+
+
+def test_audit_decision_id_is_replay_stable(sample_payload, sample_res):
+    # Same payload + same model => same decision_id, regardless of timestamp.
+    import datetime
+    r1 = build_audit_record(sample_payload, sample_res, latency_ms=10.0,
+                            timestamp=datetime.datetime(2026, 1, 1))
+    r2 = build_audit_record(sample_payload, sample_res, latency_ms=14.2,
+                            timestamp=datetime.datetime(2026, 9, 6))
+    assert r1["decision_id"] == r2["decision_id"]
 
 
 def test_to_jsonl_serialization(sample_payload, sample_res):

@@ -1,74 +1,132 @@
 """
-tests/test_generator.py
-Phase 3: tests for the v1 synthetic data generator.
-"""
+RTO Shield — Synthetic Data Generator Tests (Stage 1)
 
-import sys, os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+Uses a small dynamic run (rows=1000, seed=42) via the generate() function
+directly. Does NOT depend on the 100k CSV file.
+
+No ML model tests. No scipy/sklearn/xgboost imports.
+"""
 
 import pytest
 import pandas as pd
 import numpy as np
-from src.data.generator import generate
+
+from src.data.generator import generate, validate, EXPECTED_COLUMNS
 
 
-class TestGenerator:
-    @pytest.fixture(scope="class")
-    def df(self):
-        return generate(n_rows=500, seed=42)
+# ── Fixtures ───────────────────────────────────────────────────────────
 
-    def test_row_count(self, df):
-        assert len(df) == 500
+@pytest.fixture(scope="module")
+def df_small():
+    """Generate a small 1000-row dataset for testing."""
+    return generate(n_rows=1000, seed=42)
 
-    def test_reproducible_seed(self):
-        d1 = generate(n_rows=100, seed=42)
-        d2 = generate(n_rows=100, seed=42)
-        pd.testing.assert_frame_equal(d1, d2)
 
-    def test_different_seeds_differ(self):
-        d1 = generate(n_rows=100, seed=42)
-        d2 = generate(n_rows=100, seed=99)
-        # order_id is sequential, check a stochastic column instead
-        assert not d1["order_value"].equals(d2["order_value"])
+# ── Schema Tests ───────────────────────────────────────────────────────
 
-    def test_required_columns(self, df):
-        required = [
-            "order_id", "order_date", "order_value", "quantity", "category",
-            "discount_pct", "payment_method", "cod_charge", "customer_id",
-            "account_age_days", "prior_orders", "prior_rto_count",
-            "pincode", "courier_id", "pincode_tier",
-            "historical_pincode_rto_rate", "orders_last_24h",
-            "device_cluster_size", "rto_label",
-        ]
-        for col in required:
-            assert col in df.columns, f"Missing column: {col}"
+def test_column_count(df_small):
+    assert df_small.shape[1] == 19, f"Expected 19 columns, got {df_small.shape[1]}"
 
-    def test_rto_label_binary(self, df):
-        assert set(df["rto_label"].unique()).issubset({0, 1})
 
-    def test_cod_charge_zero_for_non_cod(self, df):
-        non_cod = df[df["payment_method"] != "COD"]
-        assert (non_cod["cod_charge"] == 0.0).all()
+def test_column_names_and_order(df_small):
+    assert list(df_small.columns) == EXPECTED_COLUMNS, \
+        f"Column mismatch: {list(df_small.columns)}"
 
-    def test_order_value_positive(self, df):
-        assert (df["order_value"] > 0).all()
 
-    def test_order_value_in_range(self, df):
-        assert df["order_value"].min() >= 50
-        assert df["order_value"].max() <= 15000
+def test_row_count(df_small):
+    assert len(df_small) == 1000
 
-    def test_pincode_tier_valid(self, df):
-        assert df["pincode_tier"].isin([1, 2, 3]).all()
 
-    def test_payment_method_distribution(self, df):
-        cod_share = (df["payment_method"] == "COD").mean()
-        assert 0.30 <= cod_share <= 0.65  # expected ~48%
+def test_no_nulls(df_small):
+    assert df_small.isnull().sum().sum() == 0
 
-    def test_prior_rto_leq_prior_orders(self, df):
-        assert (df["prior_rto_count"] <= df["prior_orders"]).all()
 
-    def test_quantity_positive(self, df):
-        assert (df["quantity"] >= 1).all()
+# ── Target ─────────────────────────────────────────────────────────────
 
-    def test_no_nulls(self, df):
-        assert df.isnull().sum().sum() == 0
+def test_rto_label_binary(df_small):
+    assert set(df_small['rto_label'].unique()).issubset({0, 1})
+
+
+def test_rto_rate_in_range(df_small):
+    rate = df_small['rto_label'].mean()
+    assert 0.15 <= rate <= 0.30, f"RTO rate {rate:.3f} outside [0.15, 0.30]"
+
+
+# ── Invariants ─────────────────────────────────────────────────────────
+
+def test_prior_rto_leq_prior_orders(df_small):
+    assert (df_small['prior_rto_count'] <= df_small['prior_orders']).all()
+
+
+def test_cod_charge_zero_for_non_cod(df_small):
+    non_cod = df_small[df_small['payment_method'] != 'COD']
+    assert (non_cod['cod_charge'] == 0).all()
+
+
+def test_cod_charge_positive_for_cod(df_small):
+    cod = df_small[df_small['payment_method'] == 'COD']
+    if len(cod) > 0:
+        assert (cod['cod_charge'] >= 20).all() and (cod['cod_charge'] <= 100).all()
+
+
+def test_pincode_string_6digit(df_small):
+    assert df_small['pincode'].dtype == object
+    assert (df_small['pincode'].str.len() == 6).all()
+
+
+def test_historical_pincode_rto_rate_range(df_small):
+    assert (df_small['historical_pincode_rto_rate'] >= 0).all()
+    assert (df_small['historical_pincode_rto_rate'] <= 1).all()
+
+
+def test_discount_pct_range(df_small):
+    assert (df_small['discount_pct'] >= 0).all()
+    assert (df_small['discount_pct'] <= 70).all()
+
+
+def test_quantity_gte_1(df_small):
+    assert (df_small['quantity'] >= 1).all()
+
+
+def test_device_cluster_size_gte_1(df_small):
+    assert (df_small['device_cluster_size'] >= 1).all()
+
+
+def test_pincode_tier_values(df_small):
+    assert set(df_small['pincode_tier'].unique()).issubset({1, 2, 3})
+
+
+def test_timestamp_parseable_and_sorted(df_small):
+    ts = pd.to_datetime(df_small['timestamp'])
+    assert ts.is_monotonic_increasing
+
+
+def test_order_value_positive(df_small):
+    assert (df_small['order_value'] > 0).all()
+
+
+def test_account_age_days_range(df_small):
+    assert (df_small['account_age_days'] >= 0).all()
+    assert (df_small['account_age_days'] <= 3650).all()
+
+
+def test_new_customer_no_prior_orders(df_small):
+    new = df_small[df_small['account_age_days'] == 0]
+    if len(new) > 0:
+        assert (new['prior_orders'] == 0).all()
+
+
+# ── Validation function itself ─────────────────────────────────────────
+
+def test_validate_passes(df_small):
+    """The full validate() function should pass on the generated data."""
+    assert validate(df_small, expected_rows=1000) is True
+
+
+# ── Reproducibility ───────────────────────────────────────────────────
+
+def test_reproducibility():
+    """generate() with same seed must produce identical output."""
+    df_a = generate(n_rows=500, seed=7)
+    df_b = generate(n_rows=500, seed=7)
+    pd.testing.assert_frame_equal(df_a, df_b)

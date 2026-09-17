@@ -18,6 +18,8 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
+import numpy as np
+
 # ── path setup ──────────────────────────────────────────────────────────────
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -57,9 +59,9 @@ def run_benchmark(n: int = 10_000, warmup: int = 1_000) -> None:
         latencies_ms.append((t1 - t0) * 1000)
 
     latencies_ms.sort()
-    p50  = latencies_ms[int(n * 0.50)]
-    p95  = latencies_ms[int(n * 0.95)]
-    p99  = latencies_ms[int(n * 0.99)]
+    # np.percentile with linear interpolation (the old int(n*q) indexing was
+    # off-by-one and read element 5000 of 10000 as the "median").
+    p50, p95, p99 = np.percentile(latencies_ms, [50, 95, 99])
     mean = statistics.mean(latencies_ms)
 
     print(f"\n{'-' * 42}")

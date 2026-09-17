@@ -53,8 +53,9 @@ def test_recommended_action_matches_cost_engine():
         
         assert res['recommended_action'] == expected_action
         
-def test_unknown_pincode_error():
-    # 3. Unknown pincode error renders (catch in test).
+def test_unknown_pincode_cold_start():
+    # 3. Unknown pincodes fall back to the global prior (was: hard rejection,
+    # contradicting docs/JUDGE_QA.md Q7 — see IMPROVEMENTS.md).
     val_rep = pd.read_csv("data/processed/val_rep.csv", dtype={'pincode': str})
     unseen = str(int(val_rep['pincode'].max()) + 1)
     
@@ -63,10 +64,9 @@ def test_unknown_pincode_error():
     features.pop('pincode_tier', None)
     features['pincode'] = unseen
     
-    with pytest.raises(ValueError) as exc:
-        score_order(features)
-        
-    assert "not found in lookup table" in str(exc.value)
+    res = score_order(features)
+    assert res['recommended_action'] in ('ALLOW_COD', 'VERIFY_ADDRESS', 'REQUIRE_DEPOSIT')
+    assert any('cold start' in w.lower() for w in res['warnings'])
 
 import os
 

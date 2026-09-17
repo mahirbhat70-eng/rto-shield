@@ -1,0 +1,38 @@
+{
+  "test_baseline_loss": -636445.0,
+  "policy_savings": {
+    "P1 Constants (v1)": 516182.0,
+    "P2 Global-learned": 528738.0,
+    "P3 Uplift (heterogeneous)": 464310.0,
+    "P4 Oracle (true effects)": 698133.0
+  },
+  "pct_of_oracle": {
+    "P1 Constants (v1)": 73.9,
+    "P2 Global-learned": 75.7,
+    "P3 Uplift (heterogeneous)": 66.5,
+    "P4 Oracle (true effects)": 100.0
+  },
+  "drift": {
+    "train": {
+      "cod_rto_rate": 0.2969,
+      "mean_p_hat": 0.3323,
+      "n": 34199
+    },
+    "val": {
+      "cod_rto_rate": 0.3313,
+      "mean_p_hat": 0.322,
+      "n": 6445
+    },
+    "test": {
+      "cod_rto_rate": 0.3649,
+      "mean_p_hat": 0.3212,
+      "n": 16557
+    }
+  },
+  "ope_dr_bias_pct": {
+    "P1 Constants (v1)": 20.9,
+    "P2 Global-learned": 7.2,
+    "P3 Uplift (heterogeneous)": -6.6,
+    "P4 Oracle (true effects)": 9.3
+  }
+}
