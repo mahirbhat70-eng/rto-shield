@@ -1,122 +1,170 @@
+"""
+src/models/tree_model.py
+WHY: Trains the main LightGBM risk model inside a sklearn Pipeline (encoder + classifier),
+     then applies isotonic calibration on val_cal to produce well-calibrated probabilities.
+
+     Three artifacts are saved:
+       - tree_model.pkl              : full pipeline (encoder + uncalibrated LGBM)
+       - tree_model_calibrated.pkl   : CalibratedClassifierCV wrapping tree_model
+       - tree_model_booster.pkl      : raw LightGBM booster for SHAP TreeExplainer
+
+     Why isotonic over Platt scaling? Isotonic is non-parametric and works better
+     when the raw scores are already monotone but non-linear (typical for LGBM).
+     val_cal is used so the calibration set is disjoint from training AND from the
+     evaluation window (val_rep / test).
+"""
+
 import os
+import sys
 import joblib
-import itertools
+import numpy as np
 import pandas as pd
-from lightgbm import LGBMClassifier, early_stopping
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
-from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
-from sklearn.metrics import average_precision_score
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.isotonic import IsotonicRegression
+from lightgbm import LGBMClassifier
 
-NUMERICAL_FEATURES = [
-    'order_value', 'quantity', 'discount_pct', 'cod_charge',
-    'account_age_days', 'prior_orders', 'prior_rto_count',
-    'historical_pincode_rto_rate', 'orders_last_24h', 'device_cluster_size'
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+
+MODELS_DIR   = "models"
+PROCESSED_DIR = "data/processed"
+SEED = 42
+
+# ── Feature definitions ───────────────────────────────────────────────────────
+
+CATEGORICAL_FEATURES = ["category", "payment_method", "courier_id"]
+# pincode_tier treated as numeric ordinal (already 1/2/3)
+NUMERIC_FEATURES = [
+    "order_value", "quantity", "discount_pct", "cod_charge",
+    "account_age_days", "prior_orders", "prior_rto_count",
+    "orders_last_24h", "device_cluster_size",
+    "historical_pincode_rto_rate", "pincode_tier",
 ]
-ONEHOT_CATEGORICALS = ['category', 'payment_method', 'courier_id', 'pincode_tier']
-TARGET = 'rto_label'
+TARGET = "rto_label"
+DROP_COLS = ["order_id", "order_date", "customer_id", "pincode", TARGET]
 
-def get_preprocessor():
-    return ColumnTransformer(
+
+def _drop_extra(df: pd.DataFrame) -> pd.DataFrame:
+    return df.drop(columns=[c for c in DROP_COLS if c in df.columns], errors="ignore")
+
+
+class IsoCalibratedPipeline:
+    """
+    Module-level picklable wrapper: sklearn Pipeline -> IsotonicRegression calibration.
+    Placed at module scope so joblib.dump/load works across processes.
+    """
+    def __init__(self, base_pipe: Pipeline, iso_reg: IsotonicRegression):
+        self._pipe = base_pipe
+        self._iso  = iso_reg
+        self.classes_ = np.array([0, 1])
+
+    def predict_proba(self, X) -> np.ndarray:
+        raw = self._pipe.predict_proba(X)[:, 1]
+        cal = self._iso.predict(raw)
+        return np.column_stack([1.0 - cal, cal])
+
+    def predict(self, X) -> np.ndarray:
+        return (self.predict_proba(X)[:, 1] >= 0.5).astype(int)
+
+    @property
+    def named_steps(self):
+        """Forward named_steps so explainability code can access the preprocessor."""
+        return self._pipe.named_steps
+
+
+def build_pipeline() -> Pipeline:
+    """Build the sklearn pipeline with OneHot encoder + LGBMClassifier."""
+    from sklearn.preprocessing import OneHotEncoder
+
+    preprocessor = ColumnTransformer(
         transformers=[
-            ('num', StandardScaler(), NUMERICAL_FEATURES),
-            ('cat', OneHotEncoder(handle_unknown='ignore', sparse_output=False), ONEHOT_CATEGORICALS),
+            ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=False), CATEGORICAL_FEATURES),
+            ("num", "passthrough", NUMERIC_FEATURES),
         ],
-        remainder='drop'
+        remainder="drop",
     )
+    clf = LGBMClassifier(
+        n_estimators=400,
+        learning_rate=0.05,
+        num_leaves=63,
+        min_child_samples=20,
+        subsample=0.8,
+        colsample_bytree=0.8,
+        random_state=SEED,
+        verbose=-1,
+        n_jobs=-1,
+    )
+    return Pipeline([("preprocessor", preprocessor), ("classifier", clf)])
 
-def main():
-    print("=" * 60)
-    print("Stage 3: Gradient Boosting Model (LightGBM)")
-    print("=" * 60)
 
-    # Load splits
-    train_df = pd.read_csv("data/processed/train.csv", dtype={'pincode': str})
-    val_cal_df = pd.read_csv("data/processed/val_cal.csv", dtype={'pincode': str})
-    val_rep_df = pd.read_csv("data/processed/val_rep.csv", dtype={'pincode': str})
+def train(
+    train_path: str = None,
+    val_cal_path: str = None,
+    models_dir: str = None,
+) -> dict:
+    """
+    Train, calibrate, and save model artifacts.
 
-    preprocessor = get_preprocessor()
+    Returns dict with paths to saved artifacts.
+    """
+    if train_path is None:
+        train_path = f"{PROCESSED_DIR}/train.csv"
+    if val_cal_path is None:
+        val_cal_path = f"{PROCESSED_DIR}/val_cal.csv"
+    if models_dir is None:
+        models_dir = MODELS_DIR
 
-    # Fit preprocessor on train only
-    X_train_raw = train_df.drop(columns=[TARGET])
-    y_train = train_df[TARGET]
-    X_train = preprocessor.fit_transform(X_train_raw)
+    os.makedirs(models_dir, exist_ok=True)
 
-    # Transform val_cal for tuning and early stopping
-    X_val_cal_raw = val_cal_df.drop(columns=[TARGET])
-    y_val_cal = val_cal_df[TARGET]
-    X_val_cal = preprocessor.transform(X_val_cal_raw)
+    # Load data
+    train = pd.read_csv(train_path, dtype={"pincode": str})
+    val_cal = pd.read_csv(val_cal_path, dtype={"pincode": str})
 
-    # Grid search on val_cal ONLY
-    grid = {
-        'n_estimators': [400, 800],
-        'learning_rate': [0.05, 0.1],
-        'max_depth': [4, 6]
+    X_train = _drop_extra(train)
+    y_train = train[TARGET].values
+    X_val   = _drop_extra(val_cal)
+    y_val   = val_cal[TARGET].values
+
+    print(f"Training on {len(train):,} rows, calibrating on {len(val_cal):,} rows")
+
+    # ── Train uncalibrated pipeline ────────────────────────────────────────────
+    pipe = build_pipeline()
+    pipe.fit(X_train, y_train)
+
+    # ── Extract raw booster for SHAP ───────────────────────────────────────────
+    booster = pipe.named_steps["classifier"].booster_
+
+    # ── Isotonic calibration on val_cal ───────────────────────────────────────
+    raw_proba_val = pipe.predict_proba(X_val)[:, 1]
+    iso = IsotonicRegression(out_of_bounds="clip")
+    iso.fit(raw_proba_val, y_val)
+
+    # Wrap with module-level class (picklable across processes)
+    cal = IsoCalibratedPipeline(pipe, iso)
+
+    # ── Save artifacts ─────────────────────────────────────────────────────────
+    paths = {
+        "uncalibrated": os.path.join(models_dir, "tree_model.pkl"),
+        "calibrated":   os.path.join(models_dir, "tree_model_calibrated.pkl"),
+        "booster":      os.path.join(models_dir, "tree_model_booster.pkl"),
     }
-    keys = list(grid.keys())
-    combinations = list(itertools.product(*grid.values()))
+    joblib.dump(pipe,    paths["uncalibrated"])
+    joblib.dump(cal,     paths["calibrated"])
+    joblib.dump(booster, paths["booster"])
 
-    best_pr_auc = -1
-    best_params = None
-    best_model = None
+    # ── Quick eval ────────────────────────────────────────────────────────────
+    from sklearn.metrics import average_precision_score, roc_auc_score
+    proba_cal = cal.predict_proba(X_val)[:, 1]
+    print(f"Val-cal  AUC-ROC : {roc_auc_score(y_val, proba_cal):.4f}")
+    print(f"Val-cal  PR-AUC  : {average_precision_score(y_val, proba_cal):.4f}")
+    print(f"Val-cal  mean p  : {proba_cal.mean():.4f}  (true rate: {y_val.mean():.4f})")
+    print(f"Artifacts saved -> {models_dir}/")
+    for k, v in paths.items():
+        print(f"  {k:15s}: {v}")
 
-    print(f"Starting grid search on {len(combinations)} configurations using val_cal...")
-    for combo in combinations:
-        params = dict(zip(keys, combo))
-        params['random_state'] = 42
-        params['n_jobs'] = -1
-        # Set max_depth but also keep num_leaves consistent if needed, 
-        # LGBM default num_leaves is 31. For max_depth 4, max leaves is 16.
-        params['num_leaves'] = 2 ** params['max_depth'] - 1
+    return paths
 
-        clf = LGBMClassifier(**params)
-        
-        # We'll use early stopping on val_cal
-        clf.fit(
-            X_train, y_train,
-            eval_set=[(X_val_cal, y_val_cal)],
-            callbacks=[early_stopping(stopping_rounds=50, verbose=False)]
-        )
-
-        proba = clf.predict_proba(X_val_cal)[:, 1]
-        score = average_precision_score(y_val_cal, proba)
-
-        print(f"  {params} -> PR-AUC: {score:.4f} (best_iter: {clf.best_iteration_})")
-
-        if score > best_pr_auc:
-            best_pr_auc = score
-            best_params = params
-            best_model = clf
-
-    print(f"\nBest Config: {best_params}")
-    print(f"Best val_cal PR-AUC: {best_pr_auc:.4f}")
-
-    # Retrain best model on train, evaluating on val_cal for early stopping
-    print("\nRefitting best model...")
-    best_clf = LGBMClassifier(**best_params)
-    best_clf.fit(
-        X_train, y_train,
-        eval_set=[(X_val_cal, y_val_cal)],
-        callbacks=[early_stopping(stopping_rounds=50, verbose=False)]
-    )
-
-    pipeline = Pipeline([
-        ('preprocessor', preprocessor),
-        ('classifier', best_clf)
-    ])
-
-    os.makedirs('models', exist_ok=True)
-    joblib.dump(pipeline, 'models/tree_model.pkl')
-    joblib.dump(best_clf, 'models/tree_model_booster.pkl')
-    print("Saved models/tree_model.pkl and models/tree_model_booster.pkl")
-
-    # Diagnostic check on val_rep
-    X_val_rep_raw = val_rep_df.drop(columns=[TARGET])
-    y_val_rep = val_rep_df[TARGET]
-    proba_rep = pipeline.predict_proba(X_val_rep_raw)[:, 1]
-    rep_pr_auc = average_precision_score(y_val_rep, proba_rep)
-
-    print(f"\nval_rep PR-AUC (Diagnostic): {rep_pr_auc:.4f}")
 
 if __name__ == "__main__":
-    main()
+    train()

@@ -1,14 +1,12 @@
-"""
-configs/cost_config.yaml
-WHY: Frozen industry-prior constants governing the COD intervention cost model.
-     Every EL(a) = friction(a) + p*(1-r)*150 - (1-p)*(1-d)*(0.20*V) computation
-     reads from this file. Changing these values changes every downstream number.
-     The r,d sensitivity scan (Phase 5) quantifies how sensitive the headline
-     2.0x savings claim is to these unvalidated priors.
-"""
+# configs/cost_config.yaml
+# WHY: Frozen industry-prior constants governing the COD intervention cost model.
+#      EL(a) = friction(a) + p*(1-r)*150 - (1-p)*(1-d)*(0.20*V)
+#      Changing these values changes every downstream number.
+#      Phase 5 sensitivity scan quantifies how sensitive the 2.0x savings claim
+#      is to these unvalidated priors.
 
-rto_logistics_cost: 150      # industry prior: forward + reverse + packaging (₹)
-average_margin_pct: 0.20     # industry prior: gross margin fraction
+rto_logistics_cost: 150
+average_margin_pct: 0.20
 
 interventions:
   ALLOW_COD:
