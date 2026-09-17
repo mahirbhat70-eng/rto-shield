@@ -43,6 +43,17 @@ PRESETS = {
     }
 }
 
+DEFAULTS = {
+    "order_value": 616.0, "category": "Apparel", "payment_method": "COD", "quantity": 2,
+    "discount_pct": 2.0, "cod_charge": 49.0, "account_age_days": 236, "prior_orders": 3,
+    "prior_rto_count": 0, "orders_last_24h": 1, "device_cluster_size": 1, 
+    "pincode": "597542", "courier_id": "Courier_A"
+}
+
+for k, v in DEFAULTS.items():
+    if k not in st.session_state:
+        st.session_state[k] = v
+
 def load_preset(name):
     for k, v in PRESETS[name].items():
         st.session_state[k] = v
@@ -56,32 +67,28 @@ st.sidebar.markdown("---")
 
 st.sidebar.title("Order Inputs")
 
-# Helper to get session state or default
-def get_val(key, default):
-    return st.session_state.get(key, default)
-
-order_value = st.sidebar.number_input("Order Value (₹)", min_value=0.0, value=get_val("order_value", 616.0), step=10.0, key="ni_order_value")
-category = st.sidebar.selectbox("Category", ['Apparel', 'Home', 'Electronics', 'Beauty', 'Footwear', 'Jewelry'], index=['Apparel', 'Home', 'Electronics', 'Beauty', 'Footwear', 'Jewelry'].index(get_val("category", "Apparel")), key="sb_category")
-payment_method = st.sidebar.selectbox("Payment Method", ['COD', 'PREPAID'], index=['COD', 'PREPAID'].index(get_val("payment_method", "COD")), key="sb_payment_method")
-quantity = st.sidebar.number_input("Quantity", min_value=1, value=get_val("quantity", 2), key="ni_quantity")
-discount_pct = st.sidebar.number_input("Discount %", min_value=0.0, max_value=100.0, value=get_val("discount_pct", 2.0), key="ni_discount_pct")
+order_value = st.sidebar.number_input("Order Value (₹)", min_value=0.0, step=10.0, key="order_value")
+category = st.sidebar.selectbox("Category", ['Apparel', 'Home', 'Electronics', 'Beauty', 'Footwear', 'Jewelry'], key="category")
+payment_method = st.sidebar.selectbox("Payment Method", ['COD', 'PREPAID'], key="payment_method")
+quantity = st.sidebar.number_input("Quantity", min_value=1, key="quantity")
+discount_pct = st.sidebar.number_input("Discount %", min_value=0.0, max_value=100.0, key="discount_pct")
 
 if payment_method == 'COD':
-    cod_charge = st.sidebar.number_input("COD Charge (₹)", min_value=0.0, value=get_val("cod_charge", 49.0), help="Train COD median ₹49", key="ni_cod_charge")
+    cod_charge = st.sidebar.number_input("COD Charge (₹)", min_value=0.0, help="Train COD median ₹49", key="cod_charge")
 else:
-    cod_charge = st.sidebar.number_input("COD Charge (₹)", min_value=0.0, max_value=0.0, value=0.0, disabled=True, key="ni_cod_charge_disabled")
+    cod_charge = st.sidebar.number_input("COD Charge (₹)", min_value=0.0, max_value=0.0, value=0.0, disabled=True)
 
-account_age_days = st.sidebar.number_input("Account Age (Days)", min_value=0, value=get_val("account_age_days", 236), key="ni_account_age_days")
-prior_orders = st.sidebar.number_input("Prior Orders", min_value=0, value=get_val("prior_orders", 3), key="ni_prior_orders")
-prior_rto_count = st.sidebar.slider("Prior RTO Count", min_value=0, max_value=max(1, prior_orders), value=get_val("prior_rto_count", 0), key="sl_prior_rto_count")
+account_age_days = st.sidebar.number_input("Account Age (Days)", min_value=0, key="account_age_days")
+prior_orders = st.sidebar.number_input("Prior Orders", min_value=0, key="prior_orders")
+prior_rto_count = st.sidebar.slider("Prior RTO Count", min_value=0, max_value=max(1, prior_orders), key="prior_rto_count")
 if prior_rto_count > prior_orders:
     st.sidebar.warning("Prior RTOs cannot exceed prior orders.")
     
-orders_last_24h = st.sidebar.number_input("Orders Last 24h", min_value=0, value=get_val("orders_last_24h", 1), key="ni_orders_last_24h")
-device_cluster_size = st.sidebar.number_input("Device Cluster Size", min_value=1, value=get_val("device_cluster_size", 1), key="ni_device_cluster_size")
+orders_last_24h = st.sidebar.number_input("Orders Last 24h", min_value=0, key="orders_last_24h")
+device_cluster_size = st.sidebar.number_input("Device Cluster Size", min_value=1, key="device_cluster_size")
 # 597542 is a known valid pincode in the lookup
-pincode = st.sidebar.text_input("Pincode", value=get_val("pincode", "597542"), key="ti_pincode")
-courier_id = st.sidebar.text_input("Courier ID", value=get_val("courier_id", "Courier_A"), key="ti_courier_id")
+pincode = st.sidebar.text_input("Pincode", key="pincode")
+courier_id = st.sidebar.text_input("Courier ID", key="courier_id")
 
 st.title("Order Risk Scorer")
 
