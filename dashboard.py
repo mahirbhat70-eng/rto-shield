@@ -774,7 +774,7 @@ def footer():
     st.markdown("---")
     st.markdown(
         f'<div class="foot">github.com/mahirbhat70-eng/rto-shield · frozen v1.0 artifacts · '
-        '60/60 tests green in CI · every number on this page is reproducible from reports/ and claim-matrix.md</div>',
+        '217/217 tests green in CI · every number on this page is reproducible from reports/ and claim-matrix.md</div>',
         unsafe_allow_html=True,
     )
 
@@ -783,7 +783,7 @@ def footer():
 # ----------------------------------------------------------------------------
 def view_overview():
     html_block(f"""
-<div class="eyebrow">Razorpay AI Buildathon · Track 02 · AI Risk Manager</div>
+<div class="eyebrow">Autonomous COD Risk Engine · Production Grade v1.0</div>
 <div class="hero-h1">We don't predict the coin flip.<br><span class="grad">We price it.</span></div>
 <div class="hero-sub">RTO Shield scores every COD order in under 100&nbsp;ms, prices four interventions with a real
 rupee cost matrix (₹150 landed cost per return · 20% average margin), and routes each order to the
@@ -794,14 +794,14 @@ cheapest expected loss. Risk is not an arbitrary label here — it is a price, a
         '<div class="kpi-grid">',
         kpi("Expected savings", rs(71741), "<b>vs always-allow</b> on holdout test (7,174 COD orders). Argmin routing expected loss.", "green"),
         kpi("Realized savings", rs(69786), "Same portfolio scored with <b>actual RTO labels</b> — only −2.7% off forecast.", "green"),
-        kpi("vs best threshold", "2.0×", "EL routing saves <b>₹71,741 vs ₹35,919</b> for best single-threshold policy.", "blue"),
+        kpi("vs best threshold", "2.0×", "EL saves <b>₹71,741 vs ₹35,919</b>. Causal bounds <b>[1.23×, 2.39×]</b> via 5k Monte Carlo.", "blue"),
         kpi("of Bayes ceiling", "94.7%", "PR-AUC <b>0.3313 / 0.3497</b> — extracts near theoretical maximum signal.", "amber"),
         "</div>",
         '<div class="kpi-grid" style="margin-top: 0.8rem;">',
         kpi("Profit uplift", "13.1%", "Pre-registered PASS band <b>[8%, 18%]</b> of baseline loss declared before test reveal.", "green"),
         kpi("P(savings &gt; 0)", "100%", "Across <b>5,000-draw Monte Carlo</b> on intervention effects. P5 ₹63,935 · P95 ₹75,901.", "blue"),
-        kpi("Scoring path", "&lt;100 ms", "Full path <b>including TreeSHAP</b>. Core p50 ≈ 8 ms. &gt;100 orders/sec per core.", "blue"),
-        kpi("Test suite", "60/60", "8 test suites green in CI on pinned versions (sklearn 1.9.0 · lightgbm 4.7.0 · shap 0.52.0).", ""),
+        kpi("Scoring path", "&lt;100 ms", "Full path <b>including TreeSHAP</b>. Core p50 ≈ 13 ms. &gt;75 orders/sec per core.", "blue"),
+        kpi("Test suite", "217/217", "8 test suites green in CI on pinned versions (sklearn 1.9.0 · lightgbm 4.7.0 · shap 0.52.0).", ""),
         "</div>",
     ]))
 

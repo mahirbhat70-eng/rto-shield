@@ -37,7 +37,7 @@ Reproduce: `python scripts/benchmark_latency.py`
 
 ---
 
-RTO Shield converts COD order risk prediction into financially optimal intervention decisions for Indian e-commerce merchants. Every claim in this README traces to a frozen artifact in `reports/`, backed by 60 passing automated tests (generator contract, split integrity, preprocessing leakage, metric correctness, dominance regression, adversarial robustness, serving-path equivalence, UI logic, decision audit trail) and 11/11 pre-registered checks on a strictly held-out test set.
+RTO Shield converts COD order risk prediction into financially optimal intervention decisions for Indian e-commerce merchants. Every claim in this README traces to a frozen artifact in `reports/`, backed by 217 passing automated tests (generator contract, split integrity, preprocessing leakage, metric correctness, dominance regression, adversarial robustness, serving-path equivalence, UI logic, decision audit trail) and 11/11 pre-registered checks on a strictly held-out test set.
 
 ## Executive Summary — Final Results (Held-Out Test Set)
 

@@ -29,7 +29,7 @@
 | ALLOW action calibration error | 0.0032 | `reports/stage5_test_results.md` § 2 per-action | `pytest tests/test_stage5.py -v` |
 | Calibration cost vs uncal | ₹10,839 EL | 82580 − 71741 | `reports/stage5_test_results.md` rows 4–5 |
 | Tail-clip sensitivity | Δ₹140 EL | 71881 − 71741 | `reports/stage5_test_results.md` rows 4–6 |
-| Total automated tests | 60 | CI badge | `pytest tests/ -v --tb=short` |
+| Total automated tests | 217 | CI badge | `pytest tests/ -v --tb=short` |
 | Pre-registered checks passed | 11/11 | `reports/stage5_test_results.md` throughout | `pytest tests/test_stage5.py -v` |
 | Inference latency p50 | ~3ms | `scripts/benchmark_latency.py` | `python scripts/benchmark_latency.py` |
 | Inference latency p95 | ~8ms | `scripts/benchmark_latency.py` | `python scripts/benchmark_latency.py` |
@@ -46,7 +46,7 @@
 git clone https://github.com/mahirbhat70-eng/rto-shield
 cd rto-shield
 pip install -r requirements.txt
-pytest tests/ -v          # all 216 tests, all frozen artifacts
+pytest tests/ -v          # all 217 tests, all frozen artifacts
 ```
 
 The test suite is the claim matrix made executable. Every row in the table above corresponds to an assertion in `tests/`.
