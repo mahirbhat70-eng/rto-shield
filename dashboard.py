@@ -706,7 +706,7 @@ HOLDOUT_COD_DF = load_holdout_test_set()
 
 def full_shap(payload, topn=8):
     """Computes signed TreeSHAP values for top-N features using frozen explainer."""
-    lookup = serve.PINCODE_LOOKUP[str(payload["pincode"])]
+    lookup, _ = serve.resolve_pincode_info(str(payload["pincode"]))
     row = {
         "category": payload["category"],
         "payment_method": payload["payment_method"],
@@ -861,12 +861,11 @@ def sidebar_inputs():
     )
     st.sidebar.selectbox(
         "Category", CATEGORIES,
-        index=CATEGORIES.index(get_val("category", "Home")), key="sb_category"
+        key="category"
     )
     payment_method = st.sidebar.selectbox(
         "Payment method", ["COD", "PREPAID"],
-        index=["COD", "PREPAID"].index(get_val("payment_method", "COD")),
-        key="sb_payment_method"
+        key="payment_method"
     )
     st.sidebar.number_input(
         "Quantity", min_value=1, max_value=50, step=1,
@@ -900,8 +899,7 @@ def sidebar_inputs():
     )
     st.sidebar.slider(
         "Prior RTO count", 0, max(1, int(prior_orders)),
-        value=min(int(get_val("prior_rto_count", 0)), max(1, int(prior_orders))),
-        key="sl_prior_rto_count"
+        key="prior_rto_count"
     )
 
     st.sidebar.markdown('<div class="side-h">Velocity & Logistics</div>', unsafe_allow_html=True)
@@ -921,7 +919,7 @@ def sidebar_inputs():
         rate_pct = float(pin_meta['historical_pincode_rto_rate']) * 100
         st.sidebar.caption(f"✓ Tier **{pin_meta['pincode_tier']}** · Historical RTO **{rate_pct:.1f}%**")
     else:
-        st.sidebar.markdown('<span style="color:#DC2626;font-size:0.75rem;font-weight:600;">⚠️ Unknown pincode — scoring will reject.</span>', unsafe_allow_html=True)
+        st.sidebar.markdown('<span style="color:#DC2626;font-size:0.75rem;font-weight:600;">⚠️ Unknown pincode — global prior used (cold start)</span>', unsafe_allow_html=True)
 
     st.sidebar.text_input("Courier ID", value=str(get_val("courier_id", "Courier_E")), key="ti_courier_id")
 
@@ -1103,8 +1101,11 @@ def view_scorer():
 
     st.markdown("")
     # ---- SHAP + Input Intelligence
-    pairs = full_shap(last["payload"], topn=8)
-    lookup = serve.PINCODE_LOOKUP[str(last["payload"]["pincode"])]
+    if last["payload"].get("payment_method", "").upper() == "COD":
+        pairs = full_shap(last["payload"], topn=8)
+    else:
+        pairs = []
+    lookup, is_cold = serve.resolve_pincode_info(str(last["payload"]["pincode"]))
     entry = last["entry"]
     ok = verify_audit_record(entry)
     left, right = st.columns([1.35, 1])

@@ -54,8 +54,7 @@ def test_recommended_action_matches_cost_engine():
         assert res['recommended_action'] == expected_action
         
 def test_unknown_pincode_cold_start():
-    # 3. Unknown pincodes fall back to the global prior (was: hard rejection,
-    # contradicting docs/JUDGE_QA.md Q7 — see IMPROVEMENTS.md).
+    # 3. Unknown pincodes fall back to the global prior (matching docs/JUDGE_QA.md Q7).
     val_rep = pd.read_csv("data/processed/val_rep.csv", dtype={'pincode': str})
     unseen = str(int(val_rep['pincode'].max()) + 1)
     
@@ -67,6 +66,21 @@ def test_unknown_pincode_cold_start():
     res = score_order(features)
     assert res['recommended_action'] in ('ALLOW_COD', 'VERIFY_ADDRESS', 'REQUIRE_DEPOSIT')
     assert any('cold start' in w.lower() for w in res['warnings'])
+
+def test_full_shap_cold_start():
+    # 3b. Regression test: dashboard's full_shap must not crash on unseen pincodes
+    import dashboard
+    val_rep = pd.read_csv("data/processed/val_rep.csv", dtype={'pincode': str})
+    unseen = str(int(val_rep['pincode'].max()) + 1)
+    
+    payload = val_rep.iloc[0].to_dict()
+    payload['pincode'] = unseen
+    payload['payment_method'] = 'COD'
+    
+    # This should not raise a KeyError
+    pairs = dashboard.full_shap(payload)
+    assert isinstance(pairs, list)
+    assert len(pairs) <= 8
 
 import os
 

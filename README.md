@@ -9,7 +9,7 @@
 
 ---
 
-## ⚡ Judge Quickstart — 5 Minutes
+## ⚡ Quickstart — 5 Minutes
 
 | Step | Command / Link |
 |------|----------------|
@@ -41,7 +41,7 @@ RTO Shield converts COD order risk prediction into financially optimal intervent
 
 ## Executive Summary — Final Results (Held-Out Test Set)
 
-The multi-action policy earns **2.0× the savings** of the best single-threshold policy on a fully held-out test window it never influenced, achieving a **13.1% portfolio profit uplift** (₹71,741 on the test COD subset of 7,174 orders).
+The multi-action policy earns **2.0× the savings [1.23×, 2.39× bound]** of the best single-threshold policy on a fully held-out test window it never influenced, achieving a **13.1% portfolio profit uplift** (₹71,741 on the test COD subset of 7,174 orders).
 
 **Model quality**: the primary model scores 94.7% of the measured Bayes ceiling (0.3313 vs theoretical maximum 0.3497) on test. Because the ceiling proves no model family can do meaningfully better on this problem, the value lives in the decision layer — which is where this project built its edge.
 
@@ -175,8 +175,13 @@ rto-shield/
 │       ├── stage5_test_reveal.py # one-shot held-out evaluation
 │       ├── verify_calibration.py # bin-MAE artifact investigation
 │       └── stress_test_noise.py # oracle-feature σ=0.04 stress test
-├── tests/ # 60 tests across 8 test files
+├── tests/ # 216 tests across 8 test files
 ├── scripts/
+│   ├── benchmark_latency.py # Latency benchmarking
+│   ├── deposit_effectiveness_sensitivity.py # Stage 6 bounds
+│   ├── freeze_artifact_hashes.py # SHA-256 provenance
+│   ├── generator_v2.py # Stage 6 uplift data
+│   ├── stage6_uplift_ope.py # Stage 6 Evaluation
 │   └── verify_shap_sign.py # SHAP class 1 verification
 ├── reports/
 │   ├── stage2_baseline_results.md
@@ -217,12 +222,18 @@ python src/eval/stage4_evaluate.py
 # Stage 5 — one-shot held-out test reveal (frozen artifacts)
 python src/eval/stage5_test_reveal.py
 
-# Full test suite (60 tests)
+# Stage 6 — Uplift OPE and financial bounds
+python scripts/generator_v2.py --seed 42
+python scripts/stage6_uplift_ope.py
+python scripts/deposit_effectiveness_sensitivity.py
+python scripts/freeze_artifact_hashes.py
+
+# Full test suite (216 tests)
 python -m pytest tests/ -q
 
 # Serving layer + demo (artifacts are committed — no generation needed)
 python src/serve/lookup.py        # rebuild pincode lookup from TRAIN only
-python -m pytest tests/ -q        # expect: 60 passed
+python -m pytest tests/ -q        # expect: 216 passed
 streamlit run app.py              # scorer UI; sidebar demo buttons: DEPOSIT / ALLOW / VERIFY
 ```
 
@@ -232,6 +243,7 @@ streamlit run app.py              # scorer UI; sidebar demo buttons: DEPOSIT / A
 - **One-order cost model.** The expected-loss model prices a single order; customer lifetime value of dropped good customers is not modeled.
 - **No production REST API.** The scoring module (`src/serve/`, ~15–30ms p99 per order depending on hardware) is production-ready but not exposed as a hosted REST endpoint — the analytics core is the deliverable. A Streamlit demo **is** live at [rto-shield-nlthpydtndpkupyfgfl3yy.streamlit.app](https://rto-shield-nlthpydtndpkupyfgfl3yy.streamlit.app) for interactive evaluation.
 - **Isotonic tradeoff is real:** the calibrated primary gives up ₹10.8k of test savings vs the uncalibrated router (disclosed, pre-registered).
+- **Stage-6 Causality Caveat:** The reported bounds [1.23×, 2.39×] rely on semi-synthetic uplift data; unobserved confounders in real-world friction effectiveness could widen these bounds.
 
 ## License
 MIT

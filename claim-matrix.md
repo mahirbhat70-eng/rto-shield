@@ -46,7 +46,7 @@
 git clone https://github.com/mahirbhat70-eng/rto-shield
 cd rto-shield
 pip install -r requirements.txt
-pytest tests/ -v          # all 60 tests, all frozen artifacts
+pytest tests/ -v          # all 216 tests, all frozen artifacts
 ```
 
 The test suite is the claim matrix made executable. Every row in the table above corresponds to an assertion in `tests/`.
