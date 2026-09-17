@@ -329,8 +329,8 @@ def main():
     validate(df, truth, args.rows)
 
     os.makedirs(args.output_dir, exist_ok=True)
-    df.to_csv(os.path.join(args.output_dir, "orders_v2.csv"), index=False)
-    truth.to_csv(os.path.join(args.output_dir, "potential_outcomes_v2.csv"), index=False)
+    df.to_csv(os.path.join(args.output_dir, "orders_v2.csv"), index=False, lineterminator="\n")
+    truth.to_csv(os.path.join(args.output_dir, "potential_outcomes_v2.csv"), index=False, lineterminator="\n")
 
     print(f"Rows: {len(df)} | columns: {df.shape[1]}")
     print(f"Action mix: {df['assigned_action'].value_counts(normalize=True).round(3).to_dict()}")

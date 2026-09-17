@@ -29,6 +29,7 @@ def build_lookup(train_path=DEFAULT_TRAIN_PATH, out_path=DEFAULT_OUT_PATH):
         'historical_pincode_rto_rate': 'mean',
         'pincode_tier': 'first'
     })
+    lookup['historical_pincode_rto_rate'] = lookup['historical_pincode_rto_rate'].round(4)
 
     # Sanity: rate must remain a valid probability and tier in {1,2,3}
     assert (lookup['historical_pincode_rto_rate'].between(0, 1)).all(), "rate outside [0,1]"
