@@ -7,7 +7,7 @@ import hashlib
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.policy.cost_engine import CostEngine
-from src.eval.stage4_evaluate import get_cod_subset
+from src.eval.stage4_evaluate import get_cod_subset, eval_binary_policy, eval_multi_action
 from src.eval.bayes_ceiling import get_true_p
 from sklearn.metrics import average_precision_score
 
@@ -67,3 +67,53 @@ def test_stage5_report_structure():
         assert s in report, f"missing strategy row: {s}"
     for label in ["Action Dist", "Orders Touched", "Expected RTOs Prevented"]:
         assert label in report, f"missing denominator label: {label}"
+
+def test_primary_savings_uplift(engine, test_data):
+    test, proba = test_data
+    test_cod, p_cal_cod = get_cod_subset(test, proba)
+    
+    baseline_actions, baseline_losses = eval_binary_policy(test_cod, p_cal_cod, engine, "ALLOW_COD", 1.0)
+    baseline_total = np.sum(baseline_losses)
+    
+    primary_actions, primary_losses = eval_multi_action(test_cod, p_cal_cod, engine)
+    primary_total = np.sum(primary_losses)
+    
+    primary_savings = baseline_total - primary_total
+    uplift = primary_savings / abs(baseline_total)
+    
+    # Pre-registered check: Primary savings uplift [8%, 18%] of baseline loss (reports/stage5_test_results.md § 3)
+    assert 0.08 <= uplift <= 0.18
+    assert np.isclose(uplift, 0.131, atol=0.005)
+    assert np.isclose(primary_savings, 71741.02, atol=1.0)
+
+def test_bayes_ceiling():
+    test = pd.read_csv("data/processed/test.csv", dtype={'pincode': str})
+    p_reconstructed = get_true_p(test)
+    ceiling_pr_auc = average_precision_score(test['rto_label'], p_reconstructed)
+    # Pre-registered check: Bayes Ceiling PR-AUC == 0.3497 (reports/stage5_test_results.md § 1)
+    assert np.isclose(ceiling_pr_auc, 0.3497, atol=1e-3)
+
+def test_noise_sensitivity(engine, test_data):
+    test, proba = test_data
+    test_cod, p_cal_cod = get_cod_subset(test, proba)
+    
+    baseline_actions, baseline_losses = eval_binary_policy(test_cod, p_cal_cod, engine, "ALLOW_COD", 1.0)
+    baseline_total = np.sum(baseline_losses)
+    
+    primary_actions, primary_losses = eval_multi_action(test_cod, p_cal_cod, engine)
+    primary_total = np.sum(primary_losses)
+    primary_savings = baseline_total - primary_total
+    
+    rng = np.random.default_rng(42)
+    p_cal_noisy = np.clip(p_cal_cod + rng.normal(0, 0.04, size=len(p_cal_cod)), 0.0, 1.0)
+    
+    _, base_noisy_loss = eval_binary_policy(test_cod, p_cal_noisy, engine, "ALLOW_COD", 1.0)
+    _, prim_noisy_loss = eval_multi_action(test_cod, p_cal_noisy, engine)
+    
+    noisy_savings = np.sum(base_noisy_loss) - np.sum(prim_noisy_loss)
+    delta_pct = (noisy_savings - primary_savings) / primary_savings
+    
+    # Pre-registered check: Noisy savings within ±10% (+2.7%) of clean savings (reports/stage5_test_results.md § 4)
+    assert abs(delta_pct) <= 0.10
+    assert np.isclose(delta_pct, 0.027, atol=0.005)
+

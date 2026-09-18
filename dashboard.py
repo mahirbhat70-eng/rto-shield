@@ -23,9 +23,12 @@ import os
 import time
 import json
 import datetime
+import html as html_mod
 import numpy as np
 import pandas as pd
 import streamlit as st
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 DEFAULTS = {
     "order_value": 852.0, "category": "Home", "payment_method": "COD", "quantity": 3,
@@ -33,6 +36,8 @@ DEFAULTS = {
     "prior_rto_count": 0, "orders_last_24h": 3, "device_cluster_size": 1, 
     "pincode": "253407", "courier_id": "Courier_E"
 }
+if "_persisted_form" not in st.session_state:
+    st.session_state["_persisted_form"] = dict(DEFAULTS)
 for k, v in DEFAULTS.items():
     if k not in st.session_state:
         st.session_state[k] = v
@@ -106,7 +111,8 @@ html, body, [data-testid="stAppViewContainer"], .stApp {{
   max-width: 1320px;
 }}
 
-#MainMenu, footer, header {{ visibility: hidden; }}
+#MainMenu, footer, header [data-testid="stToolbar"] {{ visibility: hidden; }}
+header {{ background: transparent !important; }}
 
 h1, h2, h3, h4 {{
   color: {C_TEXT} !important;
@@ -665,7 +671,8 @@ SELF = boot_self_test()
 def compute_frontier():
     """Vectorized replica of src/eval/stage4_evaluate.py on the val_cal COD subset.
     Closely replicates the frozen report (thresholds 0.20/0.48, argmin line -327,071)."""
-    val_cal = pd.read_csv("data/processed/val_cal.csv", dtype={"pincode": str})
+    val_cal_path = os.path.join(BASE_DIR, "data/processed/val_cal.csv")
+    val_cal = pd.read_csv(val_cal_path, dtype={"pincode": str})
     mask = val_cal["payment_method"].values == "COD"
     vc = val_cal[mask].reset_index(drop=True)
     p = serve.tree_cal.predict_proba(vc.drop(columns=["rto_label"]))[:, 1]
@@ -712,8 +719,11 @@ FR = compute_frontier()
 @st.cache_data(show_spinner=False)
 def load_holdout_test_set():
     """Loads holdout test data to enable the random holdout order sampler."""
+    csv_path = os.path.join(BASE_DIR, "data/processed/test.csv")
+    if not os.path.exists(csv_path):
+        return None
     try:
-        df = pd.read_csv("data/processed/test.csv", dtype={"pincode": str})
+        df = pd.read_csv(csv_path, dtype={"pincode": str})
         cod_df = df[df["payment_method"] == "COD"].reset_index(drop=True)
         return cod_df
     except Exception:
@@ -723,7 +733,7 @@ HOLDOUT_COD_DF = load_holdout_test_set()
 
 def full_shap(payload, topn=8):
     """Computes signed TreeSHAP values for top-N features using frozen explainer."""
-    lookup, _ = serve.resolve_pincode_info(str(payload["pincode"]))
+    lookup, _ = serve.resolve_pincode_info(str(payload["pincode"]).strip())
     row = {
         "category": payload["category"],
         "payment_method": payload["payment_method"],
@@ -801,7 +811,7 @@ cheapest expected loss. Risk is not an arbitrary label here — it is a price, a
         kpi("Profit uplift", "13.1%", "Pre-registered PASS band <b>[8%, 18%]</b> of baseline loss declared before test reveal.", "green"),
         kpi("P(savings &gt; 0)", "100%", "Across <b>5,000-draw Monte Carlo</b> on intervention effects. P5 ₹63,935 · P95 ₹75,901.", "blue"),
         kpi("Scoring path", "&lt;100 ms", "Full path <b>including TreeSHAP</b>. Core p50 ≈ 13 ms. &gt;75 orders/sec per core.", "blue"),
-        kpi("Test suite", "217/217", "8 test suites green in CI on pinned versions (sklearn 1.9.0 · lightgbm 4.7.0 · shap 0.52.0).", ""),
+        kpi("Test suite", "225/225", "14 test suites green in CI on pinned versions (sklearn 1.9.0 · lightgbm 4.7.0 · shap 0.52.0).", ""),
         "</div>",
     ]))
 
@@ -834,29 +844,52 @@ cheapest expected loss. Risk is not an arbitrary label here — it is a price, a
 # ----------------------------------------------------------------------------
 # View 02 — Live Decision Engine (Pitch Act 4)
 # ----------------------------------------------------------------------------
+def _clamp_prior_rto():
+    po = int(st.session_state.get("ni_prior_orders", 0))
+    prc = int(st.session_state.get("prior_rto_count", 0))
+    st.session_state["prior_rto_count"] = min(prc, po)
+
 def sidebar_inputs():
     def get_val(key, default):
-        return st.session_state.get(key, default)
+        wkey = WIDGET_KEYS.get(key)
+        if wkey and wkey in st.session_state:
+            st.session_state.setdefault("_persisted_form", {})[key] = st.session_state[wkey]
+            return st.session_state[wkey]
+        return st.session_state.get("_persisted_form", {}).get(key, default)
 
     def load_preset(name):
         for k, v in PRESETS[name].items():
             st.session_state[WIDGET_KEYS[k]] = v
+            st.session_state.setdefault("_persisted_form", {})[k] = v
         st.session_state["active_preset"] = name
         st.session_state["holdout_label"] = None
+        st.session_state["holdout_payload"] = None
         st.session_state["score_requested"] = True
 
     def sample_random_holdout():
         if HOLDOUT_COD_DF is not None and len(HOLDOUT_COD_DF) > 0:
             sample = HOLDOUT_COD_DF.sample(n=1).iloc[0]
+            sampled_payload = {}
             for col in WIDGET_KEYS:
                 if col in sample:
-                    st.session_state[WIDGET_KEYS[col]] = sample[col]
-            st.session_state[WIDGET_KEYS["prior_rto_count"]] = min(
-                int(sample.get("prior_rto_count", 0)),
-                max(1, int(sample.get("prior_orders", 0)))
-            )
+                    val = sample[col]
+                    if isinstance(val, (np.integer, int)):
+                        val = int(val)
+                    elif isinstance(val, (np.floating, float)):
+                        val = float(val)
+                    else:
+                        val = str(val)
+                    st.session_state[WIDGET_KEYS[col]] = val
+                    st.session_state.setdefault("_persisted_form", {})[col] = val
+                    sampled_payload[col] = val
+            po = int(sample.get("prior_orders", 0))
+            prc = min(int(sample.get("prior_rto_count", 0)), max(1, po))
+            st.session_state[WIDGET_KEYS["prior_rto_count"]] = prc
+            st.session_state.setdefault("_persisted_form", {})["prior_rto_count"] = prc
+            sampled_payload["prior_rto_count"] = prc
             st.session_state["active_preset"] = "RANDOM"
             st.session_state["holdout_label"] = int(sample.get("rto_label", 0))
+            st.session_state["holdout_payload"] = sampled_payload
             st.session_state["score_requested"] = True
 
     st.sidebar.markdown('<div class="side-h">Demo presets</div>', unsafe_allow_html=True)
@@ -913,8 +946,11 @@ def sidebar_inputs():
     )
     prior_orders = st.sidebar.number_input(
         "Prior orders", min_value=0, max_value=100, step=1,
-        value=int(get_val("prior_orders", 2)), key="ni_prior_orders"
+        value=int(get_val("prior_orders", 2)), key="ni_prior_orders",
+        on_change=_clamp_prior_rto,
     )
+    if "prior_rto_count" in st.session_state:
+        st.session_state["prior_rto_count"] = min(int(st.session_state["prior_rto_count"]), max(0, int(prior_orders)))
     st.sidebar.slider(
         "Prior RTO count", 0, max(1, int(prior_orders)),
         key="prior_rto_count"
@@ -930,7 +966,7 @@ def sidebar_inputs():
         value=int(get_val("device_cluster_size", 1)), key="ni_device_cluster_size"
     )
 
-    pin_in = st.sidebar.text_input("Pincode", value=str(get_val("pincode", "253407")), key="ti_pincode")
+    pin_in = st.sidebar.text_input("Pincode", value=str(get_val("pincode", "253407")), key="ti_pincode", max_chars=6).strip()
     # Live pincode lookup preview
     if pin_in in PINCODE_LOOKUP:
         pin_meta = PINCODE_LOOKUP[pin_in]
@@ -939,26 +975,35 @@ def sidebar_inputs():
     else:
         st.sidebar.markdown('<span style="color:#DC2626;font-size:0.75rem;font-weight:600;">⚠️ Unknown pincode — global prior used (cold start)</span>', unsafe_allow_html=True)
 
-    st.sidebar.text_input("Courier ID", value=str(get_val("courier_id", "Courier_E")), key="ti_courier_id")
+    st.sidebar.text_input("Courier ID", value=str(get_val("courier_id", "Courier_E")), key="ti_courier_id", max_chars=16)
 
 def payload_from_state():
-    return {
-        "payment_method": st.session_state.get(WIDGET_KEYS["payment_method"], "COD"),
+    payment = st.session_state.get(WIDGET_KEYS["payment_method"], "COD")
+    payload = {
+        "payment_method": payment,
         "order_value": float(st.session_state.get(WIDGET_KEYS["order_value"], 852.0)),
         "category": st.session_state.get(WIDGET_KEYS["category"], "Home"),
         "quantity": int(st.session_state.get(WIDGET_KEYS["quantity"], 3)),
         "discount_pct": float(st.session_state.get(WIDGET_KEYS["discount_pct"], 19.8)),
-        "cod_charge": float(st.session_state.get(WIDGET_KEYS["cod_charge"], 59.0)),
+        "cod_charge": float(st.session_state.get(WIDGET_KEYS["cod_charge"], 59.0))
+                      if payment == "COD" else 0.0,
         "account_age_days": int(st.session_state.get(WIDGET_KEYS["account_age_days"], 65)),
         "prior_orders": int(st.session_state.get(WIDGET_KEYS["prior_orders"], 2)),
         "prior_rto_count": int(st.session_state.get(WIDGET_KEYS["prior_rto_count"], 0)),
         "orders_last_24h": int(st.session_state.get(WIDGET_KEYS["orders_last_24h"], 3)),
         "device_cluster_size": int(st.session_state.get(WIDGET_KEYS["device_cluster_size"], 1)),
-        "pincode": str(st.session_state.get(WIDGET_KEYS["pincode"], "253407")),
-        "courier_id": str(st.session_state.get(WIDGET_KEYS["courier_id"], "Courier_E"))
+        "pincode": str(st.session_state.get(WIDGET_KEYS["pincode"], "253407")).strip(),
+        "courier_id": str(st.session_state.get(WIDGET_KEYS["courier_id"], "Courier_E")).strip()
     }
+    if "_persisted_form" in st.session_state:
+        st.session_state["_persisted_form"].update(payload)
+    return payload
 
 def shap_html(pairs):
+    if not pairs:
+        return ('<div style="color:#64748B;font-size:0.8rem;padding:0.6rem 0;">'
+                'PREPAID passthrough — no RTO risk to price; model and TreeSHAP skipped.'
+                '</div>')
     mx = max(abs(v) for _, v in pairs) or 1.0
     rows = []
     for name, v in pairs:
@@ -1018,7 +1063,9 @@ def view_scorer():
             res = score_order(payload)
             latency_ms = (time.perf_counter() - t0) * 1000.0
             entry = build_audit_record(payload, res, latency_ms=latency_ms)
-            st.session_state.setdefault("audit_log", []).append(entry)
+            audit_log = st.session_state.setdefault("audit_log", [])
+            if not audit_log or audit_log[-1].get("decision_id") != entry["decision_id"]:
+                audit_log.append(entry)
             st.session_state["last"] = {
                 "payload": payload,
                 "res": res,
@@ -1035,6 +1082,8 @@ def view_scorer():
             else:
                 st.error(msg)
             st.session_state.pop("last", None)
+            st.session_state["holdout_label"] = None
+            st.session_state["holdout_payload"] = None
 
     last = st.session_state.get("last")
     if not last:
@@ -1059,13 +1108,23 @@ def view_scorer():
         action, ("PREPAID PASSTHROUGH", C_SLATE, C_SLATE_BG, "Prepaid orders skip the COD risk engine entirely.")
     )
 
-    # Holdout ground truth indicator if random order was chosen
+    # Scorer warnings (N5)
+    for w in res.get("warnings", []):
+        st.warning(w)
+
+    # Holdout ground truth indicator if random order was chosen (N2)
     hl = st.session_state.get("holdout_label")
+    hp = st.session_state.get("holdout_payload")
     holdout_badge = ""
-    if hl is not None:
-        truth_color = C_RED if hl == 1 else C_GREEN
-        truth_text = "RTO Occurred (1)" if hl == 1 else "Delivered Successfully (0)"
-        holdout_badge = f'<div style="margin-bottom:0.7rem;"><span class="verify-chip" style="background:#F1F5F9;border-color:#CBD5E1;color:{truth_color};">🎯 Holdout ground truth: <b>{truth_text}</b></span></div>'
+    if hl is not None and hp is not None:
+        matches = all(str(last["payload"].get(k)) == str(hp.get(k)) for k in hp)
+        if matches:
+            truth_color = C_RED if hl == 1 else C_GREEN
+            truth_text = "RTO Occurred (1)" if hl == 1 else "Delivered Successfully (0)"
+            holdout_badge = f'<div style="margin-bottom:0.7rem;"><span class="verify-chip" style="background:#F1F5F9;border-color:#CBD5E1;color:{truth_color};">🎯 Holdout ground truth: <b>{truth_text}</b></span></div>'
+        else:
+            st.session_state["holdout_label"] = None
+            st.session_state["holdout_payload"] = None
 
     # ---- KPI strip: probability / decision / latency
     html_block(f"""
@@ -1122,7 +1181,7 @@ def view_scorer():
         pairs = full_shap(last["payload"], topn=8)
     else:
         pairs = []
-    lookup, is_cold = serve.resolve_pincode_info(str(last["payload"]["pincode"]))
+    lookup, is_cold = serve.resolve_pincode_info(str(last["payload"]["pincode"]).strip())
     entry = last["entry"]
     ok = verify_audit_record(entry)
     left, right = st.columns([1.35, 1])
@@ -1140,20 +1199,21 @@ def view_scorer():
     with right:
         pin_rate = float(lookup["historical_pincode_rto_rate"]) * 100
         tier = lookup["pincode_tier"]
+        esc = lambda v: html_mod.escape(str(v))
         html_block(f"""
 <div class="panel">
   <div class="panel-h">Input intelligence</div>
   <div class="d" style="font-size:0.82rem;color:{C_MUT_DARK};line-height:1.75;">
-    Pincode <b>{last['payload']['pincode']}</b> → tier {tier} · historical RTO <b>{pin_rate:.1f}%</b><br/>
-    Courier <b>{last['payload']['courier_id']}</b> · device cluster <b>{last['payload']['device_cluster_size']}</b><br/>
-    Account <b>{last['payload']['account_age_days']}d</b> · velocity <b>{last['payload']['orders_last_24h']}/24h</b>
+    Pincode <b>{esc(last['payload']['pincode'])}</b> → tier {esc(tier)} · historical RTO <b>{pin_rate:.1f}%</b><br/>
+    Courier <b>{esc(last['payload']['courier_id'])}</b> · device cluster <b>{esc(last['payload']['device_cluster_size'])}</b><br/>
+    Account <b>{esc(last['payload']['account_age_days'])}d</b> · velocity <b>{esc(last['payload']['orders_last_24h'])}/24h</b>
   </div>
   <hr class="soft"/>
   <div class="panel-h">Audit receipt</div>
   <div class="d" style="font-size:0.8rem;line-height:1.7;">
     decision_id <b style="font-family:monospace;color:{C_RAZORPAY_BLUE};">{entry['decision_id']}</b><br/>
     <span style="color:{C_GREEN};font-weight:700;">{'✓ fingerprint verified — tamper-evident' if ok else '✗ fingerprint mismatch'}</span><br/>
-    <span style="color:{C_MUT};">sha256(canonical payload ∥ timestamp), replayable</span>
+    <span style="color:{C_MUT};">sha256(canonical payload ∥ model_version ∥ action)[:16], replayable</span>
   </div>
 </div>
 """)
@@ -1236,6 +1296,8 @@ def view_frontier():
 
     st.markdown("")
     edge_pct = FR["edge"] / abs(FR["best"]["VERIFY_ADDRESS"]["loss"]) * 100
+    edge_val = FR["edge"]
+    edge_str = f"+{rs(edge_val)}" if edge_val >= 0 else rs(edge_val)
     html_block("".join([
         '<div class="kpi-grid">',
         kpi("Best single cutoff · VERIFY", rs(FR["best"]["VERIFY_ADDRESS"]["loss"]),
@@ -1244,8 +1306,8 @@ def view_frontier():
             f"at t = {FR['best']['PREPAID_ONLY']['t']:.2f} — kills customer volume before it comes close.", "blue"),
         kpi("Argmin routing line", rs(FR["primary_total"]),
             f"per-order pricing on {FR['n']:,} COD orders (val_cal). Below every point of every curve.", "green"),
-        kpi("Edge of the line", "+₹18,326",
-            "6.0% better than the best single threshold you could ever tune.", "green"),
+        kpi("Edge of the line", edge_str,
+            f"{abs(edge_pct):.1f}% better than the best single threshold you could ever tune.", "green"),
         "</div>",
     ]))
 
@@ -1256,10 +1318,12 @@ def view_frontier():
 """)
 
     with st.expander("Frozen report artifact — reports/stage4/threshold_vs_loss_curve.png (the audited version of this chart)"):
-        try:
-            st.image("reports/stage4/threshold_vs_loss_curve.png", use_column_width=True)
-        except TypeError:
-            st.image("reports/stage4/threshold_vs_loss_curve.png", use_container_width=True)
+        img_path = os.path.join(BASE_DIR, "reports/stage4/threshold_vs_loss_curve.png")
+        if os.path.exists(img_path):
+            try:
+                st.image(img_path, use_column_width=True)
+            except TypeError:
+                st.image(img_path, use_container_width=True)
         st.caption("Generated by src/eval/stage4_evaluate.py on the same frozen artifacts. The live chart above replicates it closely.")
 
 # ----------------------------------------------------------------------------

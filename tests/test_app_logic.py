@@ -101,3 +101,65 @@ def test_latency_under_100ms():
     
     # Assert elapsed < 100ms
     assert elapsed < 0.100, f"score_order took {elapsed*1000:.1f}ms, expected < 100ms"
+
+def test_payload_from_state_prepaid_zero_cod_charge():
+    import streamlit as st
+    import dashboard
+    st.session_state[dashboard.WIDGET_KEYS["payment_method"]] = "PREPAID"
+    st.session_state.pop(dashboard.WIDGET_KEYS["cod_charge"], None)
+    payload = dashboard.payload_from_state()
+    assert payload["payment_method"] == "PREPAID"
+    assert payload["cod_charge"] == 0.0
+
+def test_payload_from_state_cod_charge():
+    import streamlit as st
+    import dashboard
+    st.session_state[dashboard.WIDGET_KEYS["payment_method"]] = "COD"
+    st.session_state[dashboard.WIDGET_KEYS["cod_charge"]] = 42.0
+    payload = dashboard.payload_from_state()
+    assert payload["payment_method"] == "COD"
+    assert payload["cod_charge"] == 42.0
+
+def test_shap_html_empty_pairs():
+    import dashboard
+    out = dashboard.shap_html([])
+    assert isinstance(out, str)
+    assert "passthrough" in out.lower()
+
+def test_prepaid_scoring_and_shap_render():
+    import dashboard
+    from src.serve.scorer import score_order
+    payload = {
+        "payment_method": "PREPAID",
+        "order_value": 1200.0,
+        "category": "Apparel",
+        "quantity": 2,
+        "discount_pct": 10.0,
+        "cod_charge": 0.0,
+        "account_age_days": 120,
+        "prior_orders": 3,
+        "prior_rto_count": 0,
+        "orders_last_24h": 1,
+        "device_cluster_size": 1,
+        "pincode": "253407",
+        "courier_id": "Courier_E"
+    }
+    res = score_order(payload)
+    assert res["recommended_action"] == "PREPAID_PASSTHROUGH"
+    assert all(v == 0.0 for v in res["el_table"].values())
+    assert res["shap_top_factors"] == []
+    assert any("prepaid" in w.lower() for w in res["warnings"])
+    
+    # Render shap_html with empty pairs (as done for PREPAID orders in dashboard.py)
+    pairs = [] if payload["payment_method"] != "COD" else dashboard.full_shap(payload)
+    html_out = dashboard.shap_html(pairs)
+    assert "passthrough" in html_out.lower()
+
+def test_clamp_prior_rto():
+    import streamlit as st
+    import dashboard
+    st.session_state["ni_prior_orders"] = 1
+    st.session_state["prior_rto_count"] = 3
+    dashboard._clamp_prior_rto()
+    assert st.session_state["prior_rto_count"] == 1
+

@@ -37,7 +37,7 @@ Reproduce: `python scripts/benchmark_latency.py`
 
 ---
 
-RTO Shield converts COD order risk prediction into financially optimal intervention decisions for Indian e-commerce merchants. Every claim in this README traces to a frozen artifact in `reports/`, backed by 217 passing automated tests (generator contract, split integrity, preprocessing leakage, metric correctness, dominance regression, adversarial robustness, serving-path equivalence, UI logic, decision audit trail) and 11/11 pre-registered checks on a strictly held-out test set.
+RTO Shield converts COD order risk prediction into financially optimal intervention decisions for Indian e-commerce merchants. Every claim in this README traces to a frozen artifact in `reports/`, backed by 225 passing automated tests (generator contract, split integrity, preprocessing leakage, metric correctness, dominance regression, adversarial robustness, serving-path equivalence, UI logic, decision audit trail) and 11/11 pre-registered checks on a strictly held-out test set.
 
 ## Executive Summary — Final Results (Held-Out Test Set)
 
@@ -176,7 +176,7 @@ rto-shield/
 │       ├── stage5_test_reveal.py # one-shot held-out evaluation
 │       ├── verify_calibration.py # bin-MAE artifact investigation
 │       └── stress_test_noise.py # oracle-feature σ=0.04 stress test
-├── tests/ # 217 tests across 8 test files
+├── tests/ # 225 tests across 14 test files
 ├── scripts/
 │   ├── benchmark_latency.py # Latency benchmarking
 │   ├── deposit_effectiveness_sensitivity.py # Stage 6 bounds
@@ -229,12 +229,12 @@ python scripts/stage6_uplift_ope.py
 python scripts/deposit_effectiveness_sensitivity.py
 python scripts/freeze_artifact_hashes.py
 
-# Full test suite (217 tests)
+# Full test suite (225 tests)
 python -m pytest tests/ -q
 
 # Serving layer + demo (artifacts are committed — no generation needed)
 python src/serve/lookup.py        # rebuild pincode lookup from TRAIN only
-python -m pytest tests/ -q        # expect: 217 passed
+python -m pytest tests/ -q        # expect: 225 passed
 streamlit run dashboard.py        # 4-view decision console (Command Center, Live Engine, Frontier, Evidence)
 ```
 
