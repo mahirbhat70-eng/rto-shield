@@ -14,7 +14,7 @@
 | COD-subset RTO rate | 28.27% | `reports/stage5_test_results.md` § 3 | `pytest tests/test_stage5.py -v` |
 | Mean calibrated P | 0.2832 | `reports/stage5_test_results.md` § 3 | `pytest tests/test_stage5.py -v` |
 | Mean order value (COD) | ₹826.89 | `reports/stage5_test_results.md` § 3 | `pytest tests/test_stage5.py -v` |
-| Test COD subset size | 7,174 orders | `reports/stage5_test_results.md` § 1 | `pytest tests/test_stage3.py::test_split_integrity -v` |
+| Test COD subset size | 7,174 orders | `reports/stage5_test_results.md` § 1 | `pytest tests/test_stage2.py::test_temporal_split_no_overlap -v` |
 | RTOs prevented (primary) | 951 | `reports/stage5_test_results.md` § 3, row 4 | `pytest tests/test_stage5.py -v` |
 | Good-customer drops (primary) | 820 | `reports/stage5_test_results.md` § 3, row 4 | `pytest tests/test_stage5.py -v` |
 | Friction spend (primary) | ₹6,488 | `reports/stage5_test_results.md` § 3, row 4 | `pytest tests/test_stage5.py -v` |

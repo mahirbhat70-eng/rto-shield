@@ -82,7 +82,7 @@ ALL-PASS: All 7 acceptance gates passed successfully!
 And full CI test suite:
 ```bash
 python -m pytest tests/ -q
-# 217 passed
+# 225 passed
 ```
 
 ---

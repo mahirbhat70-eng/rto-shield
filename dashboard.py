@@ -784,7 +784,7 @@ def footer():
     st.markdown("---")
     st.markdown(
         f'<div class="foot">github.com/mahirbhat70-eng/rto-shield · frozen v1.0 artifacts · '
-        '217/217 tests green in CI · every number on this page is reproducible from reports/ and claim-matrix.md</div>',
+        '225/225 tests green in CI · every number on this page is reproducible from reports/ and claim-matrix.md</div>',
         unsafe_allow_html=True,
     )
 
@@ -910,12 +910,19 @@ def sidebar_inputs():
         "Order value (₹)", min_value=0.0, max_value=25000.0, step=10.0,
         value=float(get_val("order_value", 852.0)), key="ni_order_value"
     )
+    cat_val = str(get_val("category", "Home"))
+    cat_idx = CATEGORIES.index(cat_val) if cat_val in CATEGORIES else 0
     st.sidebar.selectbox(
         "Category", CATEGORIES,
+        index=cat_idx,
         key="category"
     )
+    pm_opts = ["COD", "PREPAID"]
+    pm_val = str(get_val("payment_method", "COD"))
+    pm_idx = pm_opts.index(pm_val) if pm_val in pm_opts else 0
     payment_method = st.sidebar.selectbox(
-        "Payment method", ["COD", "PREPAID"],
+        "Payment method", pm_opts,
+        index=pm_idx,
         key="payment_method"
     )
     st.sidebar.number_input(
@@ -949,10 +956,13 @@ def sidebar_inputs():
         value=int(get_val("prior_orders", 2)), key="ni_prior_orders",
         on_change=_clamp_prior_rto,
     )
+    max_prc = max(1, int(prior_orders))
+    prc_val = min(int(get_val("prior_rto_count", 0)), max_prc)
     if "prior_rto_count" in st.session_state:
-        st.session_state["prior_rto_count"] = min(int(st.session_state["prior_rto_count"]), max(0, int(prior_orders)))
+        st.session_state["prior_rto_count"] = min(int(st.session_state["prior_rto_count"]), max_prc)
     st.sidebar.slider(
-        "Prior RTO count", 0, max(1, int(prior_orders)),
+        "Prior RTO count", 0, max_prc,
+        value=prc_val,
         key="prior_rto_count"
     )
 
@@ -976,6 +986,11 @@ def sidebar_inputs():
         st.sidebar.markdown('<span style="color:#DC2626;font-size:0.75rem;font-weight:600;">⚠️ Unknown pincode — global prior used (cold start)</span>', unsafe_allow_html=True)
 
     st.sidebar.text_input("Courier ID", value=str(get_val("courier_id", "Courier_E")), key="ti_courier_id", max_chars=16)
+
+    # Sync all rendered widget values into _persisted_form for clean view-switch restoration
+    for k, wkey in WIDGET_KEYS.items():
+        if wkey in st.session_state:
+            st.session_state.setdefault("_persisted_form", {})[k] = st.session_state[wkey]
 
 def payload_from_state():
     payment = st.session_state.get(WIDGET_KEYS["payment_method"], "COD")
@@ -1127,14 +1142,21 @@ def view_scorer():
             st.session_state["holdout_payload"] = None
 
     # ---- KPI strip: probability / decision / latency
+    is_prepaid = last["payload"].get("payment_method", "").upper() != "COD"
+    prob_title = "P(RTO) · non-COD passthrough" if is_prepaid else "P(RTO) · calibrated probability"
+    prob_desc = (
+        "Passthrough — zero COD logistics exposure; expected return loss is <b>₹0.00</b>."
+        if is_prepaid else
+        f"Rupee rate: on <b>₹{inr(last['payload']['order_value'])}</b> COD, expected return loss ≈ <b>{rs(p * 150)}</b>."
+    )
     html_block(f"""
 {holdout_badge}
 <div class="kpi-grid" style="grid-template-columns: 1.15fr 1.15fr 0.9fr;">
   <div class="kpi">
-    <div class="t">P(RTO) · calibrated probability</div>
+    <div class="t">{prob_title}</div>
     <div class="big-p" style="color:{risk_color};">{p * 100:.1f}%</div>
     <div class="track"><i style="width:{min(p * 100, 100):.1f}%;background:{risk_color};"></i></div>
-    <div class="d">Rupee rate: on <b>₹{inr(last['payload']['order_value'])}</b> COD, expected return loss ≈ <b>{rs(p * 150)}</b>.</div>
+    <div class="d">{prob_desc}</div>
   </div>
   <div class="kpi">
     <div class="t">Decision · argmin expected loss</div>
