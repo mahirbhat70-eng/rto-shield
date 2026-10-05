@@ -84,7 +84,7 @@ Now, precision at the operating point is 0.30 — and that's fine, because a fal
 ## BEAT 6 · 4:25–5:00 · CLOSE + THE ASK — View 01 (hero)
 🎙 **SAY (verbatim):**
 
-Under the hood: a calibrated LightGBM, an 18-signal contract where every feature is knowable at order time — no leakage — 60 tests green in CI, median latency 8 milliseconds. And every number I've said today is reproducible from the repo — each claim maps to a test.
+Under the hood: a calibrated LightGBM, an 18-signal contract where every feature is knowable at order time — no leakage — 244 tests green in CI, median latency 3 milliseconds raw (~15 ms with TreeSHAP). And every number I've said today is reproducible from the repo — each claim maps to a test.
 Razorpay — this is a routing layer you can drop behind checkout. Order comes in. A rupee-priced decision goes out. An audit trail goes to the ledger.
 Everyone else will tell you which orders are risky. We tell you what to do with each one — and what it's worth.
 We don't predict the coin flip. We price it.

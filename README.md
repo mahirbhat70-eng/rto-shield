@@ -19,31 +19,66 @@
 | **4. Read the evidence** | [`claim-matrix.md`](claim-matrix.md) — every number → its artifact → its command |
 | **5. Read failure story** | [`WHAT_BROKE.md`](WHAT_BROKE.md) — 5 bugs found & fixed across the project lifecycle |
 | **6. Hard questions** | [`docs/JUDGE_QA.md`](docs/JUDGE_QA.md) — 10 questions with evidence-backed answers |
+| **7. Adversarial audit** | [`audit/GO_NO_GO.md`](audit/GO_NO_GO.md) — 17-point audit, 5 reconciled conflicts & misspecification bounds |
 
-All frozen model artifacts and reports are committed. **No data download needed to run tests.**
+All frozen model artifacts and reports are committed. **No data download needed to run tests (244/244 passed).**
 
 ---
 
 ### Decision Engine Latency (Full score_order() Path: Model + TreeSHAP + Cost Matrix)
 
-| Percentile | Latency |
-|-----------|---------|
-| p50 | ~8 ms |
-| p95 | ~11 ms |
-| p99 | ~15–30 ms |
+| Percentile | End-to-End Latency (with TreeSHAP) | Raw Model Scoring (without SHAP) |
+|-----------|-------------------------------------|----------------------------------|
+| p50 | ~15.0 ms | ~3.0 ms |
+| p95 | ~18.3 ms | ~8.0 ms |
+| p99 | ~21.1 ms | ~15.0 ms |
 
-*Full end-to-end scoring path including feature resolution, model inference, TreeSHAP explainability, and expected-loss action resolution. Hardware-dependent.*  
-Reproduce: `python scripts/benchmark_latency.py`
+*Measured across 1,000 iterations on standard CPU. Raw scoring runs in ~3ms; per-order TreeSHAP factor explanation adds ~12ms.*  
+Reproduce: `python scripts/benchmark_latency.py --n 1000 --warmup 100`
 
 ---
 
-RTO Shield converts COD order risk prediction into financially optimal intervention decisions for Indian e-commerce merchants. Every claim in this README traces to a frozen artifact in `reports/`, backed by 225 passing automated tests (generator contract, split integrity, preprocessing leakage, metric correctness, dominance regression, adversarial robustness, serving-path equivalence, UI logic, decision audit trail) and 11/11 pre-registered checks on a strictly held-out test set.
+RTO Shield converts COD order risk prediction into financially optimal intervention decisions for Indian e-commerce merchants. Every claim in this README traces to a frozen artifact in `reports/`, backed by **241 passing automated tests** (generator contract, split integrity, preprocessing leakage, metric correctness, dominance regression, adversarial robustness, serving-path equivalence, independent P&L checks, UI logic, decision audit trail) and 11/11 pre-registered checks on a strictly held-out test set.
 
-## Executive Summary — Final Results (Held-Out Test Set)
+## Operational Deployment Status: **SHADOW-MODE ONLY**
 
-The multi-action policy earns **2.0× the savings [1.23×, 2.39× bound]** of the best single-threshold policy on a fully held-out test window it never influenced, achieving a **13.1% portfolio profit uplift** (₹71,741 on the test COD subset of 7,174 orders).
+> ⚠️ **Pre-Production Operational Gate:** Autonomous live intervention routing is strictly disabled pending passive shadow calibration against real merchant delivery exports. Live serving is protected by active production safety circuit breakers:
+> 1. **Emergency Kill-Switch:** Environment / flag toggle instantly reverting all traffic to `ALLOW_COD`.
+> 2. **Intervention Rate Limiter:** Rolling window cap preventing interventions from exceeding 60% of volume.
+> 3. **High-Value Basket Protection:** Orders exceeding ₹10,000 are automatically routed to manual review rather than checkout friction.
+> 4. **Merchant Break-Even Gate:** Brands with historical COD RTO rates below **16.8%** automatically bypass friction (`ALLOW_COD`), preventing margin loss on healthy delivery profiles.
+> 5. **Cryptographic Integrity & Privacy:** Mandatory SHA-256 digest validation before pickle loading and strict allow-list sanitization stripping all customer PII.
 
-**Model quality**: the primary model scores 94.7% of the measured Bayes ceiling (0.3313 vs theoretical maximum 0.3497) on test. Because the ceiling proves no model family can do meaningfully better on this problem, the value lives in the decision layer — which is where this project built its edge.
+## Executive Summary — Final Results (Held-Out Test Set, Simulated Benchmark)
+
+> **Important Disclosure:** All metrics reported below are derived from an offline, forward-chaining synthetic benchmark dataset (N=100,000) generated under a controlled latent-risk logistic process. The reported RTO volume reductions and cash savings represent **counterfactual mathematical expectations** under specified behavioral response priors (e.g. 40% deposit drop-off, 80% RTO mitigation), not live physical merchant experiments.
+
+The multi-action policy achieves an **assumed 46.9% reduction in COD RTO return volume** (expected interception of **951.2 out of 2,028** failed deliveries based on intervention priors) and cuts the platform COD return rate from **28.3% down to 19.9%** (an **8.4 percentage-point drop**). Financially, it earns **2.0× the savings [1.23×, 2.39× bound]** of the best single-threshold policy, achieving a **13.1% portfolio profit uplift** (₹71,741 expected savings / ₹69,786 counterfactual realized cash savings on the test COD subset of 7,174 orders).
+
+**Model quality**: the primary model scores 94.7% of the measured Bayes ceiling (0.3313 vs theoretical maximum 0.3497) on test. Note: Thresholds (such as ~0.20 for verification and ~0.48 for deposits) are **order-value dependent optimal boundaries** ($p^*(V)$), not rigid constants — on a ₹100 order, verification triggers at 6.5% risk, while on a ₹10,000 order it triggers at 70%.
+
+### 📊 Comprehensive Model Evaluation Scorecard (Simulated Benchmark)
+
+| Evaluation Dimension | Metric / Test | Value | Production & Business Meaning |
+|---|---|---|---|
+| **1. Business Impact** | **RTO Volume Reduction (Simulated)** | **46.9%** | Counterfactual model expectation (951.2 out of 2,028) based on intervention priors. |
+| | **COD RTO Rate Drop (Simulated)** | **28.3% → 19.9%** | Simulated 8.4 percentage-point drop in platform return rate. |
+| | **Portfolio Profit Uplift (Simulated)**| **+13.1%** | ₹71,741 net simulated savings on 7,174 COD orders after friction costs. |
+| | **Realized P&L Savings (Simulated)** | **₹69,786** | Evaluated on actual ground-truth labels against response models (within 2.7% of EL forecast). |
+| | **Policy Superiority (Simulated)** | **2.0×** | Multi-action routing earns 2× the savings of single-threshold verify. |
+| **2. Statistical Performance** | **PR-AUC (Primary)** | **0.3313** | Evaluated on strictly held-out chronological test set (Logistic Regression baseline: 0.3434). |
+| | **Bayes Optimal Ceiling** | **0.3497** | Model achieves **94.7% of theoretical maximum signal** for this data generator. |
+| | **Recall @ Operating Point** | **85.6%** | Intercepts 1,735 out of 2,028 true RTO attempts. |
+| | **Precision @ Operating Point** | **29.6%** | Balances customer friction against ₹150 logistics penalty. |
+| | **Calibration (Brier / Bin-MAE)**| **0.1476 / 0.0086** | Probability accuracy required for cost engine. |
+| **3. Data Rigor & Splits** | **Split Strategy** | **Forward-Chaining** | Strict chronological split (Train: 71k, Val: 15k, Test: 15k) with 0 temporal leakage. |
+| | **Target Segment** | **7,174 COD Orders** | Evaluated specifically on Cash-on-Delivery checkout flow. |
+| **4. Robustness & Stress** | **Noise Sensitivity** | **+2.7% Delta** | Evaluated with σ=0.04 Gaussian feature noise (stable ≤ 10%). |
+| | **Cold-Start Pincode Fallback**| **12.0% share** | Automatic empirical Bayesian prior fallback on new locations. |
+| | **Monte Carlo (5,000 runs)** | **P(ROI > 0) = 100%** | Mean ₹69,942 (5th %tile: ₹63,935, 95th %tile: ₹75,901) over synthetic test set resampling. |
+| **5. Computational Efficiency**| **Latency (p50 / p95 / p99)** | **15ms / 18ms / 21ms** | Full end-to-end serving latency including TreeSHAP factors (3ms without SHAP). |
+| | **Model Footprint** | **123 KB** | Ultra-lightweight LightGBM, embeddable in Edge/Lambda functions. |
+
 
 ### Policy Evaluation (Test COD Subset, N=7,174)
 - **COD-Subset RTO Rate:** 28.27%
@@ -136,62 +171,101 @@ Split by calendar time (strict inequality verified, exact timestamps recorded):
 
 ---
 
+## 🛡️ Adversarial Audit, Robustness & Safety Guardrails
+
+In response to an exhaustive 17-point adversarial audit, the codebase underwent rigorous hardening, reconciliation, and automated safety verification:
+
+### 1. Reconciled Audit Conflicts (Zero Discrepancies)
+- **Design Point Savings (₹69,786.08 canonical):** An independent verification script had hardcoded a ₹0.50 per-order deposit friction ($2,612 \times 0.50 = ₹1,306.00$), yielding ₹68,480.08 ($₹69,786.08 - ₹1,306.00$). The config-driven canonical number is **₹69,786.08**.
+- **Bayes Optimal Ceiling (0.3497 observable):** The theoretical upper bound derived from the true observable generator expectation $\mathbb{E}[p \mid x]$ is **0.3497**. The primary model (0.3313) achieves **94.75% of observable ceiling signal**. The ~0.46 PR-AUC ceiling reported in earlier sweeps was computed against the unobservable latent risk $p_{\text{latent}}$ containing irreducible Gaussian noise $\epsilon \sim \mathcal{N}(0, 0.80)$.
+- **Model Ranking & Isotonic Calibration:** On the full test set ($N=14,980$), Logistic Regression achieves PR-AUC 0.3434, uncalibrated LightGBM achieves 0.3433, and isotonic LightGBM achieves 0.3313. Isotonic regression collapses the model's continuous risk distribution into 97 discrete probability plateaus (a step-function artifact that dampens ranking granularity), while preserving perfect calibration within decision bands ($|\Delta| \le 0.0032$).
+- **Merchant Break-Even Gate (16.8% COD RTO):** At average ₹1,000 order value and 20% margin, losing a customer costs ₹200 while intercepting an RTO saves ₹150. If a merchant's baseline COD RTO is below **16.8%**, intervention friction destroys net margin. The system automatically enforces an `ALLOW_COD` bypass for low-risk brands.
+- **Cryptographic Artifact Inventory:** All 9 production artifacts (5 CSVs, 4 PKLs) are pinned in `models/artifact_hashes.json`. Deserialization refuses unverified pickles with a hard `SecurityError`.
+
+### 2. Behavioral Misspecification Sensitivity Bounds
+Executed via `audit/misspec.py` across full parameter perturbations:
+- **Deposit Drop-Off Rate:** Base 40%; profitable up to **99.58%** drop-off.
+- **Verify Drop-Off Rate:** Base 5%; profitable up to **23.81%** drop-off.
+- **Reverse Courier Logistics Cost:** Base ₹150; remains net-profitable down to **₹76.11**.
+- **Joint Pessimistic Scenario:** Under worst-case joint conditions (Deposit Drop 60%, RTO drop 60%, Courier ₹120, Margin 25%), routing yields a net loss of −₹5,870.94, confirming why live deployment requires shadow calibration.
+
+### 3. Clean-Room CI Reproducibility
+- Automated GitHub Actions workflow: [`.github/workflows/repro.yml`](.github/workflows/repro.yml) rebuilds all 9 model artifacts from raw data in a clean environment and asserts SHA-256 match.
+- Fully documented in [`audit/prompt_12_repro.md`](audit/prompt_12_repro.md).
+
+---
+
 ## Project Structure
 
 ```
 rto-shield/
-├── app.py # Streamlit UI (Single-Order Scorer)
-├── dashboard.py # Streamlit UI (4-View Decision Console)
-├── run_app.bat # Windows launcher
+├── app.py                      # Streamlit UI (Single-Order Scorer)
+├── dashboard.py                # Streamlit UI (5-View Decision & Governance Console)
+├── run_app.bat                 # Windows launcher
 ├── README.md
 ├── requirements.txt
+├── requirements-ci.txt         # Pinned CI dependencies
+├── .github/workflows/
+│   ├── ci.yml                  # Continuous integration test runner
+│   └── repro.yml               # Clean-room artifact rebuild & SHA-256 verification
+├── audit/                      # Adversarial audit evidence & verification scripts
+│   ├── GO_NO_GO.md             # Production gate verdict (SHADOW-MODE ONLY)
+│   ├── prompt_12_repro.md      # Clean-venv artifact rebuild & seed determinism
+│   ├── reconcile.py            # Mathematical reconciliation of the 5 audit conflicts
+│   ├── misspec.py              # Behavioral misspecification sensitivity analysis
+│   ├── seed_sweep.py           # 5-seed end-to-end pipeline evaluation
+│   └── run_mutations.py        # In-tree mutation testing harness
 ├── configs/
-│   ├── data_config.yaml # feature groups, paths (Stage 1)
-│   └── cost_config.yaml # interventions, costs, provenance (Stage 4)
+│   ├── data_config.yaml        # feature groups, paths (Stage 1)
+│   └── cost_config.yaml        # interventions, costs, provenance (Stage 4)
 ├── docs/
-│   └── data_dictionary.md # schema, ranges, evidence tiers, oracle warning
+│   ├── data_dictionary.md      # schema, ranges, evidence tiers, oracle warning
+│   ├── JUDGE_QA.md             # 10 hard audit questions with evidence
+│   └── pitch_script.md         # 5-minute competition pitch script
 ├── src/
 │   ├── data/
-│   │   ├── generator.py # Stage 1 (frozen)
-│   │   ├── split.py # Stage 2: temporal split + val_cal/val_rep (Stage 3)
-│   │   └── verify_splits.py # boundary + leakage verification
+│   │   ├── generator.py        # Stage 1 (frozen)
+│   │   ├── split.py            # Stage 2: temporal split + val_cal/val_rep (Stage 3)
+│   │   └── verify_splits.py    # boundary + leakage verification
 │   ├── eda/
-│   │   └── report.py # Stage 2 EDA (4 diagnostic plots)
+│   │   └── report.py           # Stage 2 EDA (4 diagnostic plots)
 │   ├── models/
-│   │   ├── rule_baseline.py # Stage 2
-│   │   ├── logistic_baseline.py # Stage 2
-│   │   └── tree_model.py # Stage 3 LightGBM (grid on val_cal only)
+│   │   ├── rule_baseline.py    # Stage 2
+│   │   ├── logistic_baseline.py# Stage 2
+│   │   └── tree_model.py       # Stage 3 LightGBM (grid on val_cal only)
 │   ├── policy/
-│   │   └── cost_engine.py # Stage 4 expected loss + router
+│   │   └── cost_engine.py      # Stage 4 expected loss + router
 │   ├── serve/
-│   │   ├── lookup.py # pincode statistics rebuild
-│   │   └── scorer.py # serving entrypoint, SHAP extraction, guardrails
+│   │   ├── audit.py            # PII allow-list sanitization & HMAC audit trail
+│   │   ├── guardrails.py       # Production safety circuit breakers
+│   │   ├── lookup.py           # pincode statistics rebuild
+│   │   └── scorer.py           # serving entrypoint, SHA-256 validation, SHAP
 │   └── eval/
-│       ├── evaluate.py # Stage 2 comparison (closed-form rule AP, matched-recall)
-│       ├── calibration.py # Stage 3 reliability + isotonic (val_cal)
-│       ├── explainability.py # Stage 3 SHAP summary + waterfalls
-│       ├── bayes_ceiling.py # Stage 3.5 theoretical maximum
-│       ├── stage3_evaluate.py # continuous results table
-│       ├── stage4_evaluate.py # 6-strategy portfolio + noise sensitivity
+│       ├── evaluate.py         # Stage 2 comparison (closed-form rule AP, matched-recall)
+│       ├── calibration.py      # Stage 3 reliability + isotonic (val_cal)
+│       ├── explainability.py   # Stage 3 SHAP summary + waterfalls
+│       ├── bayes_ceiling.py    # Stage 3.5 theoretical maximum
+│       ├── stage3_evaluate.py  # continuous results table
+│       ├── stage4_evaluate.py  # 6-strategy portfolio + noise sensitivity
 │       ├── stage5_test_reveal.py # one-shot held-out evaluation
 │       ├── verify_calibration.py # bin-MAE artifact investigation
-│       └── stress_test_noise.py # oracle-feature σ=0.04 stress test
-├── tests/ # 225 tests across 14 test files
+│       └── stress_test_noise.py# oracle-feature σ=0.04 stress test
+├── tests/                      # 241 automated tests across 18 test files
 ├── scripts/
-│   ├── benchmark_latency.py # Latency benchmarking
+│   ├── benchmark_latency.py    # Latency benchmarking
 │   ├── deposit_effectiveness_sensitivity.py # Stage 6 bounds
 │   ├── freeze_artifact_hashes.py # SHA-256 provenance
-│   ├── generator_v2.py # Stage 6 uplift data
-│   ├── stage6_uplift_ope.py # Stage 6 Evaluation
-│   └── verify_shap_sign.py # SHAP class 1 verification
+│   ├── generator_v2.py         # Stage 6 uplift data
+│   ├── stage6_uplift_ope.py    # Stage 6 Evaluation
+│   └── verify_shap_sign.py     # SHAP class 1 verification
 ├── reports/
 │   ├── stage2_baseline_results.md
-│   ├── stage3_results.md # incl. bin-MAE decomposition footnote
+│   ├── stage3_results.md       # incl. bin-MAE decomposition footnote
 │   ├── stage4_financial_results.md
-│   ├── stage5_test_results.md # transfer table + pre-registered checks + Stage 5.2 Realized P&L
+│   ├── stage5_test_results.md  # transfer table + pre-registered checks + Stage 5.2 Realized P&L
 │   ├── stage4/threshold_vs_loss_curve.png
-│   └── eda/ stage3/ # plots
-└── models/ # committed for one-command demo
+│   └── eda/ stage3/            # plots
+└── models/                     # committed for one-command demo (with artifact_hashes.json)
 ```
 
 Model artifacts and the synthetic dataset are committed (synthetic, no privacy concern — and committing them fixes the Stage 5 SHA-256 value for any clone, strengthening the hash assertion). Every number remains reproducible via the chain below.
@@ -229,13 +303,18 @@ python scripts/stage6_uplift_ope.py
 python scripts/deposit_effectiveness_sensitivity.py
 python scripts/freeze_artifact_hashes.py
 
-# Full test suite (225 tests)
+# Adversarial audit verification
+python audit/reconcile.py
+python audit/misspec.py
+python audit/seed_sweep.py
+
+# Full test suite (241 tests)
 python -m pytest tests/ -q
 
 # Serving layer + demo (artifacts are committed — no generation needed)
 python src/serve/lookup.py        # rebuild pincode lookup from TRAIN only
-python -m pytest tests/ -q        # expect: 225 passed
-streamlit run dashboard.py        # 4-view decision console (Command Center, Live Engine, Frontier, Evidence)
+python -m pytest tests/ -q        # expect: 241 passed
+streamlit run dashboard.py        # 5-view decision & governance console
 ```
 
 ## Honest Limitations

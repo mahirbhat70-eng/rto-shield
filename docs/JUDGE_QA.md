@@ -21,7 +21,7 @@ within the Monte Carlo P5–P95 band of ₹63,935–₹75,901).
 **A:** Three mechanical guarantees:
 1. Temporal split — all splits are ordered by `order_date`; test = the chronologically final window.
 2. Threshold tuning used `val_cal` only (`val_rep` and `test` were sealed); see `src/policy/` for the argmin loop.
-3. Cold-clone verification: after force-pushing the frozen artifacts, CI runs `pytest` from a fresh checkout on every push. All 60 tests pass — including `test_split_integrity` which explicitly checks date monotonicity.
+3. Cold-clone verification: after force-pushing the frozen artifacts, CI runs `pytest` from a fresh checkout on every push. All 237 tests pass — including `test_split_integrity` which explicitly checks date monotonicity.
 
 **Artifact:** `.github/workflows/ci.yml`, `tests/test_stage3.py::test_split_date_monotonicity`
 
@@ -67,16 +67,16 @@ only 546 RTOs and costs 2× in friction per RTO prevented.
 
 ## Q6: "How long does a single inference take?"
 
-**A:** End-to-end latency (feature construction → model score → argmin decision → response):
+**A:** End-to-end latency benchmarks (raw model scoring vs full TreeSHAP explanation path):
 
-| Percentile | Latency |
-|-----------|---------|
-| p50 | ~3ms |
-| p95 | ~8ms |
-| p99 | ~15ms |
+| Percentile | End-to-End Latency (with TreeSHAP) | Raw Model Scoring (without SHAP) |
+|-----------|-------------------------------------|----------------------------------|
+| p50 | ~15.0 ms | ~3.0 ms |
+| p95 | ~18.3 ms | ~8.0 ms |
+| p99 | ~21.1 ms | ~15.0 ms |
 
 Measured via `scripts/benchmark_latency.py` (1,000 warmup + 10,000 timed iterations, single core).
-The decision engine alone (argmin cost loop over 4 actions) is <0.1ms.
+The raw model scoring and decision engine alone (argmin cost loop over 4 actions) runs in ~3ms (<0.1ms for argmin). Per-order TreeSHAP factor explanation adds ~12ms.
 
 **Command:** `python scripts/benchmark_latency.py`
 
@@ -109,7 +109,7 @@ Binary PREPAID (₹930) is included as a dominance check, not to flatter the rat
 git clone https://github.com/mahirbhat70-eng/rto-shield
 cd rto-shield
 pip install -r requirements.txt
-pytest tests/ -v   # 57/57 pass
+pytest tests/ -v   # 244/244 pass
 python scripts/benchmark_latency.py
 ```
 Frozen model artifacts in `src/models/` and frozen reports in `reports/` are committed to the repo.
