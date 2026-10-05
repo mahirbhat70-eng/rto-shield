@@ -227,14 +227,37 @@ def test_batch_policy_length_guard(batch_fixture):
 
 
 def test_batch_and_single_agree(batch_fixture):
-    sub, proba = batch_fixture
+    sub, _ = batch_fixture
+    sub = sub.copy()
+    from src.serve.scorer import resolve_pincode_info
+    for idx in sub.index:
+        p_info, _ = resolve_pincode_info(sub.loc[idx, 'pincode'])
+        sub.loc[idx, 'historical_pincode_rto_rate'] = p_info['historical_pincode_rto_rate']
+        sub.loc[idx, 'pincode_tier'] = p_info['pincode_tier']
+
+    model = joblib.load('models/tree_model_calibrated.pkl')
+    proba = pd.Series(model.predict_proba(sub.drop(columns=['rto_label', 'timestamp', 'order_id'], errors='ignore'))[:, 1], index=sub.index)
+
     engine = CostEngine()
     actions, losses = engine.get_optimal_policy(sub, proba)
-    row = sub.iloc[0]
-    feats = row.to_dict()
-    feats.pop('rto_label'); feats.pop('historical_pincode_rto_rate'); feats.pop('pincode_tier')
-    res = score_order(feats)
-    assert res['recommended_action'] == actions[0]
+    for i in range(min(5, len(sub))):
+        row = sub.iloc[i]
+        feats = row.to_dict()
+        feats.pop('rto_label', None); feats.pop('historical_pincode_rto_rate', None); feats.pop('pincode_tier', None)
+        feats.pop('timestamp', None); feats.pop('order_id', None)
+        res = score_order(feats)
+        assert np.isclose(res['probability'], proba.iloc[i], atol=1e-5), f"Prob mismatch on row {i}"
+        assert res['recommended_action'] == actions[i], f"Action mismatch on row {i}"
+
+
+def test_unseen_pincode_uses_exact_cold_start_prior():
+    from src.serve.scorer import COLD_START_PRIOR
+    info, is_cold = resolve_pincode_info("999999")
+    assert is_cold is True
+    assert np.isclose(info['historical_pincode_rto_rate'], COLD_START_PRIOR['historical_pincode_rto_rate'])
+    assert info['historical_pincode_rto_rate'] > 0.15
+    assert info['pincode_tier'] == COLD_START_PRIOR['pincode_tier']
+
 
 
 def test_batch_non_cod_passthrough():

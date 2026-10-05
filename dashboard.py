@@ -572,6 +572,12 @@ ACTION_META = {
         C_VIOLET_BG,
         "Convert COD to prepaid. −55% RTO, −70% conversions.",
     ),
+    "MANUAL_REVIEW": (
+        "MANUAL REVIEW",
+        C_AMBER,
+        C_AMBER_BG,
+        "High-value order (>₹10,000) flagged by safety guardrails for human review.",
+    ),
 }
 
 def inr(v, dec=0):
@@ -784,7 +790,7 @@ def footer():
     st.markdown("---")
     st.markdown(
         f'<div class="foot">github.com/mahirbhat70-eng/rto-shield · frozen v1.0 artifacts · '
-        '225/225 tests green in CI · every number on this page is reproducible from reports/ and claim-matrix.md</div>',
+        '241/241 tests green in CI · every number on this page is reproducible from reports/ and claim-matrix.md</div>',
         unsafe_allow_html=True,
     )
 
@@ -798,20 +804,24 @@ def view_overview():
 <div class="hero-sub">RTO Shield scores every COD order in under 100&nbsp;ms, prices four interventions with a real
 rupee cost matrix (₹150 landed cost per return · 20% average margin), and routes each order to the
 cheapest expected loss. Risk is not an arbitrary label here — it is a price, and the engine always selects the cheapest one.</div>
+<div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; padding: 0.65rem 1.1rem; margin: 1rem 0 1.2rem 0; font-size: 0.84rem; color: #92400E; display: flex; align-items: center; gap: 0.6rem;">
+  <span style="background: #D97706; color: #FFFFFF; font-weight: 800; font-size: 0.70rem; padding: 0.2rem 0.5rem; border-radius: 4px; letter-spacing: 0.05em;">SHADOW-MODE ONLY</span>
+  <span><b>Live Intervention Gate Active:</b> Pre-production traffic operates in passive observation mode pending real merchant margin/courier calibration. Safety circuit breakers wired: Kill-Switch, 60% Rate Cap, >₹10k Review, and 16.8% Break-Even Gate.</span>
+</div>
 """)
 
     html_block("".join([
         '<div class="kpi-grid">',
-        kpi("Expected savings", rs(71741), "<b>vs always-allow</b> on holdout test (7,174 COD orders). Argmin routing expected loss.", "green"),
-        kpi("Realized savings", rs(69786), "Same portfolio scored with <b>actual RTO labels</b> — only −2.7% off forecast.", "green"),
+        kpi("Expected savings", rs(71741), "<b>[Simulated Benchmark]</b> vs always-allow on holdout test (7,174 COD orders). Argmin routing expected loss.", "green"),
+        kpi("Realized savings", rs(69786), "<b>[Simulated Benchmark]</b> Scored with actual RTO labels under baseline response assumptions.", "green"),
         kpi("vs best threshold", "2.0×", "EL saves <b>₹71,741 vs ₹35,919</b>. Causal bounds <b>[1.23×, 2.39×]</b> via 5k Monte Carlo.", "blue"),
-        kpi("of Bayes ceiling", "94.7%", "PR-AUC <b>0.3313 / 0.3497</b> — extracts near theoretical maximum signal.", "amber"),
+        kpi("of Bayes ceiling", "94.7%", "PR-AUC <b>0.3313 / 0.3497</b> — extracts 94.7% of observable ceiling signal.", "amber"),
         "</div>",
         '<div class="kpi-grid" style="margin-top: 0.8rem;">',
         kpi("Profit uplift", "13.1%", "Pre-registered PASS band <b>[8%, 18%]</b> of baseline loss declared before test reveal.", "green"),
         kpi("P(savings &gt; 0)", "100%", "Across <b>5,000-draw Monte Carlo</b> on intervention effects. P5 ₹63,935 · P95 ₹75,901.", "blue"),
-        kpi("Scoring path", "&lt;100 ms", "Full path <b>including TreeSHAP</b>. Core p50 ≈ 13 ms. &gt;75 orders/sec per core.", "blue"),
-        kpi("Test suite", "225/225", "14 test suites green in CI on pinned versions (sklearn 1.9.0 · lightgbm 4.7.0 · shap 0.52.0).", ""),
+        kpi("Scoring path", "~15 ms", "End-to-end latency with TreeSHAP explanation (core model scoring ~3 ms).", "blue"),
+        kpi("Test suite", "241/241", "18 test files green in CI with 93% mutation score, SHA-256 integrity & PII allow-list.", "blue"),
         "</div>",
     ]))
 
@@ -833,11 +843,45 @@ cheapest expected loss. Risk is not an arbitrary label here — it is a price, a
 """)
 
     html_block(f"""
-<div class="kpi-grid" style="margin-top:0.8rem;">
-{kpi('The COD bleed', '28.27%', 'of COD orders on the holdout test ended in RTO. At ₹150 landed cost per return, COD is the most expensive button on the checkout.', 'amber')}
-{kpi('Live Decision Engine', 'View 02', 'Load the VERIFY preset, hit score, and watch the engine price all four moves and route the order with TreeSHAP explanations.', 'blue')}
-{kpi('Policy Frontier', 'View 03', 'The policy frontier chart, recomputed live in your browser from the frozen model. No single cutoff touches the routing line.', 'blue')}
-{kpi('Portfolio Evidence', 'View 04', 'Expected vs realized savings, Monte Carlo band, per-action calibration, precision/recall with reproduction commands.', 'blue')}
+<div class="panel" style="margin-top: 1rem;">
+  <div class="panel-h">Production Safety Circuit Breakers · SHADOW-MODE ONLY</div>
+  <div class="step-strip" style="grid-template-columns: repeat(5, 1fr);">
+    <div class="step">
+      <div class="n">BREAKER 01</div>
+      <div class="h">Emergency Kill-Switch</div>
+      <div class="b">Instant flag/env trigger <code>RTO_SHIELD_KILL_SWITCH</code> bypassing all models directly to <code>ALLOW_COD</code>.</div>
+    </div>
+    <div class="step">
+      <div class="n">BREAKER 02</div>
+      <div class="h">60% Rate Cap</div>
+      <div class="b">Sliding-window limiter strictly preventing interventions from exceeding 60% of rolling order volume.</div>
+    </div>
+    <div class="step">
+      <div class="n">BREAKER 03</div>
+      <div class="h">&gt;₹10,000 Safeguard</div>
+      <div class="b">High-value baskets automatically route to <code>MANUAL_REVIEW</code> instead of checkout friction.</div>
+    </div>
+    <div class="step">
+      <div class="n">BREAKER 04</div>
+      <div class="h">16.8% Break-Even Gate</div>
+      <div class="b">Brands with &lt;16.8% base COD RTO bypass friction, preventing net margin destruction on low-risk catalogues.</div>
+    </div>
+    <div class="step">
+      <div class="n">BREAKER 05</div>
+      <div class="h">SHA-256 &amp; PII Allow-List</div>
+      <div class="b">Pickle validation against 9-hash manifest + strict customer PII scrubbing before audit ingestion.</div>
+    </div>
+  </div>
+</div>
+""")
+
+    html_block(f"""
+<div class="kpi-grid" style="margin-top:0.8rem; grid-template-columns: repeat(5, 1fr);">
+{kpi('The COD bleed', '28.27%', 'of COD orders on holdout test ended in RTO. At ₹150 landed cost, COD is the biggest margin leak.', 'amber')}
+{kpi('Live Decision Engine', 'View 02', 'Load presets, edit order features, score order, and inspect TreeSHAP drivers.', 'blue')}
+{kpi('Policy Frontier', 'View 03', 'The policy frontier chart, recomputed live. No single cutoff beats argmin routing.', 'blue')}
+{kpi('Portfolio Evidence', 'View 04', 'Expected vs realized savings, 5,000 Monte Carlo draws, per-shelf calibration.', 'blue')}
+{kpi('Audit & Governance', 'View 05', '17-point audit reconciliation, parameter misspecification, and 5-seed stability.', 'green')}
 </div>
 """)
 
@@ -987,6 +1031,21 @@ def sidebar_inputs():
 
     st.sidebar.text_input("Courier ID", value=str(get_val("courier_id", "Courier_E")), key="ti_courier_id", max_chars=16)
 
+    st.sidebar.markdown('<div class="side-h">Production Guardrails</div>', unsafe_allow_html=True)
+    st.sidebar.checkbox(
+        "Enforce safety circuit breakers", value=True, key="enforce_guardrails",
+        help="Evaluates circuit breakers (Kill Switch, Break-Even Gate, >₹10k Review, Rate Cap)"
+    )
+    st.sidebar.number_input(
+        "Merchant baseline COD RTO (%)", min_value=0.0, max_value=100.0, step=0.5,
+        value=float(st.session_state.get("merchant_cod_rto_pct", 28.0)), key="merchant_cod_rto_pct",
+        help="Merchant baseline COD return rate. If <16.8%, break-even gate auto-enforces ALLOW_COD."
+    )
+    st.sidebar.checkbox(
+        "Emergency Kill-Switch (simulate)", value=False, key="simulate_kill_switch",
+        help="Instantly reverts all orders to ALLOW_COD via emergency circuit breaker"
+    )
+
     # Sync all rendered widget values into _persisted_form for clean view-switch restoration
     for k, wkey in WIDGET_KEYS.items():
         if wkey in st.session_state:
@@ -1073,9 +1132,22 @@ def view_scorer():
     if st.session_state.get("score_requested"):
         st.session_state["score_requested"] = False
         payload = payload_from_state()
+        enforce_gr = st.session_state.get("enforce_guardrails", True)
+        sim_kill = st.session_state.get("simulate_kill_switch", False)
+        m_rto_pct = float(st.session_state.get("merchant_cod_rto_pct", 28.0))
+        payload["merchant_cod_rto_rate"] = m_rto_pct / 100.0
+
         try:
             t0 = time.perf_counter()
-            res = score_order(payload)
+            if enforce_gr:
+                from src.serve.guardrails import ProductionGuardrails
+                gr = ProductionGuardrails(kill_switch=sim_kill, min_base_rto_rate=0.168)
+                res = gr.evaluate(payload, score_order)
+                if "el_table" not in res:
+                    from src.serve.scorer import engine
+                    res["el_table"] = engine.evaluate_interventions(payload["order_value"], res["probability"]) if payload["payment_method"] == "COD" else {k: 0.0 for k in engine.interventions.keys()}
+            else:
+                res = score_order(payload)
             latency_ms = (time.perf_counter() - t0) * 1000.0
             entry = build_audit_record(payload, res, latency_ms=latency_ms)
             audit_log = st.session_state.setdefault("audit_log", [])
@@ -1127,6 +1199,17 @@ def view_scorer():
     for w in res.get("warnings", []):
         st.warning(w)
 
+    # Production Guardrail Triggered Badge
+    guardrail_applied = res.get("guardrail_applied")
+    guardrail_badge = ""
+    if guardrail_applied and guardrail_applied != "NONE":
+        guardrail_badge = (
+            f'<div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:9px;padding:0.6rem 0.95rem;margin-bottom:0.8rem;display:flex;align-items:center;gap:0.6rem;font-size:0.82rem;color:#92400E;">'
+            f'<span style="background:#D97706;color:#FFFFFF;font-weight:800;font-size:0.68rem;padding:0.18rem 0.45rem;border-radius:4px;letter-spacing:0.04em;">CIRCUIT BREAKER</span>'
+            f'<span><b>Guardrail Triggered:</b> {guardrail_applied} · Status: <b>{res.get("status", "OVERRIDDEN")}</b></span>'
+            f'</div>'
+        )
+
     # Holdout ground truth indicator if random order was chosen (N2)
     hl = st.session_state.get("holdout_label")
     hp = st.session_state.get("holdout_payload")
@@ -1150,6 +1233,7 @@ def view_scorer():
         f"Rupee rate: on <b>₹{inr(last['payload']['order_value'])}</b> COD, expected return loss ≈ <b>{rs(p * 150)}</b>."
     )
     html_block(f"""
+{guardrail_badge}
 {holdout_badge}
 <div class="kpi-grid" style="grid-template-columns: 1.15fr 1.15fr 0.9fr;">
   <div class="kpi">
@@ -1456,6 +1540,162 @@ def view_portfolio():
 """)
 
 # ----------------------------------------------------------------------------
+# View 05 — Adversarial Audit & Governance
+# ----------------------------------------------------------------------------
+def view_governance():
+    st.markdown("### Adversarial Audit & Safety Governance")
+    st.markdown(
+        f'<div style="color:{C_MUT_DARK};font-size:0.88rem;max-width:960px;line-height:1.55;margin-bottom:1.1rem;">'
+        "Independent verification and reconciliation following an exhaustive 17-point adversarial audit. "
+        "All 5 conflict discrepancies have been mathematically reconciled to root cause, all 9 model artifacts "
+        "cryptographically validated, and behavioral misspecification sensitivity boundaries established.</div>",
+        unsafe_allow_html=True)
+
+    html_block(f"""
+<div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; padding: 0.85rem 1.2rem; margin-bottom: 1.2rem; color: #92400E; display: flex; align-items: center; justify-content: space-between;">
+  <div>
+    <span style="background: #D97706; color: #FFFFFF; font-weight: 800; font-size: 0.72rem; padding: 0.22rem 0.55rem; border-radius: 4px; letter-spacing: 0.05em;">SHADOW-MODE ONLY</span>
+    <b style="margin-left: 0.5rem; font-size: 0.95rem;">Production Deployment Gate Verdict</b>
+    <div style="font-size: 0.82rem; margin-top: 0.35rem; color: #78350F; line-height: 1.45;">
+      Autonomous live intervention routing is strictly deferred pending physical merchant delivery telemetry. Active pre-production circuit breakers:
+      <b>Emergency Kill-Switch</b> · <b>60% Rate Cap</b> · <b>&gt;₹10k Review</b> · <b>16.8% Merchant Break-Even Gate</b> · <b>SHA-256 Digest Validation</b>.
+    </div>
+  </div>
+  <div style="text-align: right; min-width: 140px;">
+    <span class="verify-chip" style="background:#FEF3C7; border-color:#FCD34D; color:#92400E;">0 Blockers · 5/5 Reconciled</span>
+  </div>
+</div>
+""")
+
+    html_block("".join([
+        '<div class="kpi-grid">',
+        kpi("Canonical Savings", rs(69786.08, 2), "Reconciled against verification script ₹0.50 friction deduction bug (₹1,306).", "green"),
+        kpi("Observable Ceiling", "94.75%", "PR-AUC <b>0.3313 / 0.3497</b> — extracts 94.75% of true observable signal.", "amber"),
+        kpi("Merchant Break-Even", "16.8%", "Below 16.8% COD RTO, intervention friction destroys merchant product margin.", "blue"),
+        kpi("Mutation Kill Rate", "93%", "Suite catches <b>13 of 14 intentional faults</b>. PR-AUC regression floor: ≥0.32.", "blue"),
+        "</div>",
+    ]))
+
+    st.markdown("")
+    # Reconciled Conflicts
+    html_block(f"""
+<div class="panel">
+  <div class="panel-h">The 5 Reconciled Audit Conflicts · Root Cause &amp; Mathematical Proof</div>
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.5rem;">
+    <div class="step" style="background: #FFFFFF;">
+      <div class="n">CONFLICT 01 · DESIGN POINT SAVINGS</div>
+      <div class="h">₹69,786.08 Canonical vs ₹68,480.08</div>
+      <div class="b">
+        <b>Root Cause:</b> <code>audit/run_step3_verifications.py</code> line 132 hardcoded a ₹0.50 deposit friction fee.
+        2,612 deposit orders × ₹0.50 = ₹1,306.00. ₹69,786.08 − ₹1,306.00 = ₹68,480.08.
+        Canonical config-driven savings in <code>reports/stage5_test_results.md</code> is verified bit-for-bit at <b>₹69,786.08</b>.
+      </div>
+    </div>
+    <div class="step" style="background: #FFFFFF;">
+      <div class="n">CONFLICT 02 · BAYES OPTIMAL CEILING</div>
+      <div class="h">Observable 0.3497 vs Latent ~0.46</div>
+      <div class="b">
+        <b>Root Cause:</b> Earlier sweeps computed ceiling on unobservable latent risk $p_{{latent}}$ containing random Gaussian noise $\\epsilon \\sim \\mathcal{{N}}(0, 0.80)$.
+        The true observable theoretical maximum $\\mathbb{{E}}[p \\mid x]$ is <b>0.3497</b>. The primary LightGBM (0.3313) achieves <b>94.75% of observable ceiling signal</b>.
+      </div>
+    </div>
+    <div class="step" style="background: #FFFFFF;">
+      <div class="n">CONFLICT 03 · MODEL RANKING &amp; CALIBRATION</div>
+      <div class="h">LR 0.3434 vs LGBM Isotonic 0.3313</div>
+      <div class="b">
+        <b>Root Cause:</b> Isotonic regression collapses the model's continuous risk distribution into <b>97 discrete probability plateaus</b> on test (96.1% share), flattening ranking ties.
+        Uncalibrated LightGBM achieves 0.3433 (parity with LR). Isotonic is required to make probabilities honest for expected-loss routing ($|\\Delta| \\le 0.0032$).
+      </div>
+    </div>
+    <div class="step" style="background: #FFFFFF;">
+      <div class="n">CONFLICT 04 · BREAK-EVEN COD RTO RATE</div>
+      <div class="h">Standardized to COD Subset: 16.8%</div>
+      <div class="b">
+        <b>Root Cause:</b> At ₹1,000 order value and 20% margin, losing a customer costs ₹200 while saving an RTO saves ₹150.
+        When COD RTO drops below <b>16.8%</b>, intervention friction costs exceed logistics savings. Guardrails auto-bypass low-risk brands to <code>ALLOW_COD</code>.
+      </div>
+    </div>
+  </div>
+  <div style="margin-top: 0.9rem; padding: 0.8rem 1rem; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 0.82rem; color: {C_MUT_DARK};">
+    <b>CONFLICT 05 · Cryptographic Artifact Inventory:</b> All 9 production model files (5 lookup CSVs, 4 pickled models) pinned in <code>models/artifact_hashes.json</code> verified bit-for-bit with SHA-256 digests. Model deserialization refuses unverified pickles with a hard <code>SecurityError</code>.
+  </div>
+</div>
+""")
+
+    st.markdown("")
+    left, right = st.columns([1.1, 1])
+    with left:
+        st.markdown("#### Behavioral Misspecification Sensitivity Bounds")
+        st.caption("Recomputed via audit/misspec.py across parameter perturbations")
+        misspec_data = pd.DataFrame({
+            "Parameter": [
+                "Deposit Drop-Off Rate",
+                "Verify Drop-Off Rate",
+                "Deposit RTO Reduction",
+                "Reverse Courier Logistics Cost",
+                "Joint Pessimistic Stress Test"
+            ],
+            "Baseline Value": ["40.0%", "5.0%", "80.0%", "₹150.00", "Baseline Assumptions"],
+            "Break-Even Threshold": ["99.58%", "23.81%", "25.14%", "₹76.11", "−₹5,870.94 net loss"],
+            "Safe Range": ["[0%, 99.5%]", "[0%, 23.8%]", "[25.1%, 100%]", "[₹76.11, ∞)", "Shadow calibration req."]
+        })
+        st.dataframe(misspec_data, use_container_width=True, hide_index=True)
+
+    with right:
+        st.markdown("#### 5-Seed Pipeline Determinism Sweep")
+        st.caption("Recomputed via audit/seed_sweep.py across random generator seeds")
+        seeds_data = pd.DataFrame({
+            "Seed": [42, 101, 2024, 777, 999, "Mean"],
+            "Observable Ceiling": ["0.3497", "0.3429", "0.3486", "0.3396", "0.3452", "0.3452"],
+            "Logistic Reg.": ["0.3434", "0.3359", "0.3412", "0.3353", "0.3399", "0.3391 (98.2%)"],
+            "LGBM Uncal": ["0.3433", "0.3320", "0.3419", "0.3314", "0.3364", "0.3370 (97.6%)"],
+            "LGBM Isotonic": ["0.3313", "0.3204", "0.3287", "0.3202", "0.3235", "0.3248 (94.1%)"]
+        })
+        st.dataframe(seeds_data, use_container_width=True, hide_index=True)
+
+    st.markdown("")
+    html_block(f"""
+<div class="panel">
+  <div class="panel-h">Automated Test Hardening &amp; Privacy Verification</div>
+  <div class="step-strip" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="step">
+      <div class="n">CI REPRODUCIBILITY</div>
+      <div class="h">Clean-Room Rebuild</div>
+      <div class="b"><code>.github/workflows/repro.yml</code> executes clean venv build from raw data; all 9 SHA-256 hashes matched bit-for-bit.</div>
+    </div>
+    <div class="step">
+      <div class="n">MUTATION TESTING</div>
+      <div class="h">93% Mutation Score</div>
+      <div class="b">13 of 14 intentional sabotage mutations caught by test suite. PR-AUC regression floor raised to ≥0.32 to catch depth-1 trees.</div>
+    </div>
+    <div class="step">
+      <div class="n">TAMPER REFUSAL</div>
+      <div class="h">Cryptographic Shield</div>
+      <div class="b">Verified by <code>test_artifact_integrity.py</code>: any modified pickle byte triggers hard <code>SecurityError</code> and halts loading.</div>
+    </div>
+    <div class="step">
+      <div class="n">PRIVACY COMPLIANCE</div>
+      <div class="h">Strict PII Allow-List</div>
+      <div class="b"><code>AUDIT_ALLOWLIST_KEYS</code> strips customer names, phone numbers, and addresses out of audit logs before ingestion.</div>
+    </div>
+  </div>
+</div>
+""")
+
+    st.markdown("")
+    html_block(f"""
+<div class="panel">
+  <div class="panel-h">Audit Reproduction Commands</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem 2rem;font-size:0.78rem;color:{C_MUT_DARK};line-height:1.8;">
+    <div>→ Reconcile the 5 audit conflicts: <code style="color:{C_RAZORPAY_BLUE};">python audit/reconcile.py</code></div>
+    <div>→ Recompute misspecification bounds: <code style="color:{C_RAZORPAY_BLUE};">python audit/misspec.py</code></div>
+    <div>→ Run 5-seed pipeline sweep: <code style="color:{C_RAZORPAY_BLUE};">python audit/seed_sweep.py</code></div>
+    <div>→ Full 244 automated tests: <code style="color:{C_RAZORPAY_BLUE};">pytest tests/ -v</code></div>
+  </div>
+</div>
+""")
+
+# ----------------------------------------------------------------------------
 # Router & View Dispatcher
 # ----------------------------------------------------------------------------
 VIEWS = {
@@ -1463,6 +1703,7 @@ VIEWS = {
     "02 · Live Decision Engine": view_scorer,
     "03 · Policy Frontier": view_frontier,
     "04 · Portfolio Evidence": view_portfolio,
+    "05 · Adversarial Audit & Governance": view_governance,
 }
 
 topbar()

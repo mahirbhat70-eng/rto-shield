@@ -142,3 +142,15 @@ def test_precision_recall_matches_sklearn():
     assert abs(metrics['recall'] - round(expected_rec, 4)) < 1e-4
     assert cm[1, 1] == 3  # TP
     assert cm[0, 1] == 1  # FP
+
+def test_logistic_baseline_train_learns_signal(tmp_path):
+    """Verify train_model learns real signal and fails if labels are shuffled."""
+    from src.models.logistic_baseline import train_model
+    from sklearn.metrics import average_precision_score
+    out_pkl = str(tmp_path / "test_lr.pkl")
+    pipeline = train_model(train_path="data/processed/train.csv", model_path=out_pkl)
+    val = pd.read_csv("data/processed/val_cal.csv", dtype={'pincode': str})
+    proba = pipeline.predict_proba(val.drop(columns=['rto_label']))[:, 1]
+    pr_auc = average_precision_score(val['rto_label'], proba)
+    assert pr_auc >= 0.30, f"Logistic baseline PR-AUC {pr_auc:.4f} < 0.30 (label signal lost)"
+

@@ -72,15 +72,22 @@ def test_guardrail_upper_bounds():
         print("      PASS: Guardrail rejected order_value=30000 as expected.")
 
 def test_unknown_pincode():
-    print("[4/7] Testing unknown pincode rejection...")
+    print("[4/7] Testing pincode validation (malformed rejected, unseen cold-start fallback)...")
+    # 1. Malformed pincode must raise ValueError
     bad_pin = dict(PRESETS["VERIFY"])
-    bad_pin["pincode"] = "000000"
+    bad_pin["pincode"] = "12345"
     try:
         score_order(bad_pin)
-        assert False, "Should have raised ValueError on unknown pincode"
+        assert False, "Should have raised ValueError on malformed pincode"
     except ValueError as e:
-        assert "not found in lookup table" in str(e)
-        print("      PASS: Unknown pincode cleanly rejected.")
+        assert "not a valid 6-digit code" in str(e)
+
+    # 2. Unseen 6-digit pincode must cleanly use cold-start prior with warning
+    unseen_pin = dict(PRESETS["VERIFY"])
+    unseen_pin["pincode"] = "999999"
+    res = score_order(unseen_pin)
+    assert any("cold start" in w.lower() for w in res["warnings"])
+    print("      PASS: Malformed pincode rejected and unseen pincode handled via cold-start fallback.")
 
 def test_audit_fingerprint_tamper_evident():
     print("[5/7] Testing audit record fingerprinting & tamper detection...")

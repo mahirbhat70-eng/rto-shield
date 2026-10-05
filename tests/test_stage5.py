@@ -117,3 +117,8 @@ def test_noise_sensitivity(engine, test_data):
     assert abs(delta_pct) <= 0.10
     assert np.isclose(delta_pct, 0.027, atol=0.005)
 
+def test_stage5_reveal_execution():
+    from src.eval.stage5_test_reveal import main as reveal_main
+    reveal_main()
+
+
