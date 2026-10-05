@@ -40,16 +40,64 @@ COLD_START_PRIOR = {
     'pincode_tier': int(lookup_df['pincode_tier'].mode().iloc[0]),
 }
 
-# Load models
+class SecurityError(RuntimeError):
+    """Raised when an artifact fails cryptographic integrity checks."""
+    pass
+
+
+def _verify_and_load(filename: str, manifest_path: str = None, pinned_digests: dict = None):
+    """Verify SHA-256 digest against pinned manifest / env var before deserializing."""
+    if os.path.isabs(filename):
+        full_path = filename
+    elif os.path.exists(filename):
+        full_path = os.path.abspath(filename)
+    else:
+        full_path = os.path.join(MODEL_DIR, filename)
+    base_key = os.path.basename(filename)
+    
+    # 1. Check out-of-boundary env var first (e.g. pinned in CI / cloud secret)
+    hashes = {}
+    if pinned_digests:
+        hashes.update(pinned_digests)
+    elif env_digests := os.getenv("RTO_SHIELD_PINNED_DIGESTS"):
+        try:
+            import json
+            hashes.update(json.loads(env_digests))
+        except Exception:
+            pass
+            
+    # 2. Check external or default manifest file
+    hash_file = manifest_path or os.getenv("RTO_SHIELD_HASH_MANIFEST", os.path.join(MODEL_DIR, 'artifact_hashes.json'))
+    if os.path.exists(hash_file):
+        import json
+        with open(hash_file, 'r', encoding='utf-8') as hf:
+            file_hashes = json.load(hf)
+            for k, v in file_hashes.items():
+                if k not in hashes:
+                    hashes[k] = v
+
+    expected = hashes.get(f"models/{base_key}") or hashes.get(base_key) or hashes.get(filename)
+    if expected:
+        with open(full_path, 'rb') as f:
+            digest = hashlib.sha256(f.read()).hexdigest()
+        if digest != expected:
+            raise SecurityError(
+                f"SecurityError: SHA-256 digest mismatch for '{filename}'. "
+                f"Expected {expected}, got {digest}. Rejecting untrusted pickle."
+            )
+    return joblib.load(full_path)
+
+# Load models with pre-deserialization cryptographic integrity verification
 try:
-    tree_uncal = joblib.load(os.path.join(MODEL_DIR, 'tree_model.pkl'))  # contains encoder pipeline
-    tree_cal = joblib.load(os.path.join(MODEL_DIR, 'tree_model_calibrated.pkl'))
-    booster = joblib.load(os.path.join(MODEL_DIR, 'tree_model_booster.pkl'))
-except Exception as exc:  # pragma: no cover - actionable message if artifacts are moved
+    tree_uncal = _verify_and_load('tree_model.pkl')  # contains encoder pipeline
+    tree_cal = _verify_and_load('tree_model_calibrated.pkl')
+    booster = _verify_and_load('tree_model_booster.pkl')
+except Exception as exc:  # pragma: no cover - actionable message if artifacts are moved or tampered
     raise RuntimeError(
-        f"Could not load frozen model artifacts from '{MODEL_DIR}'. "
+        f"Could not load verified model artifacts from '{MODEL_DIR}'. "
         f"Run from the repository root or restore models/*.pkl. Original error: {exc}"
     ) from exc
+
 
 explainer = shap.TreeExplainer(booster)
 
@@ -346,6 +394,16 @@ def score_order(features: dict):
     }
 
 
+from src.serve.guardrails import ProductionGuardrails
+_default_guardrails = ProductionGuardrails()
+
+def score_order_guarded(features: dict, guardrails: ProductionGuardrails = None):
+    """Score order wrapped with production guardrails (kill switch, rate cap, high value review)."""
+    gr = guardrails or _default_guardrails
+    return gr.evaluate(features, score_order)
+
+
 def route_order(features: dict):
     res = score_order(features)
     return res['recommended_action']
+

@@ -88,3 +88,53 @@ def test_byte_flip_fails_integrity(tmp_path):
     tampered_digest = sha256_file(str(tampered_file))
     assert tampered_digest != manifest[rel_path], "Byte-flip MUST change sha256 digest"
 
+
+def test_verify_and_load_refuses_tampered_model(tmp_path):
+    # Verify that _verify_and_load refuses deserialization when an actual model file is byte-modified
+    import pytest
+    from src.serve.scorer import _verify_and_load, SecurityError
+    
+    with open(MANIFEST, encoding='utf-8') as f:
+        manifest = json.load(f)
+    rel_path = "models/tree_model_calibrated.pkl"
+    src_path = os.path.join(os.path.dirname(__file__), '..', rel_path)
+    with open(src_path, 'rb') as f:
+        data = bytearray(f.read())
+
+    # Flip one byte in the model file
+    data[10] ^= 0x42
+    tampered_model = tmp_path / "tree_model_calibrated.pkl"
+    with open(tampered_model, "wb") as f:
+        f.write(data)
+
+    # Attempt to load tampered model using the manifest - must raise SecurityError
+    with pytest.raises(SecurityError, match="SecurityError: SHA-256 digest mismatch"):
+        _verify_and_load(str(tampered_model), manifest_path=MANIFEST)
+
+
+def test_out_of_boundary_pinned_digest_enforcement(tmp_path, monkeypatch):
+    # Verify that moving the trusted hash out of the repo boundary (e.g. pinned in CI or env var)
+    # prevents attackers who modify both the model and the in-repo manifest from bypassing checks.
+    import pytest
+    from src.serve.scorer import _verify_and_load, SecurityError
+
+    fake_model = tmp_path / "tree_model.pkl"
+    with open(fake_model, "wb") as f:
+        f.write(b"injected_untrusted_payload")
+
+    # Attacker modified the in-repo manifest to match their injected payload
+    attacker_hash = sha256_file(str(fake_model))
+    in_repo_manifest = tmp_path / "compromised_manifest.json"
+    with open(in_repo_manifest, "w", encoding="utf-8") as f:
+        json.dump({"models/tree_model.pkl": attacker_hash}, f)
+
+    # Out-of-boundary pinned digest (e.g. from CI secrets or secure environment)
+    trusted_digest = "e75478885e620297d17f08cc9e7211aa1d1385f33cfb73560bbf916a77fa7477"
+    monkeypatch.setenv("RTO_SHIELD_PINNED_DIGESTS", json.dumps({"models/tree_model.pkl": trusted_digest}))
+
+    # Loading with the compromised manifest MUST still fail because the out-of-boundary pin overrides it
+    with pytest.raises(SecurityError, match="SecurityError: SHA-256 digest mismatch"):
+        _verify_and_load(str(fake_model), manifest_path=str(in_repo_manifest))
+
+
+
