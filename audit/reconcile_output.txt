@@ -1,0 +1,80 @@
+warning: Ignoring dangling temporary directory: `C:\Users\vansh\AppData\Local\Programs\Python\Python313\Lib\site-packages\~ip-26.1.2.dist-info`
+==============================================================================
+C1. DESIGN-POINT REALIZED SAVINGS (config params, frozen primary policy)
+==============================================================================
+action counts: {'ALLOW_COD': 1318, 'REQUIRE_DEPOSIT': 2612, 'VERIFY_ADDRESS': 3244}  n_COD = 7174
+canonical realized savings            : Rs 69,786.08
+with Rs0.50 deposit friction (bug in run_step3_verifications.py): Rs 68,480.08
+difference = Rs 1,306.00 = 0.50 x n_deposit (2612) = Rs 1,306.00
+
+==============================================================================
+C4. MODEL TABLE (full test split, n=14980, recomputed from frozen artifacts)
+==============================================================================
+                            model  PR-AUC  ROC-AUC  Brier  LogLoss  ECE10  plateau_share  n_unique_p
+                           LogReg  0.3434   0.6854 0.1475   0.4627 0.0045         0.0000       14980
+                       LGBM uncal  0.3433   0.6883 0.1473   0.4621 0.0079         0.0000       14918
+          LGBM isotonic (PRIMARY)  0.3313   0.6874 0.1476   0.4659 0.0086         0.9608          97
+Observable Bayes ceiling (E[p|x])  0.3497   0.6904 0.1468   0.4608 0.0075         0.0000       14980
+
+primary / observable ceiling = 0.3313 / 0.3497 = 0.948
+
+==============================================================================
+C2. WHY THE SEED TABLE SAID ~0.46: latent ORACLE vs OBSERVABLE ceiling (seed 42)
+==============================================================================
+=== SEED SENSITIVITY (5 SEEDS) ===
+Seed 42: Base RTO=0.1994, COD RTO=0.2782, Prepaid RTO=0.1261, Bayes PR-AUC=0.4765, Bayes ROC-AUC=0.7709
+Seed 101: Base RTO=0.1984, COD RTO=0.2759, Prepaid RTO=0.1265, Bayes PR-AUC=0.4471, Bayes ROC-AUC=0.7611
+Seed 2024: Base RTO=0.2026, COD RTO=0.2800, Prepaid RTO=0.1312, Bayes PR-AUC=0.4655, Bayes ROC-AUC=0.7610
+Seed 777: Base RTO=0.2029, COD RTO=0.2807, Prepaid RTO=0.1305, Bayes PR-AUC=0.4661, Bayes ROC-AUC=0.7579
+Seed 999: Base RTO=0.1988, COD RTO=0.2767, Prepaid RTO=0.1270, Bayes PR-AUC=0.4534, Bayes ROC-AUC=0.7614
+
+Summary Stats:
+              seed  base_rate   cod_rto  prepaid_rto  test_base_rate  bayes_pr_auc  bayes_roc_auc
+count     5.000000   5.000000  5.000000     5.000000        5.000000      5.000000       5.000000
+mean    788.600000   0.200428  0.278275     0.128276        0.199240      0.461710       0.762448
+std     806.353086   0.002164  0.002037     0.002418        0.001789      0.011543       0.004909
+min      42.000000   0.198400  0.275917     0.126098        0.197267      0.447092       0.757922
+25%     101.000000   0.198820  0.276687     0.126513        0.197800      0.453439       0.760958
+50%     777.000000   0.199390  0.278159     0.126995        0.199067      0.465475       0.761069
+75%     999.000000   0.202640  0.279951     0.130533        0.200600      0.466088       0.761432
+max    2024.000000   0.202890  0.280661     0.131242        0.201467      0.476458       0.770861
+
+=== FEATURE CORRELATIONS WITH LABEL AND LATENT PROB (SEED 42) ===
+                       feature  corr_with_label  corr_with_latent_p
+0                  order_value          -0.0080             -0.0013
+1                     quantity           0.0037              0.0036
+2                 discount_pct           0.0170              0.0565
+3             account_age_days          -0.0395             -0.0958
+4                 prior_orders          -0.0203             -0.0500
+5              prior_rto_count           0.0769              0.1893
+6                 pincode_tier           0.0571              0.1482
+7  historical_pincode_rto_rate           0.1031              0.2580
+8              orders_last_24h           0.0396              0.1037
+9          device_cluster_size           0.0359              0.0886
+latent p incl. per-order N(0,0.8) noise (UNOBSERVABLE oracle): PR-AUC = 0.4766
+E[p | observed x]  (true Bayes ceiling for any model)       : PR-AUC = 0.3493
+=> 0.46 is an oracle that sees the noise term; it is NOT an achievable ceiling.
+
+==============================================================================
+C5. BREAK-EVEN ù definition: COD-subset RTO rate; policy FROZEN; config costs
+==============================================================================
+observed COD RTO rate on test: 0.2827
+ COD RTO |  A: resampled labels, Rs/COD order |  B: odds-shifted p, Rs/COD order
+  0.1000 |                              -5.42 |                            -5.56
+  0.1200 |                              -3.77 |                            -3.81
+  0.1400 |                              -2.13 |                            -2.08
+  0.1500 |                              -1.31 |                            -1.22
+  0.1600 |                              -0.49 |                            -0.36
+  0.1700 |                               0.33 |                             0.49
+  0.1800 |                               1.15 |                             1.35
+  0.2000 |                               2.80 |                             3.05
+  0.2400 |                               6.11 |                             6.41
+  0.2827 |                               9.69 |                             9.96
+  0.3200 |                              12.80 |                            13.02
+
+break-even COD RTO  A (label resampling): 0.1672
+break-even COD RTO  B (odds shift)      : 0.1642
+NOTE: valid ONLY for this synthetic basket + config (Rs150, 20% margin, 40%/80% deposit).
+Earlier -Rs26,921 @15% came from audit/audit_prompt11.py, which used a different,
+non-config loss model (25% margin, Rs1.50/Rs0.50 friction, no margin on ALLOW) on the
+FULL test split. It is superseded by this table.

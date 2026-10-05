@@ -1,0 +1,31 @@
+warning: Ignoring dangling temporary directory: `C:\Users\vansh\AppData\Local\Programs\Python\Python313\Lib\site-packages\~ip-26.1.2.dist-info`
+ENV: {"python": "3.13.13", "platform": "Windows-11-10.0.26200-SP0", "numpy": "2.3.2", "pandas": "2.3.3", "sklearn": "1.9.0", "lightgbm": "4.7.0", "joblib": "1.4.2", "scipy": "1.15.1"}
+[run 1] ok  src/data/generator.py
+[run 1] ok  src/data/split.py
+[run 1] ok  src/serve/lookup.py
+[run 1] ok  src/models/logistic_baseline.py
+[run 1] ok  src/models/tree_model.py
+[run 1] ok  src/eval/calibration.py
+[run 1] rebuilt in 68.2s  (workdir C:\Users\vansh\AppData\Local\Temp\rto_repro_1_asq68jtk)
+[run 2] ok  src/data/generator.py
+[run 2] ok  src/data/split.py
+[run 2] ok  src/serve/lookup.py
+[run 2] ok  src/models/logistic_baseline.py
+[run 2] ok  src/models/tree_model.py
+[run 2] ok  src/eval/calibration.py
+[run 2] rebuilt in 24.8s  (workdir C:\Users\vansh\AppData\Local\Temp\rto_repro_2_v8mxr8j0)
+
+artifact                                 | committed    | run1         | run2         | run==run | ==committed
+--------------------------------------------------------------------------------------------------------------
+data/processed/pincode_rate_lookup.csv   | 5e4b2f90662a | 5e4b2f90662a | 5e4b2f90662a | YES      | YES
+data/processed/test.csv                  | cf2999173786 | cf2999173786 | cf2999173786 | YES      | YES
+data/processed/train.csv                 | 689392d2425a | 689392d2425a | 689392d2425a | YES      | YES
+data/processed/val_cal.csv               | 85b8a63f2d4b | 85b8a63f2d4b | 85b8a63f2d4b | YES      | YES
+data/processed/val_rep.csv               | d44d195e549b | d44d195e549b | d44d195e549b | YES      | YES
+models/logistic_baseline.pkl             | 8530ca063675 | 8530ca063675 | 8530ca063675 | YES      | YES
+models/tree_model.pkl                    | e75478885e62 | e75478885e62 | e75478885e62 | YES      | YES
+models/tree_model_booster.pkl            | db099b05d7af | db099b05d7af | db099b05d7af | YES      | YES
+models/tree_model_calibrated.pkl         | 2e6b0c5198dd | 2e6b0c5198dd | 2e6b0c5198dd | YES      | YES
+--------------------------------------------------------------------------------------------------------------
+DETERMINISM (run vs run): PASS
+PARITY (rebuild vs committed hashes): PASS

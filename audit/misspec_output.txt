@@ -1,0 +1,58 @@
+warning: Ignoring dangling temporary directory: `C:\Users\vansh\AppData\Local\Programs\Python\Python313\Lib\site-packages\~ip-26.1.2.dist-info`
+frozen policy: n_COD=7174  design-point savings Rs 69,786.08
+
+--- TRUE REQUIRE_DEPOSIT.rto_reduction_pct (policy assumed 0.8) ---
+     0.8: Rs    69,786.08  PROFIT
+     0.7: Rs    57,066.08  PROFIT
+     0.6: Rs    44,346.08  PROFIT
+     0.5: Rs    31,626.08  PROFIT
+     0.4: Rs    18,906.08  PROFIT
+     0.3: Rs     6,186.08  PROFIT
+     0.2: Rs    -6,533.92  LOSS
+--- TRUE REQUIRE_DEPOSIT.success_drop_pct (policy assumed 0.4) ---
+     0.4: Rs    69,786.08  PROFIT
+     0.5: Rs    58,072.27  PROFIT
+     0.6: Rs    46,358.47  PROFIT
+     0.7: Rs    34,644.66  PROFIT
+     0.8: Rs    22,930.86  PROFIT
+     0.9: Rs    11,217.06  PROFIT
+     1.0: Rs      -496.75  LOSS
+--- TRUE VERIFY_ADDRESS.rto_reduction_pct (policy assumed 0.3) ---
+     0.3: Rs    69,786.08  PROFIT
+     0.2: Rs    56,481.08  PROFIT
+     0.1: Rs    43,176.08  PROFIT
+    0.05: Rs    36,523.58  PROFIT
+     0.0: Rs    29,871.08  PROFIT
+--- TRUE VERIFY_ADDRESS.success_drop_pct (policy assumed 0.05) ---
+    0.05: Rs    69,786.08  PROFIT
+     0.1: Rs    51,240.37  PROFIT
+    0.15: Rs    32,694.66  PROFIT
+     0.2: Rs    14,148.95  PROFIT
+     0.3: Rs   -22,942.46  LOSS
+--- TRUE VERIFY_ADDRESS.friction_cost (policy assumed 2) ---
+       2: Rs    69,786.08  PROFIT
+       5: Rs    60,054.08  PROFIT
+      10: Rs    43,834.08  PROFIT
+      20: Rs    11,394.08  PROFIT
+--- TRUE rto_logistics_cost (policy assumed 150) ---
+     150: Rs    69,786.08  PROFIT
+     120: Rs    41,451.08  PROFIT
+     100: Rs    22,561.08  PROFIT
+      80: Rs     3,671.08  PROFIT
+      60: Rs   -15,218.92  LOSS
+--- TRUE average_margin_pct (policy assumed 0.2) ---
+     0.2: Rs    69,786.08  PROFIT
+    0.25: Rs    53,435.84  PROFIT
+     0.3: Rs    37,085.61  PROFIT
+     0.4: Rs     4,385.15  PROFIT
+
+JOINT PESSIMISTIC (deposit red .60 / drop .50, verify red .15 / drop .10): Rs -5,870.94
+
+BREAK-EVEN (true value at which frozen policy savings hit 0):
+  REQUIRE_DEPOSIT.rto_reduction_pct    assumed=0.8    break-even=0.2514
+  REQUIRE_DEPOSIT.success_drop_pct     assumed=0.4    break-even=0.9958
+  VERIFY_ADDRESS.rto_reduction_pct     assumed=0.3    break-even=none in range
+  VERIFY_ADDRESS.success_drop_pct      assumed=0.05   break-even=0.2381
+  VERIFY_ADDRESS.friction_cost         assumed=2      break-even=none in range
+  rto_logistics_cost                   assumed=150    break-even=76.1132
+  average_margin_pct                   assumed=0.2    break-even=none in range

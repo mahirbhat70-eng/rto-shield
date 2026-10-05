@@ -1,0 +1,27 @@
+name: Build Reproducibility & Artifact Integrity
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  reproducibility:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.13"
+        cache: 'pip'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install --prefer-binary -r requirements-ci.txt
+    - name: Run Deterministic Rebuild and Hash Check
+      env:
+        PYTHONPATH: "."
+      run: |
+        python audit/prompt12/repro_check.py --runs 2 --out audit/prompt12/result_ci.json
