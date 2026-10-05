@@ -33,8 +33,30 @@ def test_stage3_performance_floor():
     
     proba = pipeline.predict_proba(X)[:, 1]
     pr_auc = average_precision_score(y, proba)
-    
-    assert pr_auc >= 0.23, f"Tree PR-AUC on val_rep fell below floor: {pr_auc}"
+    assert pr_auc >= 0.32, f"Tree PR-AUC on val_rep fell below floor: {pr_auc}"
+
+    cal_pipeline = joblib.load('models/tree_model_calibrated.pkl')
+    proba_cal = cal_pipeline.predict_proba(X)[:, 1]
+    pr_auc_cal = average_precision_score(y, proba_cal)
+    assert pr_auc_cal >= 0.31, f"Calibrated Tree PR-AUC on val_rep fell below floor: {pr_auc_cal}"
+
+    # Model degradation tests on held-out test set:
+    # 1. Assert production model test PR-AUC >= 0.32
+    # 2. Assert clear gap to a label-shuffled random baseline (>= 0.10)
+    test_df = pd.read_csv('data/processed/test.csv', dtype={'pincode': str})
+    X_test = test_df.drop(columns=['rto_label', 'timestamp', 'order_id'], errors='ignore')
+    y_test = test_df['rto_label'].values
+    p_test = cal_pipeline.predict_proba(X_test)[:, 1]
+    pr_test = average_precision_score(y_test, p_test)
+    assert pr_test >= 0.32, f"Production model test PR-AUC fell below floor (0.32): {pr_test:.4f}"
+
+    rng = np.random.default_rng(42)
+    y_shuffled = rng.permutation(y_test)
+    pr_shuffled = average_precision_score(y_shuffled, p_test)
+    gap = pr_test - pr_shuffled
+    assert gap >= 0.10, (
+        f"Production model gap to shuffled-label baseline is too small: {gap:.4f} (must be >= 0.10)"
+    )
 
 def test_stage3_noise_check():
     # From our printed SHAP values:
