@@ -58,6 +58,24 @@ def test_build_audit_record_structure(sample_payload, sample_res):
     assert len(record["top_factors"]) == 2
     assert verify_audit_record(record) is True
 
+def test_pii_masking_in_audit_record(sample_res):
+    payload_with_pii = {
+        "order_value": 500.0,
+        "customer_id": "CUST012345",
+        "phone": "+91-9876543210",
+        "email": "customer@example.com",
+        "address": "Flat 402, Sunshine Apartments, MG Road, Bengaluru",
+        "pincode": "560001",
+        "payment_method": "COD"
+    }
+    record = build_audit_record(payload_with_pii, sample_res)
+    assert "phone" not in record["payload"]
+    assert "email" not in record["payload"]
+    assert "address" not in record["payload"]
+    assert record["payload"]["customer_id"].startswith("HASH_")
+    assert verify_audit_record(record) is True
+
+
 
 def test_audit_tamper_detection(sample_payload, sample_res):
     record = build_audit_record(sample_payload, sample_res, latency_ms=8.3)
@@ -98,3 +116,19 @@ def test_to_jsonl_serialization(sample_payload, sample_res):
     parsed2 = json.loads(lines[1])
     assert parsed1["decision_id"] == rec1["decision_id"]
     assert parsed2["decision_id"] == rec2["decision_id"]
+
+
+def test_allowlist_drops_arbitrary_free_text(sample_res):
+    payload_with_free_text = {
+        "order_value": 750.0,
+        "payment_method": "COD",
+        "customer_notes": "Please deliver to John behind the hospital",
+        "delivery_instructions": "Leave package with guard Rajesh 9876543210",
+        "gift_message": "Happy Birthday to my brother!"
+    }
+    record = build_audit_record(payload_with_free_text, sample_res)
+    assert "customer_notes" not in record["payload"]
+    assert "delivery_instructions" not in record["payload"]
+    assert "gift_message" not in record["payload"]
+    assert "order_value" in record["payload"]
+
