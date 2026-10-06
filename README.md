@@ -114,37 +114,46 @@ $$\text{Margin} = \text{Order Value} \times 20\%$$
 
 ## 🏛️ Decision Flow Architecture
 
+<p align="center">
+  <a href="docs/decision_architecture.html">
+    <img src="docs/decision_architecture.png" alt="Decision Flow Architecture" width="100%"/>
+  </a>
+</p>
+
 ```mermaid
 flowchart TD
-    subgraph Input ["1. Inbound Order Signal"]
-        O["New COD Order\n(Pincode, Cart Value, Category, User History)"]
+    subgraph Input["1. Inbound Order Signal"]
+        O["New COD Order<br/>(Pincode, Cart Value, Category, History)"]
     end
 
-    subgraph Feature ["2. Feature Engineering & Lookup"]
+    subgraph Feature["2. Feature Engineering & Lookup"]
         F1["Pincode Historical RTO Rate"]
         F2["Behavioral & Cart Features"]
         F3["Device & Account Age Clusters"]
     end
 
-    subgraph ML ["3. ML Inference & Calibration"]
+    subgraph ML["3. ML Inference & Calibration"]
         LGBM["LightGBM Gradient Booster"]
-        CAL["Isotonic Calibrator (Platt Scaling)"]
-        SHAP["TreeSHAP Attribution (Local Explanations)"]
+        CAL["Isotonic Calibrator"]
+        SHAP["TreeSHAP Attribution"]
     end
 
-    subgraph Cost ["4. Expected Loss Decision Engine"]
-        EL["Calculate Expected Loss for All 4 Interventions:\nEL(ALLOW), EL(VERIFY), EL(DEPOSIT), EL(PREPAID)"]
-        ARGMIN["Cost-Sensitive Action Selection:\nargmin(Expected Loss)"]
+    subgraph Cost["4. Expected Loss Decision Engine"]
+        EL["Calculate Expected Loss for All 4 Actions:<br/>ALLOW, VERIFY, DEPOSIT, PREPAID"]
+        ARGMIN["Cost-Sensitive Action Selection:<br/>argmin(Expected Loss)"]
     end
 
-    subgraph Output ["5. Execution & Audit"]
-        DEC["Execute Action:\nALLOW | VERIFY | DEPOSIT | PREPAID"]
+    subgraph Output["5. Execution & Audit"]
+        DEC["Execute Action:<br/>ALLOW / VERIFY / DEPOSIT / PREPAID"]
         LOG[("Immutable Audit Trail & SHAP Waterfall")]
-
     end
 
-    O --> F1 & F2 & F3
-    F1 & F2 & F3 --> LGBM
+    O --> F1
+    O --> F2
+    O --> F3
+    F1 --> LGBM
+    F2 --> LGBM
+    F3 --> LGBM
     LGBM --> CAL
     LGBM --> SHAP
     CAL --> EL
