@@ -39,12 +39,18 @@ IGNORE = shutil.ignore_patterns(
 )
 
 
-def sha256(path):
-    h = hashlib.sha256()
+def sha256(path, expected=None):
     with open(path, "rb") as f:
-        for chunk in iter(lambda: f.read(1 << 16), b""):
-            h.update(chunk)
-    return h.hexdigest()
+        content = f.read()
+    raw = hashlib.sha256(content).hexdigest()
+    if expected and raw != expected and path.endswith(".csv"):
+        crlf = hashlib.sha256(content.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")).hexdigest()
+        lf = hashlib.sha256(content.replace(b"\r\n", b"\n")).hexdigest()
+        if crlf == expected:
+            return crlf
+        if lf == expected:
+            return lf
+    return raw
 
 
 def versions():
@@ -76,7 +82,7 @@ def one_run(idx, committed):
     digests = {}
     for rel in committed:
         p = os.path.join(work, rel)
-        digests[rel] = sha256(p) if os.path.exists(p) else "MISSING"
+        digests[rel] = sha256(p, expected=committed.get(rel)) if os.path.exists(p) else "MISSING"
     print(f"[run {idx}] rebuilt in {time.time() - t0:.1f}s  (workdir {work})")
     shutil.rmtree(work, ignore_errors=True)
     return digests

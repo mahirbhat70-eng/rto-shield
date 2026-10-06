@@ -1,4 +1,4 @@
 # Ensure CSV files preserve CRLF line endings on checkout across all platforms
 data/processed/*.csv text eol=crlf
 data/raw/*.csv text eol=crlf
-data/raw_v2/*.csv text eol=crlf
+data/raw_v2/*.csv text eol=lf
