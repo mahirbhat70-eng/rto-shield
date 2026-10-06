@@ -40,7 +40,7 @@ weighted_bin_mae = np.average(bin_maes, weights=weights)
 
 print("=== 1. TEST SET STATISTICAL METRICS (N=15,000) ===")
 print(f"PR-AUC:           {pr_auc:.4f} (target: 0.3313)")
-print(f"ROC-AUC:          {roc_auc:.4f} (target: 0.6729)")
+print(f"ROC-AUC:          {roc_auc:.4f} (target: 0.6874; val_rep was 0.6729)")
 print(f"Brier Score:      {brier:.4f} (target: 0.1476)")
 print(f"Weighted Bin MAE: {weighted_bin_mae:.4f}")
 

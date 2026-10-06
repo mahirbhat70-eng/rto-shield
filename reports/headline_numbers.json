@@ -1,0 +1,74 @@
+{
+  "cod_subset_size": 7174,
+  "cod_base_rto_rate": 0.2827,
+  "cod_base_rto_pct": 28.27,
+  "baseline_cod_rtos": 2028,
+  "models": {
+    "logistic_regression": {
+      "pr_auc": 0.343396,
+      "roc_auc": 0.685425,
+      "brier": 0.147464,
+      "log_loss": 0.462658,
+      "ece": 0.004503
+    },
+    "lgbm_uncalibrated": {
+      "pr_auc": 0.343297,
+      "roc_auc": 0.688278,
+      "brier": 0.147299,
+      "log_loss": 0.462084,
+      "ece": 0.007905
+    },
+    "lgbm_isotonic": {
+      "pr_auc": 0.331315,
+      "roc_auc": 0.687356,
+      "brier": 0.147564,
+      "log_loss": 0.472859,
+      "ece": 0.008564
+    },
+    "lgbm_platt": {
+      "pr_auc": 0.343297,
+      "roc_auc": 0.688278,
+      "brier": 0.147691,
+      "log_loss": 0.463856,
+      "ece": 0.020323
+    }
+  },
+  "primary_model": "lgbm_isotonic",
+  "expected_savings_inr": 71741.02,
+  "realized_savings_inr": 69786.08,
+  "expected_rtos_prevented": 951.16,
+  "rtos_prevented_pct": 46.9,
+  "good_customer_drops": 820.08,
+  "friction_spend_inr": 6488.0,
+  "action_mix_counts": {
+    "ALLOW_COD": 1318,
+    "REQUIRE_DEPOSIT": 2612,
+    "VERIFY_ADDRESS": 3244,
+    "PREPAID_ONLY": 0
+  },
+  "action_mix_pct": {
+    "ALLOW_COD": 18.37,
+    "REQUIRE_DEPOSIT": 36.41,
+    "VERIFY_ADDRESS": 45.22,
+    "PREPAID_ONLY": 0.0
+  },
+  "effective_post_policy_rto_pct": 19.93,
+  "uplift_pct": 13.1,
+  "binary_verify_expected_savings_inr": 35919.42,
+  "ratio_vs_single_threshold": 1.9973,
+  "latency": {
+    "with_shap": {
+      "p50_ms": 8.16,
+      "p95_ms": 9.66,
+      "p99_ms": 11.09,
+      "mean_ms": 8.35
+    },
+    "without_shap": {
+      "p50_ms": 4.58,
+      "p95_ms": 5.31,
+      "p99_ms": 7.5,
+      "mean_ms": 4.71
+    }
+  },
+  "test_count": 249
+}
