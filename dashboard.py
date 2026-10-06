@@ -20,6 +20,16 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 
 import os
+# Ensure Streamlit runs in development mode by default unless explicitly configured
+try:
+    import streamlit as st
+    if hasattr(st, "secrets"):
+        for k in ("RTO_SHIELD_ENV", "RTO_SHIELD_PINNED_DIGESTS"):
+            if k in st.secrets and k not in os.environ:
+                os.environ[k] = str(st.secrets[k])
+except Exception:
+    pass
+os.environ.setdefault("RTO_SHIELD_ENV", "development")
 import time
 import json
 import datetime

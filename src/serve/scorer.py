@@ -59,7 +59,18 @@ def _verify_and_load(filename: str, manifest_path: str = None, pinned_digests: d
     hashes = {}
     env_str = os.getenv("RTO_SHIELD_ENV") or os.getenv("ENVIRONMENT") or ""
     env_clean = env_str.strip().lower()
-    is_dev = env_clean in ("development", "dev", "test", "testing", "local")
+    # Detect interactive Streamlit environment (e.g. Streamlit Cloud demo)
+    is_streamlit = False
+    try:
+        import sys
+        if any("streamlit" in str(arg).lower() for arg in sys.argv):
+            is_streamlit = True
+        elif "STREAMLIT_SERVER_PORT" in os.environ or "STREAMLIT_RUNTIME" in os.environ:
+            is_streamlit = True
+    except Exception:
+        pass
+
+    is_dev = env_clean in ("development", "dev", "test", "testing", "local", "demo") or (env_clean == "" and is_streamlit)
     env_digests = os.getenv("RTO_SHIELD_PINNED_DIGESTS")
 
     if pinned_digests:
