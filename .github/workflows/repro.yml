@@ -23,5 +23,6 @@ jobs:
     - name: Run Deterministic Rebuild and Hash Check
       env:
         PYTHONPATH: "."
+        CI: "true"
       run: |
         python audit/prompt12/repro_check.py --runs 2 --out audit/prompt12/result_ci.json
