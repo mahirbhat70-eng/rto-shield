@@ -8,13 +8,13 @@
 
 ```mermaid
 flowchart TD
-    A["Merchant Historical Export<br/>(30–60 Days Replay)"] -->|"Stage 1: Offline Replay"| B["Shadow Scoring &amp; Calibration<br/>(Zero Merchant Impact)"]
-    B -->|"Gate 1 Passed"| C["Live Traffic Ingestion<br/>(Production Checkout)"]
-    C -->|"Stage 2: 80/20 A/B Split"| D{"Randomized 20% Slice<br/>(VERIFY Only)"}
-    D -->|"Control 50%"| E["Status Quo Arm<br/>(Always Allow COD)"]
-    D -->|"Treatment 50%"| F["RTO Shield Arm<br/>(VERIFY vs ALLOW)"]
-    F -->|"Gate 2 Passed:<br/>Conversion Confirmed"| G["Stage 3: Full Multi-Action Policy"]
-    G --> H["DEPOSIT + VERIFY + ALLOW<br/>(Measured Parameters)"]
+    A["Merchant Historical<br/>Export"] -->|"Stage 1: Offline Replay"| B("Shadow Scoring &<br/>Calibration Check")
+    B -->|"Gate 1 Passed"| C["Live Traffic<br/>Ingestion"]
+    C -->|"Stage 2: 80/20 A/B Split"| D{"Randomized Slice:<br/>VERIFY Only"}
+    D -->|"Control 50%"| E["Status Quo:<br/>Always Allow COD"]
+    D -->|"Treatment 50%"| F["Model Action:<br/>VERIFY vs ALLOW"]
+    F -->|"Gate 2 Passed:<br/>Conversion & Effect Measured"| G["Stage 3: Full<br/>Multi-Action Policy"]
+    G --> H["DEPOSIT + VERIFY + ALLOW<br/>with Measured Parameters"]
 ```
 
 ### Stage 1: Offline Shadow Replay (Zero Merchant Impact)
