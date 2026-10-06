@@ -6,7 +6,7 @@
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Streamlit%20App-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://rto-shield-nlthpydtndpkupyfgfl3yy.streamlit.app)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![LightGBM](https://img.shields.io/badge/Model-LightGBM%20%2B%20TreeSHAP-2ECC71?style=for-the-badge)](https://lightgbm.readthedocs.io)
-[![Tests](https://img.shields.io/badge/Tests-249%20Passing-brightgreen?style=for-the-badge&logo=pytest&logoColor=white)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-250%20Passing-brightgreen?style=for-the-badge&logo=pytest&logoColor=white)](tests/)
 [![Latency](https://img.shields.io/badge/Inference-15ms%20p50-blue?style=for-the-badge)](#-decision-engine-latency)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
 
@@ -33,7 +33,7 @@
 | **6. Hard questions** | [`docs/JUDGE_QA.md`](docs/JUDGE_QA.md) — 10 questions with evidence-backed answers |
 | **7. Adversarial audit** | [`audit/REVIEW_PACKET.md`](audit/REVIEW_PACKET.md) — 15 reconciled audit tasks & sensitivity bounds |
 
-All frozen model artifacts and reports are committed. **Full test suite passes: (249/249 passed).**
+All frozen model artifacts and reports are committed. **Full test suite passes: (250/250 passed).**
 
 ```bash
 # 1. Clone repository
@@ -43,7 +43,7 @@ cd rto-shield
 # 2. Install dependencies
 pip install -r requirements.txt
 
-# 3. Run full automated test suite (249 passing tests)
+# 3. Run full automated test suite (250 passing tests)
 pytest tests/ -q
 
 # 4. Launch interactive 5-view decision dashboard

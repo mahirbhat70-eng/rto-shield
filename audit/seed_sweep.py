@@ -75,17 +75,23 @@ def evaluate(work, seed):
     cod = (test["payment_method"] == "COD").values
     tc = test[cod].reset_index(drop=True)
 
+    from reconcile import expected_pl
+
     acts_iso = frozen_actions(tc, p_iso[cod])
     sav_iso = realized_pl(acts_iso, tc["rto_label"].values, tc["order_value"].values, CFG)
+    exp_iso = expected_pl(acts_iso, p_iso[cod], tc["order_value"].values, CFG)
 
     acts_uncal = frozen_actions(tc, p_uncal[cod])
     sav_uncal = realized_pl(acts_uncal, tc["rto_label"].values, tc["order_value"].values, CFG)
+    exp_uncal = expected_pl(acts_uncal, p_uncal[cod], tc["order_value"].values, CFG)
 
     acts_platt = frozen_actions(tc, p_platt[cod])
     sav_platt = realized_pl(acts_platt, tc["rto_label"].values, tc["order_value"].values, CFG)
+    exp_platt = expected_pl(acts_platt, p_platt[cod], tc["order_value"].values, CFG)
 
     acts_lr = frozen_actions(tc, p_lr[cod])
     sav_lr = realized_pl(acts_lr, tc["rto_label"].values, tc["order_value"].values, CFG)
+    exp_lr = expected_pl(acts_lr, p_lr[cod], tc["order_value"].values, CFG)
 
     ceil = average_precision_score(y_test, get_true_p(test))
 
@@ -99,10 +105,18 @@ def evaluate(work, seed):
         "LGBM_uncal_PR": average_precision_score(y_test, p_uncal),
         "LGBM_platt_PR": average_precision_score(y_test, p_platt),
         "LGBM_iso_PR": average_precision_score(y_test, p_iso),
-        "LR_savings_Rs": sav_lr,
-        "LGBM_uncal_savings_Rs": sav_uncal,
-        "LGBM_platt_savings_Rs": sav_platt,
-        "LGBM_iso_savings_Rs": sav_iso,
+        "LR_expected_Rs": exp_lr,
+        "LR_realized_Rs": sav_lr,
+        "LR_gap_pct": ((exp_lr - sav_lr) / sav_lr) * 100.0,
+        "LGBM_uncal_expected_Rs": exp_uncal,
+        "LGBM_uncal_realized_Rs": sav_uncal,
+        "LGBM_uncal_gap_pct": ((exp_uncal - sav_uncal) / sav_uncal) * 100.0,
+        "LGBM_platt_expected_Rs": exp_platt,
+        "LGBM_platt_realized_Rs": sav_platt,
+        "LGBM_platt_gap_pct": ((exp_platt - sav_platt) / sav_platt) * 100.0,
+        "LGBM_iso_expected_Rs": exp_iso,
+        "LGBM_iso_realized_Rs": sav_iso,
+        "LGBM_iso_gap_pct": ((exp_iso - sav_iso) / sav_iso) * 100.0,
     }
 
 

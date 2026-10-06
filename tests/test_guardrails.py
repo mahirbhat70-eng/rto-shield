@@ -84,3 +84,44 @@ def test_merchant_breakeven_gate():
     assert res_low['recommended_action'] == 'REQUIRE_DEPOSIT'
     assert res_low['guardrail_applied'] == 'NONE'
 
+
+def test_merchant_break_even_simulation_gate():
+    """
+    Test guardrails.merchant_break_even:
+    1. Low-RTO merchant (10% COD RTO) must be blocked.
+    2. High-RTO merchant (30% COD RTO) must be allowed.
+    3. Fewer than 1,000 orders must fall back to ALLOW with logged reason.
+    """
+    from src.serve.guardrails import merchant_break_even
+
+    costs = {
+        'rto_cost': 150.0,
+        'margin_pct': 0.20
+    }
+    # Standard basket distribution: 1,500 orders around Rs 800
+    basket_1500 = [800.0] * 1500
+
+    # 1. Low-RTO merchant (10%): Net savings <= 0 -> BLOCKED
+    res_low = merchant_break_even(costs, basket_1500, historical_cod_rto_rate=0.10)
+    assert not res_low['allowed']
+    assert res_low['status'] == 'BLOCKED'
+    assert res_low['action'] == 'ALLOW_COD'
+    assert res_low['expected_net_savings'] <= 0
+
+    # 2. High-RTO merchant (30%): Net savings > 0 -> ALLOWED
+    res_high = merchant_break_even(costs, basket_1500, historical_cod_rto_rate=0.30)
+    assert res_high['allowed']
+    assert res_high['status'] == 'ALLOWED'
+    assert res_high['action'] == 'POLICY_ENABLED'
+    assert res_high['expected_net_savings'] > 0
+
+    # 3. Fewer than 1,000 orders (e.g. 500 orders): Insufficient data -> fall back to ALLOW with logged reason
+    basket_500 = [800.0] * 500
+    res_small = merchant_break_even(costs, basket_500, historical_cod_rto_rate=0.30)
+    assert not res_small['allowed']
+    assert res_small['status'] == 'INSUFFICIENT_DATA'
+    assert res_small['action'] == 'ALLOW_COD'
+    assert "Insufficient order data" in res_small['reason']
+    assert "Falling back to ALLOW_COD" in res_small['reason']
+
+
