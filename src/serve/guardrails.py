@@ -140,26 +140,42 @@ def merchant_break_even(merchant_costs: dict,
         baseline_losses.append(base_l)
         policy_losses.append(pol_l)
 
-    total_baseline = float(np.sum(baseline_losses))
-    total_policy = float(np.sum(policy_losses))
-    net_savings = total_baseline - total_policy
+    diff_losses = np.array(baseline_losses) - np.array(policy_losses)
+    mean_diff = float(np.mean(diff_losses))
+    std_diff = float(np.std(diff_losses, ddof=1)) if n_orders > 1 else 0.0
+    se_diff = std_diff / np.sqrt(n_orders) if n_orders > 0 else 0.0
 
-    if net_savings <= 0:
+    # Stated safety margin: require expected positive savings at lower 95% confidence bound
+    safety_margin_per_order = float(merchant_costs.get('safety_margin_per_order', 0.25))
+    lower_95_bound_per_order = mean_diff - 1.96 * se_diff
+    lower_95_bound_total = lower_95_bound_per_order * n_orders
+    net_savings = float(np.sum(diff_losses))
+
+    if lower_95_bound_per_order <= safety_margin_per_order:
         return {
             'allowed': False,
             'expected_net_savings': round(net_savings, 2),
+            'lower_95_ci_savings': round(lower_95_bound_total, 2),
             'status': 'BLOCKED',
             'action': 'ALLOW_COD',
-            'reason': f"Simulation shows negative or zero net savings (Rs {net_savings:,.2f}) at historical COD RTO rate {target_r*100:.1f}%. Friction blocked."
+            'reason': (
+                f"Simulation lower 95% CI net savings (Rs {lower_95_bound_total:,.2f}) "
+                f"fails safety margin threshold at historical COD RTO rate {target_r*100:.1f}%. Friction blocked."
+            )
         }
     else:
         return {
             'allowed': True,
             'expected_net_savings': round(net_savings, 2),
+            'lower_95_ci_savings': round(lower_95_bound_total, 2),
             'status': 'ALLOWED',
             'action': 'POLICY_ENABLED',
-            'reason': f"Simulation verified positive net savings (Rs {net_savings:,.2f}) at historical COD RTO rate {target_r*100:.1f}%. Friction enabled."
+            'reason': (
+                f"Simulation verified positive net savings at lower 95% CI (Rs {lower_95_bound_total:,.2f}) "
+                f"at historical COD RTO rate {target_r*100:.1f}%. Friction enabled."
+            )
         }
+
 
 
 class ProductionGuardrails:
@@ -173,7 +189,8 @@ class ProductionGuardrails:
                  merchant_margin_pct: float = 0.20,
                  merchant_typical_order_value: float = 826.89,
                  pincode_whitelist: set = None,
-                 pincode_blacklist: set = None):
+                 pincode_blacklist: set = None,
+                 cap_mode: str = 'naive'):
         self.kill_switch = kill_switch or (os.getenv("RTO_SHIELD_KILL_SWITCH", "0") == "1")
         self.max_intervention_rate = max_intervention_rate
         self.high_value_threshold = high_value_threshold
@@ -190,6 +207,16 @@ class ProductionGuardrails:
         # Sliding window for rate limiting
         self.window_size = window_size
         self.recent_actions = deque(maxlen=window_size)
+        # cap_mode 'naive': first-come — once the window rate hits the cap, ANY new
+        #   intervention is forced to ALLOW (arrival order decides who is dropped).
+        # cap_mode 'ranked': intervene only if this order's EL improvement over ALLOW is
+        #   >= the (1 - cap) quantile of improvements in the recent window.
+        # ponytail: quantile over a sliding window of the last `window_size` COD orders;
+        #   assumes the benefit distribution is stationary over that window.
+        if cap_mode not in ('naive', 'ranked'):
+            raise ValueError(f"cap_mode must be 'naive' or 'ranked', got {cap_mode!r}")
+        self.cap_mode = cap_mode
+        self.recent_benefits = deque(maxlen=window_size)
         
     def evaluate(self, features: Dict[str, Any], raw_decision_func) -> Dict[str, Any]:
         """
@@ -260,7 +287,18 @@ class ProductionGuardrails:
 
         # 5. Intervention Rate Cap (Sliding Window)
         is_intervention = 1 if action not in ('ALLOW_COD', 'PREPAID_PASSTHROUGH') else 0
-        if len(self.recent_actions) >= 50:
+        if self.cap_mode == 'ranked' and action != 'PREPAID_PASSTHROUGH':
+            el = decision.get('el_table') or {}
+            benefit = float(el.get('ALLOW_COD', 0.0) - el.get(action, 0.0)) if is_intervention else 0.0
+            self.recent_benefits.append(benefit)
+            if is_intervention and len(self.recent_benefits) >= 50:
+                cutoff = float(np.quantile(self.recent_benefits, 1.0 - self.max_intervention_rate))
+                if benefit < cutoff:
+                    self.recent_actions.append(0)
+                    return {**decision, 'recommended_action': 'ALLOW_COD', 'probability': p,
+                            'guardrail_applied': f'INTERVENTION_CAP_RANKED (benefit {benefit:.2f} < {cutoff:.2f})',
+                            'status': 'OVERRIDDEN'}
+        elif len(self.recent_actions) >= 50:
             current_rate = sum(self.recent_actions) / len(self.recent_actions)
             if current_rate >= self.max_intervention_rate and is_intervention:
                 self.recent_actions.append(0)
@@ -270,7 +308,7 @@ class ProductionGuardrails:
                     'guardrail_applied': f'INTERVENTION_RATE_CAP_TRIPPED ({current_rate*100:.1f}%)',
                     'status': 'OVERRIDDEN'
                 }
-                
+
         self.recent_actions.append(is_intervention)
         decision['guardrail_applied'] = 'NONE'
         decision['status'] = 'PASSED'

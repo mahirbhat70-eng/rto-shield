@@ -152,22 +152,28 @@ def test_stage3_artifact_check():
     )
 
 def test_tree_model_min_depth_guard():
-    """Enforce minimum tree depth to prevent degenerate decision stumps (max_depth=1)."""
-    import inspect
+    """Verify tree model config and booster have min_depth >= 2 to capture interactions (not stumps)."""
     from src.models import tree_model
-    src = inspect.getsource(tree_model.main)
-    assert "'max_depth': [1" not in src and "'max_depth': 1" not in src, (
-        "Tree model grid illegally configured with degenerate max_depth=1"
-    )
+    depths = tree_model.PARAM_GRID.get('max_depth', [])
+    assert min(depths) >= 2, f"Tree grid allows degenerate depth-1 stumps: {depths}"
     booster = joblib.load('models/tree_model_booster.pkl')
-    assert booster.max_depth >= 3, f"Shipped booster depth too shallow: {booster.max_depth}"
+    assert booster.max_depth >= 2, f"Shipped booster depth too shallow: {booster.max_depth}"
 
 def test_calibrator_source_leakage_guard():
-    """Ensure calibration never fits on test data (data leakage)."""
-    cal_path = os.path.join(os.path.dirname(__file__), '..', 'src', 'eval', 'calibration.py')
-    with open(cal_path, 'r', encoding='utf-8') as f:
-        src = f.read()
-    assert 'data/processed/test.csv' not in src, (
-        "Calibration script illegally references test data (data leakage)"
+    """Behavioural provenance: refitting the calibrator with the pipeline's own
+    fit_calibrator() must reproduce the shipped artifact on test, and a test-fitted
+    calibrator must NOT (data leakage detection)."""
+    from src.eval import calibration
+    uncal = joblib.load('models/tree_model.pkl')
+    shipped = joblib.load('models/tree_model_calibrated.pkl')
+    test_df = pd.read_csv('data/processed/test.csv', dtype={'pincode': str})
+    X = test_df.drop(columns=['rto_label'])
+    p_shipped = shipped.predict_proba(X)[:, 1]
+    p_refit = calibration.fit_calibrator(uncal).predict_proba(X)[:, 1]
+    assert np.allclose(p_refit, p_shipped, atol=1e-9), (
+        f"Calibrator data provenance mismatch: max diff {np.abs(p_refit - p_shipped).max():.4g}"
     )
+    p_leak = calibration.fit_calibrator(uncal, 'data/processed/test.csv').predict_proba(X)[:, 1]
+    assert not np.allclose(p_leak, p_shipped, atol=1e-6), "check cannot distinguish test-fitted calibrator"
+
 

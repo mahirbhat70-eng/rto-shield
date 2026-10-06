@@ -18,3 +18,15 @@ interventions:
     friction_cost: 0
     success_drop_pct: 0.70   
     rto_reduction_pct: 0.55  # Provenance: EDA shows Prepaid RTO is ~12-13% vs COD 27%. Drops RTO by ~55%.
+
+# ASSUMED OPERATIONAL COSTS (Task 10 audit breakdown):
+# Real merchant fulfillment entails payment gateway, reconciliation, and messaging costs.
+assumed_operational_costs:
+  payment_gateway_fee_deposit_pct: 0.02          # ASSUMED: 2.0% pg fee on partial deposit
+  payment_gateway_fee_deposit_fixed: 2.00        # ASSUMED: Rs 2.00 fixed pg transaction fee
+  deposit_refund_reconciliation_cost: 3.00       # ASSUMED: Rs 3.00 refund handling & ledger reconciliation
+  whatsapp_otp_template_cost: 0.75               # ASSUMED: Rs 0.75 per OTP verification message
+  customer_support_cost_per_intervention: 1.25   # ASSUMED: Rs 1.25 support overhead per triggered intervention
+  total_assumed_deposit_friction_cost: 7.00      # ASSUMED: sum of deposit gateway, refund, recon & support
+  total_assumed_verify_friction_cost: 2.00       # ASSUMED: template (0.75) + customer support (1.25)
+

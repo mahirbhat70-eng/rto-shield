@@ -6,6 +6,17 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import brier_score_loss
 from sklearn.calibration import calibration_curve, CalibratedClassifierCV
 
+CAL_SPLIT = "data/processed/val_cal.csv"
+
+
+def fit_calibrator(tree_model, cal_path=CAL_SPLIT):
+    """Isotonic calibrator fitted on cal_path only (val_cal by default; never test)."""
+    cal_df = pd.read_csv(cal_path, dtype={'pincode': str})
+    from sklearn.frozen import FrozenEstimator
+    calibrator = CalibratedClassifierCV(FrozenEstimator(tree_model), method='isotonic', cv=None)
+    return calibrator.fit(cal_df.drop(columns=['rto_label']), cal_df['rto_label'])
+
+
 def main():
     print("=" * 60)
     print("Stage 3: Calibration & Reliability")
@@ -45,20 +56,7 @@ def main():
     if brier_tree > brier_lr or mean_abs_err > 0.03:
         print("\nCalibrating Tree Model...")
         
-        y_val_cal = val_cal_df['rto_label']
-        X_val_cal = val_cal_df.drop(columns=['rto_label'])
-        
-        # In sklearn >=1.6, we should use FrozenEstimator
-        try:
-            from sklearn.utils.estimator_checks import check_estimator
-            from sklearn.utils import estimator_html_repr
-            # Hack to check if FrozenEstimator exists
-            from sklearn.frozen import FrozenEstimator
-            calibrator = CalibratedClassifierCV(FrozenEstimator(tree_model), method='isotonic', cv=None)
-        except ImportError:
-            calibrator = CalibratedClassifierCV(estimator=tree_model, method='isotonic', cv='prefit')
-            
-        calibrator.fit(X_val_cal, y_val_cal)
+        calibrator = fit_calibrator(tree_model)
         
         joblib.dump(calibrator, 'models/tree_model_calibrated.pkl')
         print("Saved models/tree_model_calibrated.pkl")

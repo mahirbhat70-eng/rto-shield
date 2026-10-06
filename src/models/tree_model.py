@@ -25,6 +25,12 @@ def get_preprocessor():
         remainder='drop'
     )
 
+PARAM_GRID = {
+    'n_estimators': [400, 800],
+    'learning_rate': [0.05, 0.1],
+    'max_depth': [4, 6]
+}
+
 def main():
     print("=" * 60)
     print("Stage 3: Gradient Boosting Model (LightGBM)")
@@ -48,11 +54,8 @@ def main():
     X_val_cal = preprocessor.transform(X_val_cal_raw)
 
     # Grid search on val_cal ONLY
-    grid = {
-        'n_estimators': [400, 800],
-        'learning_rate': [0.05, 0.1],
-        'max_depth': [4, 6]
-    }
+    grid = PARAM_GRID
+
     keys = list(grid.keys())
     combinations = list(itertools.product(*grid.values()))
 

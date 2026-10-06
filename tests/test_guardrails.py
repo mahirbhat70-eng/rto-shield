@@ -87,33 +87,35 @@ def test_merchant_breakeven_gate():
 
 def test_merchant_break_even_simulation_gate():
     """
-    Test guardrails.merchant_break_even:
-    1. Low-RTO merchant (10% COD RTO) must be blocked.
-    2. High-RTO merchant (30% COD RTO) must be allowed.
-    3. Fewer than 1,000 orders must fall back to ALLOW with logged reason.
+    Test guardrails.merchant_break_even (Task 5b):
+    1. Low/near-crossover merchant (17% COD RTO): lower 95% CI <= safety margin -> BLOCKED.
+    2. High-RTO merchant (30% COD RTO): lower 95% CI > safety margin -> ALLOWED.
+    3. Fewer than 1,000 orders: Insufficient data -> fall back to ALLOW with logged reason.
     """
     from src.serve.guardrails import merchant_break_even
 
     costs = {
         'rto_cost': 150.0,
-        'margin_pct': 0.20
+        'margin_pct': 0.20,
+        'safety_margin_per_order': 0.25
     }
     # Standard basket distribution: 1,500 orders around Rs 800
     basket_1500 = [800.0] * 1500
 
-    # 1. Low-RTO merchant (10%): Net savings <= 0 -> BLOCKED
-    res_low = merchant_break_even(costs, basket_1500, historical_cod_rto_rate=0.10)
-    assert not res_low['allowed']
-    assert res_low['status'] == 'BLOCKED'
-    assert res_low['action'] == 'ALLOW_COD'
-    assert res_low['expected_net_savings'] <= 0
+    # 1. Merchant at 17% COD RTO: Must be BLOCKED
+    res_17 = merchant_break_even(costs, basket_1500, historical_cod_rto_rate=0.17)
+    assert not res_17['allowed']
+    assert res_17['status'] == 'BLOCKED'
+    assert res_17['action'] == 'ALLOW_COD'
+    assert res_17['lower_95_ci_savings'] <= 0.25 * 1500
 
-    # 2. High-RTO merchant (30%): Net savings > 0 -> ALLOWED
-    res_high = merchant_break_even(costs, basket_1500, historical_cod_rto_rate=0.30)
-    assert res_high['allowed']
-    assert res_high['status'] == 'ALLOWED'
-    assert res_high['action'] == 'POLICY_ENABLED'
-    assert res_high['expected_net_savings'] > 0
+    # 2. High-RTO merchant (30% COD RTO): Must be ALLOWED
+    res_30 = merchant_break_even(costs, basket_1500, historical_cod_rto_rate=0.30)
+    assert res_30['allowed']
+    assert res_30['status'] == 'ALLOWED'
+    assert res_30['action'] == 'POLICY_ENABLED'
+    assert res_30['expected_net_savings'] > 0
+    assert res_30['lower_95_ci_savings'] > 0
 
     # 3. Fewer than 1,000 orders (e.g. 500 orders): Insufficient data -> fall back to ALLOW with logged reason
     basket_500 = [800.0] * 500
@@ -123,5 +125,44 @@ def test_merchant_break_even_simulation_gate():
     assert res_small['action'] == 'ALLOW_COD'
     assert "Insufficient order data" in res_small['reason']
     assert "Falling back to ALLOW_COD" in res_small['reason']
+
+
+def test_ranked_cap_drops_lowest_benefit_orders():
+    """Verify ranked cap drops lowest-benefit orders and preserves highest-benefit orders (Task 2 & Mutation 20)."""
+    gr = ProductionGuardrails(kill_switch=False, max_intervention_rate=0.50, window_size=100, cap_mode='ranked')
+
+    # Seed 60 orders with varying benefits
+    for b in range(1, 61):
+        gr.recent_benefits.append(float(b))
+        gr.recent_actions.append(1)
+
+    # Low benefit order (benefit = 5 < cutoff ~30): must be dropped to ALLOW_COD
+    low_order = {
+        'order_value': 800.0,
+        'pincode': '110001'
+    }
+    low_model = lambda f: {
+        'recommended_action': 'VERIFY_ADDRESS',
+        'probability': 0.25,
+        'el_table': {'ALLOW_COD': 50.0, 'VERIFY_ADDRESS': 45.0}  # benefit = 5.0
+    }
+    res_low = gr.evaluate(low_order, low_model)
+    assert res_low['recommended_action'] == 'ALLOW_COD'
+    assert 'INTERVENTION_CAP_RANKED' in res_low['guardrail_applied']
+
+    # High benefit order (benefit = 50 > cutoff ~30): must be kept
+    high_order = {
+        'order_value': 800.0,
+        'pincode': '110001'
+    }
+    high_model = lambda f: {
+        'recommended_action': 'REQUIRE_DEPOSIT',
+        'probability': 0.70,
+        'el_table': {'ALLOW_COD': 120.0, 'REQUIRE_DEPOSIT': 70.0}  # benefit = 50.0
+    }
+    res_high = gr.evaluate(high_order, high_model)
+    assert res_high['recommended_action'] == 'REQUIRE_DEPOSIT'
+    assert res_high['guardrail_applied'] == 'NONE'
+
 
 

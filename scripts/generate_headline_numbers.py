@@ -224,6 +224,26 @@ def generate_numbers():
     print("Collecting test count...")
     test_count = get_test_count()
 
+    # 5-seed sweep statistics for the shipped model (Task 3a)
+    sweep_csv_path = os.path.join(ROOT, "audit/seed_sweep.csv")
+
+    if os.path.exists(sweep_csv_path):
+        sweep_df = pd.read_csv(sweep_csv_path)
+        iso_realized = sweep_df["LGBM_iso_realized_Rs"].values
+        iso_expected = sweep_df["LGBM_iso_expected_Rs"].values
+        iso_gap = sweep_df["LGBM_iso_gap_pct"].values
+        five_seed_stats = {
+            "description": "5-seed sweep over seeds [42, 101, 2024, 777, 999]",
+            "expected_savings_mean_inr": round(float(np.mean(iso_expected)), 2),
+            "expected_savings_std_inr": round(float(np.std(iso_expected, ddof=1)), 2),
+            "realized_savings_mean_inr": round(float(np.mean(iso_realized)), 2),
+            "realized_savings_std_inr": round(float(np.std(iso_realized, ddof=1)), 2),
+            "gap_pct_mean": round(float(np.mean(iso_gap)), 2),
+            "gap_pct_std": round(float(np.std(iso_gap, ddof=1)), 2),
+        }
+    else:
+        five_seed_stats = {}
+
     results = {
         "cod_subset_size": n_cod,
         "cod_base_rto_rate": round(cod_base_rto, 4),
@@ -231,8 +251,12 @@ def generate_numbers():
         "baseline_cod_rtos": baseline_cod_rtos,
         "models": model_metrics,
         "primary_model": "lgbm_isotonic",
+        "primary_model_note": "Seed 42 is a single draw (best of 5 seeds); 5-seed mean realized savings is Rs 66,333.14 +/- 2,148.16",
+        "single_draw_label": "seed_42_single_draw",
         "expected_savings_inr": expected_savings,
         "realized_savings_inr": realized_savings,
+        "seed_42_single_draw_realized_savings_inr": realized_savings,
+        "five_seed_sweep_shipped_model": five_seed_stats,
         "expected_rtos_prevented": round(float(rtos_prev_exp), 2),
         "rtos_prevented_pct": round(float(rtos_prev_exp) / baseline_cod_rtos * 100.0, 2),
         "good_customer_drops": round(float(drops_exp), 2),
@@ -246,6 +270,7 @@ def generate_numbers():
         "latency": latency,
         "test_count": test_count,
     }
+
 
     out_path = os.path.join(ROOT, "reports/headline_numbers.json")
     os.makedirs(os.path.dirname(out_path), exist_ok=True)

@@ -188,8 +188,8 @@ mutations = [
         "id": 17,
         "name": "Calibrator fitted on test data (data leakage)",
         "file": "src/eval/calibration.py",
-        "old": 'val_cal_df = pd.read_csv("data/processed/val_cal.csv", dtype={\'pincode\': str})',
-        "new": 'val_cal_df = pd.read_csv("data/processed/test.csv", dtype={\'pincode\': str})',
+        "old": 'CAL_SPLIT = "data/processed/val_cal.csv"',
+        "new": 'CAL_SPLIT = "data/processed/test.csv"',
         "tests": ["tests/test_stage3.py"]
     },
     {
@@ -199,13 +199,30 @@ mutations = [
         "old": "os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'processed', 'train.csv')",
         "new": "os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'raw', 'synthetic_orders.csv')",
         "tests": ["tests/test_data_realism.py"]
+    },
+    {
+        "id": 19,
+        "name": "Deposit operational friction cost set to zero",
+        "file": "configs/cost_config.yaml",
+        "old": "total_assumed_deposit_friction_cost: 7.00",
+        "new": "total_assumed_deposit_friction_cost: 0.00",
+        "tests": ["tests/test_cost_engine.py"]
+    },
+    {
+        "id": 20,
+        "name": "Cap selector drops highest-benefit orders instead of lowest",
+        "file": "src/serve/guardrails.py",
+        "old": "if benefit < cutoff:",
+        "new": "if benefit >= cutoff:",
+        "tests": ["tests/test_guardrails.py"]
     }
 ]
 
 def main():
     print("=" * 80)
-    print(f"STARTING 18-MUTATION SABOTAGE SUITE (Total: {len(mutations)})")
+    print(f"STARTING 20-MUTATION SABOTAGE SUITE (Total: {len(mutations)})")
     print("=" * 80 + "\n")
+
 
     results = []
 

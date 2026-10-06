@@ -34,8 +34,20 @@
     }
   },
   "primary_model": "lgbm_isotonic",
+  "primary_model_note": "Seed 42 is a single draw (best of 5 seeds); 5-seed mean realized savings is Rs 66,333.14 +/- 2,148.16",
+  "single_draw_label": "seed_42_single_draw",
   "expected_savings_inr": 71741.02,
   "realized_savings_inr": 69786.08,
+  "seed_42_single_draw_realized_savings_inr": 69786.08,
+  "five_seed_sweep_shipped_model": {
+    "description": "5-seed sweep over seeds [42, 101, 2024, 777, 999]",
+    "expected_savings_mean_inr": 72135.02,
+    "expected_savings_std_inr": 2855.9,
+    "realized_savings_mean_inr": 66333.14,
+    "realized_savings_std_inr": 2147.73,
+    "gap_pct_mean": 8.8,
+    "gap_pct_std": 4.46
+  },
   "expected_rtos_prevented": 951.16,
   "rtos_prevented_pct": 46.9,
   "good_customer_drops": 820.08,
@@ -58,17 +70,17 @@
   "ratio_vs_single_threshold": 1.9973,
   "latency": {
     "with_shap": {
-      "p50_ms": 23.07,
-      "p95_ms": 32.91,
-      "p99_ms": 71.71,
-      "mean_ms": 23.61
+      "p50_ms": 11.22,
+      "p95_ms": 15.35,
+      "p99_ms": 17.71,
+      "mean_ms": 11.83
     },
     "without_shap": {
-      "p50_ms": 12.51,
-      "p95_ms": 16.62,
-      "p99_ms": 30.62,
-      "mean_ms": 13.1
+      "p50_ms": 7.02,
+      "p95_ms": 9.03,
+      "p99_ms": 10.05,
+      "mean_ms": 7.11
     }
   },
-  "test_count": 258
+  "test_count": 263
 }

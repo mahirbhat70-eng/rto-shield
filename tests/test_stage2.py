@@ -78,6 +78,21 @@ def test_temporal_split_no_overlap(small_dataset, tmp_path):
     assert val_cal_max < val_rep_min, "val_cal/val_rep temporal overlap"
     assert val_rep_max < test_min, "val_rep/test temporal overlap"
     assert len(train) + len(val_cal) + len(val_rep) + len(test) == len(small_dataset)
+    # Within-split chronological order (rate-cap simulation consumes rows in arrival order)
+    for name, s in [("train", train), ("val_cal", val_cal), ("val_rep", val_rep), ("test", test)]:
+        assert pd.to_datetime(s['timestamp']).is_monotonic_increasing, f"{name} not chronological"
+
+
+def test_shipped_splits_chronological_and_disjoint():
+    """Same checks on the frozen data/processed splits actually used by every report."""
+    names = ["train", "val_cal", "val_rep", "test"]
+    ts = {n: pd.to_datetime(pd.read_csv(f"data/processed/{n}.csv", usecols=["timestamp"])["timestamp"])
+          for n in names}
+    for n in names:
+        assert ts[n].is_monotonic_increasing, f"{n}.csv not chronological"
+    for a, b in zip(names, names[1:]):
+        assert ts[a].max() < ts[b].min(), f"timestamp overlap {a}/{b}"
+
 
 
 # ── Test: Rule Baseline ──────────────────────────────────────────────

@@ -200,3 +200,12 @@ class TestGetOptimalPolicy:
         el = engine.evaluate_interventions(5000.0, 0.95)
         best_manual = min(el, key=el.get)
         assert actions[0] == best_manual
+
+
+def test_deposit_operational_costs_nonzero(engine):
+    """Ensure cost config defines non-zero operational costs for deposits (Task 10 & Mutation 19)."""
+    cfg = engine.config
+    assumed = cfg.get("assumed_operational_costs", {})
+    deposit_friction = assumed.get("total_assumed_deposit_friction_cost", 0.0)
+    assert deposit_friction > 0, "Deposit operational friction costs must be greater than zero"
+

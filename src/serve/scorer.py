@@ -57,7 +57,9 @@ def _verify_and_load(filename: str, manifest_path: str = None, pinned_digests: d
     
     # 1. Check out-of-boundary env var first (e.g. pinned in CI / cloud secret)
     hashes = {}
-    is_prod = os.getenv("RTO_SHIELD_ENV", "").lower() in ("production", "prod")
+    env_str = os.getenv("RTO_SHIELD_ENV") or os.getenv("ENVIRONMENT") or ""
+    env_clean = env_str.strip().lower()
+    is_dev = env_clean in ("development", "dev", "test", "testing", "local")
     env_digests = os.getenv("RTO_SHIELD_PINNED_DIGESTS")
 
     if pinned_digests:
@@ -68,16 +70,16 @@ def _verify_and_load(filename: str, manifest_path: str = None, pinned_digests: d
             hashes.update(json.loads(env_digests))
         except Exception as e:
             raise SecurityError(f"SecurityError: Malformed RTO_SHIELD_PINNED_DIGESTS JSON: {e}")
-    elif is_prod:
-        # FAIL CLOSED in production mode
+    elif not is_dev:
+        # FAIL CLOSED: unset, unrecognised, or explicitly production requires pinned digests
         raise SecurityError(
-            "SecurityError: In production mode (RTO_SHIELD_ENV=production), "
+            f"SecurityError: In production mode (environment '{env_str}' is unset, unrecognised, or production), "
             "RTO_SHIELD_PINNED_DIGESTS must be set. Refusing to load models without pinned digests."
         )
     else:
         import warnings
         warnings.warn(
-            "RTO_SHIELD_PINNED_DIGESTS is unset in development mode; using repo hashes from artifact_hashes.json.",
+            f"RTO_SHIELD_PINNED_DIGESTS is unset in development mode ('{env_clean}'); using repo hashes from artifact_hashes.json.",
             UserWarning
         )
             

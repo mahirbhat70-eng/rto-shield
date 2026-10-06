@@ -178,6 +178,31 @@ def test_verify_and_load_fail_closed_in_production(monkeypatch):
         _verify_and_load("tree_model.pkl")
 
 
+def test_verify_and_load_fail_closed_when_unset(monkeypatch):
+    """If ENVIRONMENT / RTO_SHIELD_ENV is unset, default to production and fail closed."""
+    import pytest
+    from src.serve.scorer import _verify_and_load, SecurityError
+
+    monkeypatch.delenv("RTO_SHIELD_ENV", raising=False)
+    monkeypatch.delenv("ENVIRONMENT", raising=False)
+    monkeypatch.delenv("RTO_SHIELD_PINNED_DIGESTS", raising=False)
+
+    with pytest.raises(SecurityError, match="In production mode"):
+        _verify_and_load("tree_model.pkl")
+
+
+def test_verify_and_load_fail_closed_when_unrecognised(monkeypatch):
+    """If ENVIRONMENT is unrecognised (e.g. 'staging'), behave as production and fail closed."""
+    import pytest
+    from src.serve.scorer import _verify_and_load, SecurityError
+
+    monkeypatch.setenv("RTO_SHIELD_ENV", "staging_unknown_env")
+    monkeypatch.delenv("RTO_SHIELD_PINNED_DIGESTS", raising=False)
+
+    with pytest.raises(SecurityError, match="In production mode"):
+        _verify_and_load("tree_model.pkl")
+
+
 def test_verify_and_load_warns_and_loads_in_dev(monkeypatch):
     """In development mode, warn when RTO_SHIELD_PINNED_DIGESTS is unset and fall back to repo manifest."""
     import pytest
@@ -189,6 +214,7 @@ def test_verify_and_load_warns_and_loads_in_dev(monkeypatch):
     with pytest.warns(UserWarning, match="RTO_SHIELD_PINNED_DIGESTS is unset in development mode"):
         model = _verify_and_load("tree_model.pkl")
     assert model is not None
+
 
 
 

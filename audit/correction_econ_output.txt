@@ -1,0 +1,45 @@
+====================================================================================================
+TASK 2  INTERVENTION RATE AND CAP (frozen model, test COD n=7174)
+pure policy intervention rate: 5856/7174 = 81.63%  mix={'ALLOW_COD': np.int64(1318), 'REQUIRE_DEPOSIT': np.int64(2612), 'VERIFY_ADDRESS': np.int64(3244)}
+  cap    mode   served Rs  vs pure forced ALLOW interv % lost good COD % good COD rev lost %
+  40%   naive   35,977.16  -48.45%         2991   39.94%           7.92%               3.71%
+  40%  ranked   59,265.11  -15.08%         2947   40.55%          12.82%               5.40%
+  60%   naive   55,065.83  -21.09%         1560   59.88%          11.73%               5.53%
+  60%  ranked   66,681.50   -4.45%         1539   60.18%          14.79%               6.57%
+  80%   naive   68,444.67   -1.92%          151   79.52%          15.61%               7.48%
+  80%  ranked   69,687.85   -0.14%          122   79.93%          15.91%               7.57%
+ 100%   naive   69,786.08   +0.00%            0   81.63%          16.00%               7.68%
+ 100%  ranked   69,786.08   +0.00%            0   81.63%          16.00%               7.68%
+pure (no cap): Rs 69,786.08; expected good COD customers lost 16.00% (= 823 of 5146 good COD orders); good-COD revenue lost 7.68%
+====================================================================================================
+TASK 5a  BREAK-EVEN (frozen actions; label-shift by resampling, 20 seeds)
+raw sweep, Rs per COD order (mean over 20 seeds):
+  COD RTO 0.1200:   -3.772
+  COD RTO 0.1500:   -1.309
+  COD RTO 0.1700:   +0.332
+  COD RTO 0.2000:   +2.800
+  COD RTO 0.2400:   +6.105
+  COD RTO 0.2827:   +9.686
+  COD RTO 0.3200:  +12.795
+per-seed COD crossovers: [0.1679, 0.1683, 0.1719, 0.1674, 0.1687, 0.1715, 0.1665, 0.1656, 0.1624, 0.1647, 0.1622, 0.1622, 0.1673, 0.1617, 0.1674, 0.1659, 0.1617, 0.167, 0.166, 0.1636]
+COD-RTO crossover: mean 0.1660, seed sd 0.0030, bootstrap 95% CI of mean [0.1647, 0.1673]
+overall-RTO crossover (prepaid rate fixed at 0.1198, COD share 0.479): mean 0.1419, range [0.1398, 0.1448]
+linear interpolation between (0.15, -1.309) and (0.2827, +9.686) -> 0.1658 (savings are convex in r because the policy is frozen, so straight-line interpolation is biased)
+====================================================================================================
+TASK 8  MISSPECIFICATION GRID (pessimistic / neutral / optimistic; policy FROZEN at design)
+cells=81; design point (0.40,0.80,0.05,0.30) is NOT on this grid (dep_drop 0.40 is between levels)
+policy      : beats always-allow 35.8% (29/81), beats pincode rule 19.8%; min -137,227 median -16,820 max 94,805
+reoptimized : beats always-allow 100.0% (81/81), beats pincode rule 100.0%; min 8,874 median 29,421 max 97,161
+pincode rule: min -75,949 median -25 max 70,355
+profitable share by parameter value (frozen policy):
+  dep_drop: 0.3: 56%, 0.5: 33%, 0.7: 19%
+  dep_red: 0.2: 4%, 0.5: 37%, 0.8: 67%
+  ver_drop: 0.05: 56%, 0.1: 37%, 0.2: 15%
+  ver_red: 0.0: 15%, 0.2: 37%, 0.4: 56%
+most pessimistic profitable cells (frozen policy):
+ dep_drop  dep_red  ver_drop  ver_red    policy   pincode  reoptimized
+     0.30     0.20      0.05     0.40 18,484.88 23,284.92    68,474.94
+     0.70     0.80      0.10     0.20  2,793.96 13,710.46    25,673.74
+     0.70     0.50      0.05     0.40  9,789.66 21,910.40    68,474.94
+     0.50     0.50      0.05     0.20  6,607.27 13,485.16    23,418.74
+     0.30     0.50      0.05     0.00  3,424.88  5,059.92    29,443.28

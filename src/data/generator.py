@@ -165,7 +165,7 @@ def validate(df, expected_rows):
 
 
 # ─── Generator ─────────────────────────────────────────────────────────
-def generate(n_rows=100000, seed=42):
+def generate(n_rows=100000, seed=42, pincode_zipf_a=None):
     """
     Generate a synthetic e-commerce order dataset using a probabilistic
     latent-risk logistic-Bernoulli process. Returns a pd.DataFrame with
@@ -228,7 +228,11 @@ def generate(n_rows=100000, seed=42):
     prior_rto_count = rng.binomial(n=prior_orders, p=np.clip(rto_prop * 0.3, 0, 0.8))
 
     # ── 6. Pincodes, tiers, historical rate ──────────────────────────
-    pin_indices = rng.integers(0, len(pincode_pool), size=n_rows)
+    if pincode_zipf_a is None:
+        pin_indices = rng.integers(0, len(pincode_pool), size=n_rows)
+    else:  # long-tail variant: volume of rank-k pincode proportional to k^-a
+        w = np.arange(1, len(pincode_pool) + 1, dtype=float) ** -pincode_zipf_a
+        pin_indices = rng.choice(len(pincode_pool), size=n_rows, p=w / w.sum())
     pincodes_sampled = pincode_pool['pincode'].values[pin_indices]
     pincode_tiers = pincode_pool['pincode_tier'].values[pin_indices]
     theta_pincode = pincode_pool['theta_pincode'].values[pin_indices]

@@ -6,18 +6,27 @@
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Streamlit%20App-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://rto-shield-nlthpydtndpkupyfgfl3yy.streamlit.app)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![LightGBM](https://img.shields.io/badge/Model-LightGBM%20%2B%20TreeSHAP-2ECC71?style=for-the-badge)](https://lightgbm.readthedocs.io)
-[![Tests](https://img.shields.io/badge/Tests-258%20Passing-brightgreen?style=for-the-badge&logo=pytest&logoColor=white)](tests/)
-[![Latency](https://img.shields.io/badge/Inference-15ms%20p50-blue?style=for-the-badge)](#-decision-engine-latency)
+[![Tests](https://img.shields.io/badge/Tests-263%20Passing-brightgreen?style=for-the-badge&logo=pytest&logoColor=white)](tests/)
+[![Latency](https://img.shields.io/badge/Inference-8--10ms%20p50-blue?style=for-the-badge)](#-decision-engine-latency)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
 
 <p align="center">
-  <b>Transforming Cash-on-Delivery (COD) risk prediction into profit-maximizing interventions:</b><br/>
+  <b>Transforming Cash-on-Delivery (COD) risk prediction into cost-minimizing interventions:</b><br/>
   Combines calibrated probability estimation, TreeSHAP explainability, and an expected-loss decision matrix to protect merchant margins against Return-to-Origin (RTO) logistics waste.
 </p>
 
 > 📄 **Executive Resources**: **[Executive Brief (PDF)](docs/executive_brief.pdf)** · **[Interactive HTML](https://htmlpreview.github.io/?https://github.com/mahirbhat70-eng/rto-shield/blob/main/docs/executive_brief.html)** · **[Decision Audit Claim Matrix](claim-matrix.md)** · **[Audit Review Packet](audit/REVIEW_PACKET.md)**
 
 </div>
+
+---
+
+## ⚠️ Critical Limitations & Research Prototype Disclaimer
+
+> **PLEASE READ BEFORE EVALUATING:**
+> 1. **Synthetic Data Only:** All benchmarks, distributions, and models were evaluated strictly on synthetic order data generated from parametric processes. Real merchant traffic features fraud rings, carrier NDR fake-delivery attempts, and customer address spoofing not modeled here.
+> 2. **Assumed Intervention Effects:** RTO reductions (80% deposit, 30% verification) and customer drop-offs (40% deposit, 5% verification) are **unvalidated parametric modeling assumptions**, not empirical counterfactuals measured on live human shoppers.
+> 3. **No Real Merchant Validation:** This codebase is a research prototype. It has **NOT** been piloted or validated on real merchant stores. Autonomous live intervention routing must remain disabled pending staged shadow and randomized control pilot testing (see [Pilot Design](audit/PILOT_DESIGN.md)).
 
 ---
 
@@ -33,7 +42,7 @@
 | **6. Hard questions** | [`docs/JUDGE_QA.md`](docs/JUDGE_QA.md) — 10 questions with evidence-backed answers |
 | **7. Adversarial audit** | [`audit/REVIEW_PACKET.md`](audit/REVIEW_PACKET.md) — 15 reconciled audit tasks & sensitivity bounds |
 
-All frozen model artifacts and reports are committed. **Full test suite passes: (258/258 passed).**
+All frozen model artifacts and reports are committed. **Full test suite passes: (263/263 passed).**
 
 ```bash
 # 1. Clone repository
@@ -43,11 +52,12 @@ cd rto-shield
 # 2. Install dependencies
 pip install -r requirements.txt
 
-# 3. Run full automated test suite (258 passing tests)
+# 3. Run full automated test suite (263 passing tests)
 pytest tests/ -q
 
 # 4. Launch interactive 5-view decision dashboard
 streamlit run dashboard.py
+
 ```
 
 ---
@@ -74,13 +84,13 @@ Benchmarked across the full end-to-end scoring pipeline (`feature resolution` �
 > 2. **Intervention Rate Limiter:** Rolling window cap preventing interventions from exceeding 60% of volume.
 > 3. **High-Value Basket Protection:** Orders exceeding ₹10,000 are automatically routed to manual review rather than checkout friction.
 > 4. **Merchant Break-Even Gate:** Brands with historical COD RTO rates below **16.8%** automatically bypass friction (`ALLOW_COD`), preventing margin loss on healthy delivery profiles.
-> 5. **Cryptographic Integrity & Privacy:** Mandatory SHA-256 digest validation before pickle loading and strict allow-list sanitization stripping all customer PII.
+> 5. **SHA-256 Digest Verification & Privacy:** Pre-deserialization SHA-256 integrity validation and strict allow-list sanitization stripping all customer PII.
 
 ---
 
 ## 💡 The Core Problem: Why Predicting P(RTO) Isn't Enough
 
-Predicting probability is not the end-product — **deciding the financially optimal intervention is.**
+Predicting probability is not the end-product — **deciding the expected-loss minimizing intervention is.**
 
 In Indian e-commerce, reverse logistics for an RTO order costs a merchant **₹150+ in dead freight**, destroying profitability. However, bluntly blocking high-risk orders drops paying customers and forfeits revenue. 
 
@@ -96,7 +106,7 @@ $$\text{Margin} = \text{Order Value} \times 20\%$$
 | **`ALLOW`** | Seamless fulfillment | ₹0 | Low-risk orders, high-margin VIP customers |
 | **`VERIFY`** | Automated WhatsApp / IVR address confirmation | ₹2 | Borderline uncertainty; filters typo & bogus addresses |
 | **`DEPOSIT`** | Request partial pre-payment (₹50–₹100 advance) | Modest | High-risk, low-ticket orders where reverse logistics exceeds margin |
-| **`PREPAID`** | Require 100% digital payment (UPI / Card) | High | Severe repeat fraud or known serial RTO addresses |
+| **`PREPAID`** | Require digital payment (UPI / Card) | High | Severe repeat fraud or known serial RTO addresses |
 
 ---
 
@@ -122,12 +132,13 @@ flowchart TD
 
     subgraph Cost ["4. Expected Loss Decision Engine"]
         EL["Calculate Expected Loss for All 4 Interventions:\nEL(ALLOW), EL(VERIFY), EL(DEPOSIT), EL(PREPAID)"]
-        ARGMIN["Optimal Action Selection:\nargmin(Expected Loss)"]
+        ARGMIN["Cost-Sensitive Action Selection:\nargmin(Expected Loss)"]
     end
 
     subgraph Output ["5. Execution & Audit"]
         DEC["Execute Action:\nALLOW | VERIFY | DEPOSIT | PREPAID"]
         LOG[("Immutable Audit Trail & SHAP Waterfall")]
+
     end
 
     O --> F1 & F2 & F3
@@ -171,7 +182,7 @@ Every claim traces to frozen artifacts in `reports/` and is validated against 11
 | | **Realized P&L Savings (Simulated)** | **₹69,786.08** | Evaluated on actual ground-truth labels against response models (within 2.7% of EL forecast). |
 | | **Policy Superiority (Simulated)** | **2.0×** | Multi-action routing earns 2× the savings of single-threshold verify. |
 | **2. Statistical Performance** | **PR-AUC (Primary)** | **0.3313** | Evaluated on strictly held-out chronological test set (Logistic Regression baseline: 0.3434). |
-| | **Bayes Optimal Ceiling** | **0.3497** | Model achieves **94.7% of observable maximum signal** for this data generator. |
+| | **Bayes Observable Ceiling** | **0.3497** | Model achieves **94.7% of observable maximum signal** for this data generator. |
 | | **Recall @ Operating Point** | **85.6%** | Intercepts 1,735 out of 2,028 true RTO attempts. |
 | | **Precision @ Operating Point** | **29.6%** | Balances customer friction against ₹150 logistics penalty. |
 | | **Calibration (Brier / Bin-MAE)**| **0.1476 / 0.0086** | Probability accuracy required for cost engine. |
@@ -179,7 +190,7 @@ Every claim traces to frozen artifacts in `reports/` and is validated against 11
 | | **Target Segment** | **7,174 COD Orders** | Evaluated specifically on Cash-on-Delivery checkout flow. |
 | **4. Robustness & Stress** | **Noise Sensitivity** | **+2.7% Delta** | Evaluated with σ=0.04 Gaussian feature noise (stable ≤ 10%). |
 | | **Cold-Start Pincode Fallback**| **12.0% share** | Automatic empirical Bayesian prior fallback on new locations. |
-| | **Monte Carlo (5,000 runs)** | **P(ROI > 0) = 100%** | Mean ₹69,942 (5th %tile: ₹63,935, 95th %tile: ₹75,901) over synthetic test set resampling. |
+| | **Monte Carlo (5,000 runs)** | **P(ROI > 0) > 99.9%** | Mean ₹69,942 (5th %tile: ₹63,935, 95th %tile: ₹75,901) over synthetic test set resampling (under modeled response assumptions). |
 | **5. Computational Efficiency**| **Latency (p50 / p95 / p99)** | **15ms / 18ms / 21ms** | Full end-to-end serving latency including TreeSHAP factors (3ms without SHAP). |
 | | **Model Footprint** | **123 KB** | Ultra-lightweight LightGBM, embeddable in Edge/Lambda functions. |
 
@@ -206,14 +217,15 @@ COD Risk Factors:
 
 ## 🛡️ Adversarial Audit, Robustness & Safety Guardrails
 
-In response to an exhaustive 17-point adversarial audit, the codebase underwent rigorous hardening, reconciliation, and automated safety verification:
+In response to an exhaustive adversarial audit, the codebase underwent rigorous hardening, reconciliation, and automated safety verification:
 
 ### 1. Reconciled Audit Conflicts (Zero Discrepancies)
 - **Design Point Savings (₹69,786.08 canonical):** Standardized across all verification scripts and dashboards. An initial scratch script had applied a legacy ₹0.50 per-order deposit friction ($2,612 \times 0.50 = ₹1,306.00$), producing ₹68,480.08. Canonical config-driven realized savings is **₹69,786.08**.
-- **Bayes Optimal Ceiling (0.3497 observable):** The theoretical upper bound derived from the true observable generator expectation $\mathbb{E}[p \mid x]$ is **0.3497**. The primary model (0.3313) achieves **94.75% of observable ceiling signal**. The ~0.46 PR-AUC ceiling reported in earlier sweeps was computed against the unobservable latent risk $p_{\text{latent}}$ containing irreducible Gaussian noise $\epsilon \sim \mathcal{N}(0, 0.80)$.
-- **Model Ranking & Isotonic Calibration:** On the full test set ($N=14,980$), Logistic Regression achieves PR-AUC 0.3434, uncalibrated LightGBM achieves 0.3433, and isotonic LightGBM achieves 0.3313. Isotonic regression collapses the model's continuous risk distribution into 97 discrete probability plateaus (a step-function artifact that dampens ranking granularity), while preserving perfect calibration within decision bands ($|\Delta| \le 0.0032$).
+- **Bayes Observable Ceiling (0.3497):** The theoretical upper bound derived from the true observable generator expectation $\mathbb{E}[p \mid x]$ is **0.3497**. The primary model (0.3313) achieves **94.75% of observable ceiling signal**. The ~0.46 PR-AUC ceiling reported in earlier sweeps was computed against the unobservable latent risk $p_{\text{latent}}$ containing irreducible Gaussian noise $\epsilon \sim \mathcal{N}(0, 0.80)$.
+- **Model Ranking & Isotonic Calibration:** On the full test set ($N=14,980$), Logistic Regression achieves PR-AUC 0.3434, uncalibrated LightGBM achieves 0.3433, and isotonic LightGBM achieves 0.3313. Isotonic regression collapses the model's continuous risk distribution into 97 discrete probability plateaus (a step-function artifact that dampens ranking granularity), while preserving calibration within decision bands ($|\Delta| \le 0.0032$).
 - **Merchant Break-Even Gate (16.8% COD RTO):** At average ₹1,000 order value and 20% margin, losing a customer costs ₹200 while intercepting an RTO saves ₹150. If a merchant's baseline COD RTO is below **16.8%**, intervention friction destroys net margin. The system automatically enforces an `ALLOW_COD` bypass for low-risk brands.
-- **Cryptographic Artifact Inventory:** All 9 production artifacts (5 CSVs, 4 PKLs) are pinned in `models/artifact_hashes.json`. Deserialization refuses unverified pickles with a hard `SecurityError`.
+- **SHA-256 Artifact Inventory:** All 13 artifacts (CSV splits and PKLs) are pinned in `models/artifact_hashes.json`. Deserialization refuses unverified pickles with a hard `SecurityError`.
+
 
 ### 2. Behavioral Misspecification Sensitivity Bounds
 Executed via `audit/misspec.py` across full parameter perturbations:
