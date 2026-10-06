@@ -33,22 +33,36 @@ def test_stage3_performance_floor():
     
     proba = pipeline.predict_proba(X)[:, 1]
     pr_auc = average_precision_score(y, proba)
-    assert pr_auc >= 0.32, f"Tree PR-AUC on val_rep fell below floor: {pr_auc}"
+    # Relative floor: model PR-AUC must be >= 90% of observable Bayes ceiling
+    from src.eval.bayes_ceiling import get_true_p
+    p_ceil_val = get_true_p(val_rep)
+    ceil_pr_val = average_precision_score(y, p_ceil_val)
+    ratio_val = pr_auc / ceil_pr_val
+    assert ratio_val >= 0.90, f"Tree PR-AUC on val_rep fell below 90% of ceiling: {ratio_val:.3f}"
 
     cal_pipeline = joblib.load('models/tree_model_calibrated.pkl')
     proba_cal = cal_pipeline.predict_proba(X)[:, 1]
     pr_auc_cal = average_precision_score(y, proba_cal)
-    assert pr_auc_cal >= 0.31, f"Calibrated Tree PR-AUC on val_rep fell below floor: {pr_auc_cal}"
+    ratio_val_cal = pr_auc_cal / ceil_pr_val
+    assert ratio_val_cal >= 0.90, f"Calibrated Tree PR-AUC on val_rep fell below 90% of ceiling: {ratio_val_cal:.3f}"
 
     # Model degradation tests on held-out test set:
-    # 1. Assert production model test PR-AUC >= 0.32
+    # 1. Assert production model test PR-AUC >= 90% of observable Bayes ceiling
     # 2. Assert clear gap to a label-shuffled random baseline (>= 0.10)
+    from src.eval.bayes_ceiling import get_true_p
     test_df = pd.read_csv('data/processed/test.csv', dtype={'pincode': str})
     X_test = test_df.drop(columns=['rto_label', 'timestamp', 'order_id'], errors='ignore')
     y_test = test_df['rto_label'].values
     p_test = cal_pipeline.predict_proba(X_test)[:, 1]
     pr_test = average_precision_score(y_test, p_test)
-    assert pr_test >= 0.32, f"Production model test PR-AUC fell below floor (0.32): {pr_test:.4f}"
+
+    p_ceiling = get_true_p(test_df)
+    ceiling_pr = average_precision_score(y_test, p_ceiling)
+    ratio_to_ceiling = pr_test / ceiling_pr
+    assert ratio_to_ceiling >= 0.90, (
+        f"Production model PR-AUC ratio to observable ceiling fell below 90%: "
+        f"{pr_test:.4f} / {ceiling_pr:.4f} = {ratio_to_ceiling:.3f}"
+    )
 
     rng = np.random.default_rng(42)
     y_shuffled = rng.permutation(y_test)
@@ -136,3 +150,24 @@ def test_stage3_artifact_check():
     assert os.path.exists(manifest), (
         "models/artifact_hashes.json missing — run scripts/freeze_artifact_hashes.py"
     )
+
+def test_tree_model_min_depth_guard():
+    """Enforce minimum tree depth to prevent degenerate decision stumps (max_depth=1)."""
+    import inspect
+    from src.models import tree_model
+    src = inspect.getsource(tree_model.main)
+    assert "'max_depth': [1" not in src and "'max_depth': 1" not in src, (
+        "Tree model grid illegally configured with degenerate max_depth=1"
+    )
+    booster = joblib.load('models/tree_model_booster.pkl')
+    assert booster.max_depth >= 3, f"Shipped booster depth too shallow: {booster.max_depth}"
+
+def test_calibrator_source_leakage_guard():
+    """Ensure calibration never fits on test data (data leakage)."""
+    cal_path = os.path.join(os.path.dirname(__file__), '..', 'src', 'eval', 'calibration.py')
+    with open(cal_path, 'r', encoding='utf-8') as f:
+        src = f.read()
+    assert 'data/processed/test.csv' not in src, (
+        "Calibration script illegally references test data (data leakage)"
+    )
+

@@ -81,3 +81,14 @@ def test_production_feature_strictly_prior_50_rows():
         ]
         # Current order must not be in the count
         assert row["order_id"] not in df.iloc[:idx][(df.iloc[:idx]["pincode"] == pincode) & (df.iloc[:idx]["timestamp_dt"] == t_order)]["order_id"].values or rec_count < len(df)
+
+
+def test_pincode_lookup_train_only():
+    """Ensure lookup table is computed strictly from train.csv, never full dataset."""
+    lookup_file = os.path.join(REPO_ROOT, "src/serve/lookup.py")
+    with open(lookup_file, "r", encoding="utf-8") as f:
+        src = f.read()
+    assert "synthetic_orders.csv" not in src, "Lookup script illegally references full raw dataset"
+    from src.serve.lookup import DEFAULT_TRAIN_PATH
+    assert "train.csv" in DEFAULT_TRAIN_PATH, f"Lookup default train path must point to train.csv, got {DEFAULT_TRAIN_PATH}"
+

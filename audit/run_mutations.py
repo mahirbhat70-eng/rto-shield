@@ -24,7 +24,7 @@ def restore_files(paths):
         shutil.rmtree(BACKUP_DIR)
 
 def run_pytest(test_targets=None):
-    cmd = ["uv", "run", "pytest", "-q"]
+    cmd = [sys.executable, "-m", "pytest", "-q"]
     if test_targets:
         cmd.extend(test_targets)
     res = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
@@ -167,61 +167,107 @@ mutations = [
         "old": '"decision_id": decision_id,',
         "new": '"decision_id": "",',
         "tests": ["tests/test_audit.py", "tests/test_serving_validation.py"]
+    },
+    {
+        "id": 15,
+        "name": "LightGBM max_depth=1 (degenerate decision stumps)",
+        "file": "src/models/tree_model.py",
+        "old": "'max_depth': [4, 6]",
+        "new": "'max_depth': [1, 1]",
+        "tests": ["tests/test_stage3.py"]
+    },
+    {
+        "id": 16,
+        "name": "Scorer applies a different category encoding",
+        "file": "src/serve/scorer.py",
+        "old": "'category': clean['category'],",
+        "new": "'category': 'UnknownCategory',",
+        "tests": ["tests/test_serving_validation.py"]
+    },
+    {
+        "id": 17,
+        "name": "Calibrator fitted on test data (data leakage)",
+        "file": "src/eval/calibration.py",
+        "old": 'val_cal_df = pd.read_csv("data/processed/val_cal.csv", dtype={\'pincode\': str})',
+        "new": 'val_cal_df = pd.read_csv("data/processed/test.csv", dtype={\'pincode\': str})',
+        "tests": ["tests/test_stage3.py"]
+    },
+    {
+        "id": 18,
+        "name": "Pincode feature computed from full dataset",
+        "file": "src/serve/lookup.py",
+        "old": "os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'processed', 'train.csv')",
+        "new": "os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'raw', 'synthetic_orders.csv')",
+        "tests": ["tests/test_data_realism.py"]
     }
 ]
 
-print("Starting Mutation Testing Audit...")
-print(f"Total mutations defined: {len(mutations)}\n")
+def main():
+    print("=" * 80)
+    print(f"STARTING 18-MUTATION SABOTAGE SUITE (Total: {len(mutations)})")
+    print("=" * 80 + "\n")
 
-results = []
+    results = []
 
-for m in mutations:
-    m_id = m["id"]
-    m_name = m["name"]
-    files_to_touch = [m["file"]]
-    if "extra_file" in m and m["extra_file"] not in files_to_touch:
-        files_to_touch.append(m["extra_file"])
+    for m in mutations:
+        m_id = m["id"]
+        m_name = m["name"]
+        files_to_touch = [m["file"]]
+        if "extra_file" in m and m["extra_file"] not in files_to_touch:
+            files_to_touch.append(m["extra_file"])
 
-    backup_files(files_to_touch)
-    try:
-        replace_in_file(m["file"], m["old"], m["new"])
-        if "extra_file" in m:
-            replace_in_file(m["extra_file"], m["extra_old"], m["extra_new"])
-        
-        ret, failed, stdout, stderr = run_pytest(m["tests"])
-        verdict = "CAUGHT" if ret != 0 or len(failed) > 0 else "SURVIVED"
-        results.append({
-            "id": m_id,
-            "name": m_name,
-            "file": m["file"],
-            "failed_count": len(failed),
-            "failed_tests": failed[:3],
-            "verdict": verdict,
-            "raw_err": stderr[:200] if stderr else stdout[:200]
-        })
-        print(f"[{m_id}/14] {verdict}: {m_name}")
-        if failed:
-            print(f"       Failed: {', '.join(failed[:3])}")
-    except Exception as e:
-        print(f"[{m_id}/14] ERROR applying mutation: {e}")
-        results.append({
-            "id": m_id,
-            "name": m_name,
-            "file": m["file"],
-            "failed_count": 0,
-            "failed_tests": [],
-            "verdict": f"ERROR: {e}",
-            "raw_err": str(e)
-        })
-    finally:
-        restore_files(files_to_touch)
+        backup_files(files_to_touch)
+        try:
+            replace_in_file(m["file"], m["old"], m["new"])
+            if "extra_file" in m:
+                replace_in_file(m["extra_file"], m["extra_old"], m["extra_new"])
+            
+            ret, failed, stdout, stderr = run_pytest(m["tests"])
+            verdict = "CAUGHT" if ret != 0 or len(failed) > 0 else "SURVIVED"
+            results.append({
+                "id": m_id,
+                "name": m_name,
+                "file": m["file"],
+                "failed_count": len(failed),
+                "failed_tests": failed[:3],
+                "verdict": verdict,
+                "raw_err": stderr[:200] if stderr else stdout[:200]
+            })
+            print(f"[{m_id:>2}/{len(mutations)}] {verdict:<8}: {m_name}")
+            if failed:
+                print(f"         Failing test(s): {', '.join(failed[:2])}")
+        except Exception as e:
+            print(f"[{m_id:>2}/{len(mutations)}] ERROR applying mutation: {e}")
+            results.append({
+                "id": m_id,
+                "name": m_name,
+                "file": m["file"],
+                "failed_count": 0,
+                "failed_tests": [],
+                "verdict": f"ERROR: {e}",
+                "raw_err": str(e)
+            })
+        finally:
+            restore_files(files_to_touch)
 
-print("\n" + "="*80)
-print(f"{'ID':<3} | {'Mutation':<55} | {'Verdict':<10} | {'Fails'}")
-print("="*80)
-for r in results:
-    f_str = ", ".join(r["failed_tests"]) if r["failed_tests"] else "-"
-    print(f"{r['id']:<3} | {r['name'][:55]:<55} | {r['verdict']:<10} | {f_str}")
-print("="*80)
-caught = sum(1 for r in results if r["verdict"] == "CAUGHT")
-print(f"Summary: {caught}/{len(results)} mutations caught ({caught/len(results)*100:.1f}%)")
+    print("\n" + "=" * 90)
+    print(f"{'ID':<3} | {'Mutation Description':<50} | {'Verdict':<10} | {'First Failing Test'}")
+    print("=" * 90)
+    for r in results:
+        f_str = r["failed_tests"][0] if r["failed_tests"] else "-"
+        print(f"{r['id']:<3} | {r['name'][:50]:<50} | {r['verdict']:<10} | {f_str}")
+    print("=" * 90)
+    caught = sum(1 for r in results if r["verdict"] == "CAUGHT")
+    total = len(results)
+    pct = (caught / total) * 100.0
+    print(f"\nFinal Summary: {caught}/{total} mutations caught ({pct:.1f}% caught).")
+    survivors = [r for r in results if r["verdict"] != "CAUGHT"]
+    if survivors:
+        print("Survivors:")
+        for s in survivors:
+            print(f"  - [{s['id']}] {s['name']}: {s['verdict']}")
+    else:
+        print("All mutations successfully caught by test suite!")
+
+if __name__ == '__main__':
+    main()
