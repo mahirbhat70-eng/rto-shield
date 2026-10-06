@@ -1658,7 +1658,7 @@ def view_governance():
         st.markdown("#### 5-Seed Pipeline Determinism Sweep")
         st.caption("Recomputed via audit/seed_sweep.py across random generator seeds")
         seeds_data = pd.DataFrame({
-            "Seed": [42, 101, 2024, 777, 999, "Mean"],
+            "Seed": ["42", "101", "2024", "777", "999", "Mean"],
             "Observable Ceiling": ["0.3497", "0.3429", "0.3486", "0.3396", "0.3452", "0.3452"],
             "Logistic Reg.": ["0.3434", "0.3359", "0.3412", "0.3353", "0.3399", "0.3391 (98.2%)"],
             "LGBM Uncal": ["0.3433", "0.3320", "0.3419", "0.3314", "0.3364", "0.3370 (97.6%)"],
