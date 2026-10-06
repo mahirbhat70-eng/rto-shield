@@ -58,17 +58,17 @@
   "ratio_vs_single_threshold": 1.9973,
   "latency": {
     "with_shap": {
-      "p50_ms": 8.42,
-      "p95_ms": 9.87,
-      "p99_ms": 10.95,
-      "mean_ms": 8.59
+      "p50_ms": 8.35,
+      "p95_ms": 9.9,
+      "p99_ms": 13.27,
+      "mean_ms": 8.6
     },
     "without_shap": {
-      "p50_ms": 4.78,
-      "p95_ms": 5.71,
-      "p99_ms": 6.71,
-      "mean_ms": 4.88
+      "p50_ms": 4.48,
+      "p95_ms": 5.69,
+      "p99_ms": 6.76,
+      "mean_ms": 4.65
     }
   },
-  "test_count": 250
+  "test_count": 251
 }
