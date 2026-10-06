@@ -37,6 +37,7 @@ import html as html_mod
 import numpy as np
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -886,12 +887,13 @@ cheapest expected loss. Risk is not an arbitrary label here — it is a price, a
 """)
 
     html_block(f"""
-<div class="kpi-grid" style="margin-top:0.8rem; grid-template-columns: repeat(5, 1fr);">
+<div class="kpi-grid" style="margin-top:0.8rem; grid-template-columns: repeat(6, 1fr);">
 {kpi('The COD bleed', '28.27%', 'of COD orders on holdout test ended in RTO. At ₹150 landed cost, COD is the biggest margin leak.', 'amber')}
 {kpi('Live Decision Engine', 'View 02', 'Load presets, edit order features, score order, and inspect TreeSHAP drivers.', 'blue')}
 {kpi('Policy Frontier', 'View 03', 'The policy frontier chart, recomputed live. No single cutoff beats argmin routing.', 'blue')}
 {kpi('Portfolio Evidence', 'View 04', 'Expected vs realized savings, 5,000 Monte Carlo draws, per-shelf calibration.', 'blue')}
 {kpi('Audit & Governance', 'View 05', '17-point audit reconciliation, parameter misspecification, and 5-seed stability.', 'green')}
+{kpi('Staged Pilot Protocol', 'View 06', '3-stage validation architecture, circuit breakers, and empirical replacement matrix.', 'blue')}
 </div>
 """)
 
@@ -1568,7 +1570,8 @@ def view_governance():
     <b style="margin-left: 0.5rem; font-size: 0.95rem;">Production Deployment Gate Verdict</b>
     <div style="font-size: 0.82rem; margin-top: 0.35rem; color: #78350F; line-height: 1.45;">
       Autonomous live intervention routing is strictly deferred pending physical merchant delivery telemetry. Active pre-production circuit breakers:
-      <b>Emergency Kill-Switch</b> · <b>60% Rate Cap</b> · <b>&gt;₹10k Review</b> · <b>16.8% Merchant Break-Even Gate</b> · <b>SHA-256 Digest Validation</b>.
+      <b>Emergency Kill-Switch</b> · <b>60% Rate Cap</b> · <b>&gt;₹10k Review</b> · <b>16.8% Merchant Break-Even Gate</b> · <b>SHA-256 Digest Validation</b>.<br/>
+      <span style="font-weight:600; color:#B45309; font-size:0.80rem;">👉 Live Transition Roadmap: See <b>View 06 · Staged Pilot Protocol</b> for the 3-stage validation gating architecture.</span>
     </div>
   </div>
   <div style="text-align: right; min-width: 140px;">
@@ -1706,6 +1709,222 @@ def view_governance():
 """)
 
 # ----------------------------------------------------------------------------
+# View 06 — Staged Pilot Protocol & Real-World Validation
+# ----------------------------------------------------------------------------
+def view_pilot_protocol():
+    st.markdown("### Pilot Design & Real-World Validation Protocol")
+    st.markdown(
+        f'<div style="color:{C_MUT_DARK};font-size:0.88rem;max-width:960px;line-height:1.55;margin-bottom:1.1rem;">'
+        "A 3-stage controlled gating protocol transitioning RTO Shield from synthetic validation to live merchant checkout safely. "
+        "Protects merchant revenue, validates core assumptions, and quantifies causal treatment effects without risking conversion collapse. "
+        "Reference: <a href='https://github.com/mahirbhat70-eng/rto-shield/blob/main/audit/PILOT_DESIGN.md' target='_blank'>audit/PILOT_DESIGN.md</a>.</div>",
+        unsafe_allow_html=True)
+
+    # 1. Interactive Mermaid Architecture
+    st.markdown("#### 1. Staged Deployment Architecture")
+    mermaid_code = """flowchart TD
+    A["Merchant Historical<br/>Export"] -->|"Stage 1: Offline Replay"| B("Shadow Scoring &<br/>Calibration Check")
+    B -->|"Gate 1 Passed"| C["Live Traffic<br/>Ingestion"]
+    C -->|"Stage 2: 80/20 A/B Split"| D{"Randomized Slice:<br/>VERIFY Only"}
+    D -->|"Control 50%"| E["Status Quo:<br/>Always Allow COD"]
+    D -->|"Treatment 50%"| F["Model Action:<br/>VERIFY vs ALLOW"]
+    F -->|"Gate 2 Passed:<br/>Conversion & Effect Measured"| G["Stage 3: Full<br/>Multi-Action Policy"]
+    G --> H["DEPOSIT + VERIFY + ALLOW<br/>with Measured Parameters"]
+"""
+    html_mermaid = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
+      <script>
+        mermaid.initialize({{
+          startOnLoad: true,
+          theme: 'neutral',
+          flowchart: {{ htmlLabels: true, useMaxWidth: true, curve: 'basis' }},
+          themeVariables: {{
+            primaryColor: '#EFF6FF',
+            primaryTextColor: '#0F172A',
+            primaryBorderColor: '#0052FF',
+            lineColor: '#64748B',
+            secondaryColor: '#F8FAFC',
+            tertiaryColor: '#FFFFFF',
+            fontSize: '12px',
+            fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif'
+          }}
+        }});
+      </script>
+      <style>
+        body {{
+          margin: 0;
+          padding: 6px;
+          background: #FFFFFF;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          font-family: 'Inter', sans-serif;
+        }}
+        .mermaid {{
+          width: 100%;
+          text-align: center;
+        }}
+      </style>
+    </head>
+    <body>
+      <div class="mermaid">
+{mermaid_code}
+      </div>
+    </body>
+    </html>
+    """
+    components.html(html_mermaid, height=440, scrolling=False)
+
+    # 2. The 3 Stages Explained
+    html_block(f"""
+<div class="panel" style="margin-top: 0.8rem;">
+  <div class="panel-h">The 3 Deployment Stages &amp; Exit Gates</div>
+  <div class="step-strip" style="grid-template-columns: repeat(3, 1fr);">
+    <div class="step" style="background: #FFFFFF;">
+      <div class="n">STAGE 1 · ZERO IMPACT</div>
+      <div class="h">Offline Shadow Replay</div>
+      <div class="b">
+        <b>Data Source:</b> 30–60 days historical merchant orders (11 fields: value, category, courier, pincode, prior orders/RTOs).<br/>
+        <b>Execution:</b> Replay policy without serving interventions. Verify base RTO ≥ 16.8% break-even gate.<br/>
+        <b>Exit Gate:</b> PR-AUC ≥ 90% observable ceiling, net savings &gt; 0 (p &lt; 0.01), sample ≥ 1,000 orders.
+      </div>
+    </div>
+    <div class="step" style="background: #FFFFFF;">
+      <div class="n">STAGE 2 · LOW-RISK LIVE</div>
+      <div class="h">Randomized Slice (VERIFY Only)</div>
+      <div class="b">
+        <b>Constraint:</b> No deposit friction permitted. Only OTP/call verification or allow COD.<br/>
+        <b>Traffic:</b> 20% live COD slice; deterministic 50/50 sha256 split (Control: Status Quo vs Treatment: RTO Shield).<br/>
+        <b>Exit Gate:</b> Measured drop-off ≤ 8% and verification delivers positive net margin.
+      </div>
+    </div>
+    <div class="step" style="background: #FFFFFF;">
+      <div class="n">STAGE 3 · FULL POLICY</div>
+      <div class="h">Multi-Action Rollout</div>
+      <div class="b">
+        <b>Constraint:</b> Activated only after Stage 2 empirical confirmation.<br/>
+        <b>Actions:</b> ALLOW_COD, VERIFY_ADDRESS, REQUIRE_DEPOSIT.<br/>
+        <b>Parameter Update:</b> Frozen cost engine constants updated with empirical Stage 2 measurements. 10% global holdout arm maintained.
+      </div>
+    </div>
+  </div>
+</div>
+""")
+
+    st.markdown("")
+    # 3. Statistical Power & Sample Size
+    st.markdown("#### 2. Statistical Power & Sample Size Calculation")
+    html_block("".join([
+        '<div class="kpi-grid">',
+        kpi("Minimum Sample", "2,384 orders", "1,192 per arm (Closed-form two-proportion Z-test).", "blue"),
+        kpi("Statistical Power", "80% (β = 0.20)", "Two-sided α = 0.05, 95% confidence.", "green"),
+        kpi("Target Effect", "−5.0% abs. drop", "Detects baseline COD RTO reduction from 28.0% to 23.0%.", "amber"),
+        kpi("Pilot Duration", "~24 days", "At 500 COD orders/day on a 20% slice (100 orders/day in pilot).", "blue"),
+        "</div>",
+    ]))
+
+    st.markdown("")
+    left, right = st.columns([1.1, 1])
+    with left:
+        st.markdown("#### 3. Automated Stopping Rules (Circuit Breakers)")
+        st.caption("Hourly automated evaluations engaging the Emergency Kill-Switch if breached")
+        breakers_df = pd.DataFrame({
+            "Trigger": [
+                "Conversion Collapse",
+                "Excessive Drop-off",
+                "Financial Net Loss",
+                "Model Drift",
+                "Ops Latency Spill"
+            ],
+            "Threshold": [
+                "Checkout completion drops > 3.0%",
+                "Verification abandonment > 10.0%",
+                "Treatment < Control by ≥ ₹15,000",
+                "Observed RTO exceeds P by > 8.0%",
+                "p95 inference latency > 50 ms"
+            ],
+            "Window": [
+                "Rolling 24 hours",
+                "Rolling 100 prompts",
+                "Cumulative since launch",
+                "Rolling 500 orders",
+                "5-minute rolling"
+            ],
+            "Action Taken": [
+                "Kill switch trip; alert merchant oncall",
+                "Freeze VERIFY, fallback to ALLOW",
+                "Kill switch trip; full post-mortem",
+                "Disable interventions, recalibrate",
+                "Bypass scoring, return passthrough"
+            ]
+        })
+        st.dataframe(breakers_df, use_container_width=True, hide_index=True)
+
+    with right:
+        st.markdown("#### 4. Parameter Replacement Matrix")
+        st.caption("Replacing synthetic model priors with empirical metrics measured during pilot")
+        param_df = pd.DataFrame({
+            "Engine Parameter": [
+                "Verification Drop-off",
+                "Verification RTO Reduction",
+                "Deposit Drop-off",
+                "Deposit RTO Reduction",
+                "Forward Delivery Cost",
+                "Reverse Logistics Cost",
+                "Net Gross Margin",
+                "WhatsApp / Friction Fee"
+            ],
+            "Synthetic Prior": [
+                "5.0%",
+                "20.0%",
+                "50.0%",
+                "60.0%",
+                "₹0 (free)",
+                "₹150.00",
+                "20.0%",
+                "₹2.00"
+            ],
+            "Empirical Metric": [
+                "δ_verify (obs)",
+                "Δ_verify (obs)",
+                "δ_deposit (obs)",
+                "Δ_deposit (obs)",
+                "C_delivery (obs)",
+                "C_rto (obs)",
+                "m (obs)",
+                "C_friction (obs)"
+            ],
+            "Measurement Source": [
+                "Stage 2 OTP completion drop-off",
+                "Control RTO minus Treatment RTO",
+                "Stage 3 deposit gateway drop-off",
+                "Delivery rate on deposit-paid orders",
+                "Carrier freight invoice (₹40–₹70)",
+                "Carrier reverse manifest invoice",
+                "SKU-level ERP export",
+                "Meta BSP conversation billing"
+            ]
+        })
+        st.dataframe(param_df, use_container_width=True, hide_index=True)
+
+    st.markdown("")
+    html_block(f"""
+<div class="panel">
+  <div class="panel-h">Pilot Reproduction &amp; Audit Reference</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem 2rem;font-size:0.78rem;color:{C_MUT_DARK};line-height:1.8;">
+    <div>→ Full Pilot Protocol Spec: <code style="color:{C_RAZORPAY_BLUE};">audit/PILOT_DESIGN.md</code></div>
+    <div>→ Shadow Replay Harness: <code style="color:{C_RAZORPAY_BLUE};">python audit/shadow/harness.py</code></div>
+    <div>→ Production Guardrails: <code style="color:{C_RAZORPAY_BLUE};">python audit/guardrails.py</code></div>
+    <div>→ Reconcile Audit Packet: <code style="color:{C_RAZORPAY_BLUE};">python audit/reconcile.py</code></div>
+  </div>
+</div>
+""")
+
+# ----------------------------------------------------------------------------
 # Router & View Dispatcher
 # ----------------------------------------------------------------------------
 VIEWS = {
@@ -1714,6 +1933,7 @@ VIEWS = {
     "03 · Policy Frontier": view_frontier,
     "04 · Portfolio Evidence": view_portfolio,
     "05 · Adversarial Audit & Governance": view_governance,
+    "06 · Staged Pilot Protocol": view_pilot_protocol,
 }
 
 topbar()
