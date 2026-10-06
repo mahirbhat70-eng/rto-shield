@@ -7,13 +7,13 @@ orders per pincode per 30 days (pincode level): p10=14.2 median=16.1 p90=18.1; s
 
 ======================================================================================================================
 regime                                        PR-AUC    model Rs  pincode Rs     lift pinfeat mean pin interv model interv
-(a) current feature (latent+N(0,.03))         0.3262   71,551.45   53,687.54   +33.3%       0.1966      53.6%        81.2%
-(b) feature + N(0,0.10)                       0.3208   68,962.22   47,583.37   +44.9%       0.1994      52.5%        82.2%
-(c) feature + N(0,0.20)                       0.3119   67,085.34   39,224.41   +71.0%       0.2277      54.5%        82.7%
-(d) rolling 30d, lag 0                        0.3098   67,268.35   53,916.40   +24.8%       0.1970      60.5%        82.3%
-(d') rolling 30d, label lag 10d               0.3089   68,479.36   51,958.57   +31.8%       0.1991      61.1%        82.3%
+(a) current feature (latent+N(0,.03))         0.3262   55,558.61   40,691.15   +36.5%       0.1966      53.6%        81.2%
+(b) feature + N(0,0.10)                       0.3208   55,247.66   36,832.11   +50.0%       0.1994      52.5%        82.2%
+(c) feature + N(0,0.20)                       0.3119   51,436.79   28,541.39   +80.2%       0.2277      54.5%        82.7%
+(d) rolling 30d, lag 0                        0.3098   53,606.04   39,913.75   +34.3%       0.1970      60.5%        82.3%
+(d') rolling 30d, label lag 10d               0.3089   51,189.68   38,688.15   +32.3%       0.1991      61.1%        82.3%
 ======================================================================================================================
-survival (b) feature + N(0,0.10)                 : 68,962.22 / 71,551.45 = 96.38%; loss Rs 2,589.23 over 7174 COD orders = Rs 360.92 per 1,000 COD orders
-survival (c) feature + N(0,0.20)                 : 67,085.34 / 71,551.45 = 93.76%; loss Rs 4,466.11 over 7174 COD orders = Rs 622.54 per 1,000 COD orders
-survival (d) rolling 30d, lag 0                  : 67,268.35 / 71,551.45 = 94.01%; loss Rs 4,283.10 over 7174 COD orders = Rs 597.03 per 1,000 COD orders
-survival (d') rolling 30d, label lag 10d         : 68,479.36 / 71,551.45 = 95.71%; loss Rs 3,072.09 over 7174 COD orders = Rs 428.23 per 1,000 COD orders
+survival (b) feature + N(0,0.10)                 : 55,247.66 / 55,558.61 = 99.44%; loss Rs 310.96 over 7174 COD orders = Rs 43.34 per 1,000 COD orders
+survival (c) feature + N(0,0.20)                 : 51,436.79 / 55,558.61 = 92.58%; loss Rs 4,121.82 over 7174 COD orders = Rs 574.55 per 1,000 COD orders
+survival (d) rolling 30d, lag 0                  : 53,606.04 / 55,558.61 = 96.49%; loss Rs 1,952.57 over 7174 COD orders = Rs 272.17 per 1,000 COD orders
+survival (d') rolling 30d, label lag 10d         : 51,189.68 / 55,558.61 = 92.14%; loss Rs 4,368.93 over 7174 COD orders = Rs 609.00 per 1,000 COD orders

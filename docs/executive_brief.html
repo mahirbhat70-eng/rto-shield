@@ -37,7 +37,7 @@
  <div class="head"><span>RTO SHIELD — EXECUTIVE BRIEF</span><span>COD RISK DECISIONS · SEPT 2026</span></div>
 
  <h1>PREDICTION IS<br>NOT THE <span class="accent">PRODUCT.</span></h1>
- <p class="intro">RTO Shield converts COD order risk prediction into <b>financially optimal intervention decisions</b> for Indian e-commerce merchants — a measured, frozen, independently reproduced decision engine.</p>
+ <p class="intro">RTO Shield converts COD order risk prediction into <b>cost-minimizing intervention decisions</b> for Indian e-commerce merchants — a measured, frozen, independently reproduced decision engine.</p>
  <div class="rule"></div>
 
  <div class="box">
@@ -45,10 +45,10 @@
   <p>Cash-on-delivery dominates Indian e-commerce, and <b>28.27% of test COD orders</b> came back as Return-to-Origin — each costing <b>₹150</b> in reverse logistics. Low-value risky orders are economically unsalvageable; high-value ones deserve a frictionless path.</p>
 
   <div class="label">THE SYSTEM</div>
-  <p>A calibrated LightGBM scores P(RTO) from <b>15 order-time features</b> — 13 merchant inputs plus 2 fields resolved from a train-only pincode lookup. An expected-loss engine prices every intervention per order — <span class="code">EL(action) = friction + P_rto_after × ₹150 − P_success × margin</span> — and routes each order to the argmin: <b>ALLOW</b>, <b>VERIFY</b> (₹2 friction, −30% RTO), or <b>DEPOSIT</b> (−80% RTO). A fourth option, PREPAID_ONLY, is proven mathematically dominated and never selected.</p>
+  <p>A calibrated LightGBM scores P(RTO) from <b>15 order-time features</b> — 13 merchant inputs plus 2 fields resolved from a train-only pincode lookup. An expected-loss engine prices every intervention per order — <span class="code">EL(action) = friction + P_rto_after × ₹150 − P_success × margin</span> — and routes each order to the argmin: <b>ALLOW</b>, <b>VERIFY</b> (₹2 friction, −30% RTO), or <b>DEPOSIT</b> (−80% RTO). A fourth option, PREPAID_ONLY, is mathematically dominated on COD orders and never selected.</p>
 
   <div class="label">THE PROOF</div>
-  <p>On a strictly held-out test window (7,174 COD orders), the multi-action policy earned <b>₹71,741 expected savings</b> and <b>₹69,786 realized</b> against actual labels — −2.7% vs forecast, inside Monte Carlo noise. The uncalibrated router's forecast collapsed <b>−15.3%</b> against the same labels: calibration bought the only forecast that held up.</p>
+  <p>On a strictly held-out test window (7,174 COD orders), the multi-action policy earned <b>₹56,872 expected savings</b> and <b>₹54,936 realized</b> against actual labels under canonical config (historical zero-friction anchor: ₹69,786). The uncalibrated router's forecast collapsed <b>−15.3%</b> against the same labels: calibration bought the only forecast that held up.</p>
  </div>
 
  <div class="stats">

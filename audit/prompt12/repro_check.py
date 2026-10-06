@@ -25,6 +25,7 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 CHAIN = [
     ["src/data/generator.py"],
+    ["src/data/generator_v2.py"],
     ["src/data/split.py"],
     ["src/serve/lookup.py"],
     ["src/models/logistic_baseline.py"],

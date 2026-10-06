@@ -1,32 +1,48 @@
-rto_logistics_cost: 150      # Provenance: Industry prior (Forward + reverse + packaging)
-average_margin_pct: 0.20     # Provenance: Industry prior
+rto_logistics_cost: 150      # PUBLISHED: Industry prior (Forward + reverse + packaging; Shiprocket/Ecom Express benchmark)
+average_margin_pct: 0.20     # ASSUMED: Industry prior benchmark for Indian D2C gross merchandise margin
 
 interventions:
   ALLOW_COD:
-    friction_cost: 0         
-    success_drop_pct: 0.0    
-    rto_reduction_pct: 0.0   
+    friction_cost: 0.0         # BASELINE: Zero friction cost
+    success_drop_pct: 0.0      # BASELINE: 0.0% conversion drop
+    rto_reduction_pct: 0.0     # BASELINE: 0.0% RTO reduction
   VERIFY_ADDRESS:
-    friction_cost: 2         
-    success_drop_pct: 0.05   
-    rto_reduction_pct: 0.30  
+    friction_cost: 2.00        # ASSUMED: Rs 2.00 friction cost (WhatsApp OTP Rs 0.75 + Support overhead Rs 1.25)
+    success_drop_pct: 0.05     # ASSUMED: 5.0% checkout drop-off due to address verification delay
+    rto_reduction_pct: 0.30    # ASSUMED: 30.0% RTO reduction via address correction & confirmation
   REQUIRE_DEPOSIT:
-    friction_cost: 0         
-    success_drop_pct: 0.40   
-    rto_reduction_pct: 0.80  
+    friction_cost: 7.00        # ASSUMED: Rs 7.00 operational friction (PG fee + Refund recon + Support + SMS)
+    success_drop_pct: 0.40     # ASSUMED: 40.0% customer checkout abandonment from upfront payment friction
+    rto_reduction_pct: 0.80    # ASSUMED: 80.0% RTO reduction (customers with financial stake rarely reject delivery)
   PREPAID_ONLY:
-    friction_cost: 0
-    success_drop_pct: 0.70   
-    rto_reduction_pct: 0.55  # Provenance: EDA shows Prepaid RTO is ~12-13% vs COD 27%. Drops RTO by ~55%.
+    friction_cost: 0.0         # BASELINE: No additional friction fee charged to merchant
+    success_drop_pct: 0.70     # ASSUMED: 70.0% drop-off when COD option is entirely eliminated
+    rto_reduction_pct: 0.55    # MEASURED-ON-SYNTHETIC: EDA shows Prepaid RTO is ~12-13% vs COD 27% (drops RTO by ~55%)
 
-# ASSUMED OPERATIONAL COSTS (Task 10 audit breakdown):
-# Real merchant fulfillment entails payment gateway, reconciliation, and messaging costs.
+# ASSUMED OPERATIONAL COSTS DECOMPOSITION (Task 8 & 10 audit model):
+# Explicit breakdown of payment gateway, refund handling, reconciliation, messaging, and support costs.
 assumed_operational_costs:
-  payment_gateway_fee_deposit_pct: 0.02          # ASSUMED: 2.0% pg fee on partial deposit
-  payment_gateway_fee_deposit_fixed: 2.00        # ASSUMED: Rs 2.00 fixed pg transaction fee
-  deposit_refund_reconciliation_cost: 3.00       # ASSUMED: Rs 3.00 refund handling & ledger reconciliation
-  whatsapp_otp_template_cost: 0.75               # ASSUMED: Rs 0.75 per OTP verification message
-  customer_support_cost_per_intervention: 1.25   # ASSUMED: Rs 1.25 support overhead per triggered intervention
-  total_assumed_deposit_friction_cost: 7.00      # ASSUMED: sum of deposit gateway, refund, recon & support
-  total_assumed_verify_friction_cost: 2.00       # ASSUMED: template (0.75) + customer support (1.25)
+  # Payment gateway fees on deposit amount
+  deposit_fixed_amount: 100.00                   # ASSUMED: Rs 100 partial COD commitment deposit (range: Rs 50 - 200)
+  payment_gateway_fee_deposit_pct: 0.02          # ASSUMED: 2.0% gateway transaction fee on deposit (range: 0.015 - 0.025)
+  payment_gateway_fee_deposit_fixed: 1.80        # ASSUMED: Rs 1.80 fixed payment gateway fee per transaction (range: 1.50 - 2.50)
 
+  # Refund and ledger reconciliation costs
+  refund_processing_cost_unit: 3.00              # ASSUMED: Rs 3.00 bank handling fee per refunded deposit (range: 2.00 - 5.00)
+  refund_probability_on_deposit: 0.40            # ASSUMED: 40% probability of deposit refund / settlement adjustment (range: 0.30 - 0.50)
+
+  # Customer service & exception handling
+  support_ticket_cost_unit: 5.00                 # ASSUMED: Rs 5.00 loaded labor cost per support query (range: 4.00 - 8.00)
+  support_contact_probability_deposit: 0.25      # ASSUMED: 25% of customers asked for deposit contact support (range: 0.15 - 0.35)
+  support_contact_probability_verify: 0.25       # ASSUMED: 25% of customers asked for verification contact support (range: 0.15 - 0.35)
+
+  # Verification messaging
+  whatsapp_otp_template_cost: 0.75               # ASSUMED: Rs 0.75 per Meta WhatsApp OTP message (range: 0.50 - 1.00)
+
+  # Long-term Customer Lifetime Value (LTV) loss toggle (default: false)
+  include_ltv_loss: false                        # ASSUMED: Optional toggle to include long-term brand equity drop
+  ltv_margin_multiplier: 1.0                     # ASSUMED: 1.0x order margin forfeited on abandoned good customers
+
+  # Aggregated canonical totals
+  total_assumed_deposit_friction_cost: 7.00      # ASSUMED: PG fee (Rs 3.80) + Refund (Rs 1.20) + Support (Rs 1.25) + WhatsApp (Rs 0.75) = Rs 7.00 exactly
+  total_assumed_verify_friction_cost: 2.00       # ASSUMED: OTP (Rs 0.75) + Support overhead (Rs 1.25) = Rs 2.00 exactly

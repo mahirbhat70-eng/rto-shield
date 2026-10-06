@@ -1,0 +1,65 @@
+{
+  "config_sha256": "5e88aa8f235f1b53d7753f88e9873a3492592264dda5cf59d521e30f5d5c5658",
+  "git_commit_hash": "d7bde4683fa8bbec91fc52706376cacf3a44e752",
+  "components": {
+    "payment_gateway_fee_deposit": {
+      "pct": 0.02,
+      "fixed_inr": 1.8,
+      "at_100_deposit_inr": 3.8
+    },
+    "refund_processing": {
+      "unit_inr": 3.0,
+      "probability": 0.4,
+      "expected_inr": 1.2
+    },
+    "support_overhead_deposit": {
+      "ticket_unit_inr": 5.0,
+      "probability": 0.25,
+      "expected_inr": 1.25
+    },
+    "messaging_whatsapp_otp": {
+      "unit_inr": 0.75,
+      "expected_inr": 0.75
+    },
+    "total_deposit_friction_inr": 7.0,
+    "total_verify_friction_inr": 2.0
+  },
+  "per_action_total_cost": {
+    "mean_order_value_826_89": {
+      "ALLOW_COD": 0.0,
+      "VERIFY_ADDRESS": 2.0,
+      "REQUIRE_DEPOSIT": 7.0,
+      "PREPAID_ONLY": 0.0
+    },
+    "basket_200": {
+      "ALLOW_COD": 0.0,
+      "VERIFY_ADDRESS": 2.0,
+      "REQUIRE_DEPOSIT": 7.0,
+      "PREPAID_ONLY": 0.0
+    },
+    "basket_3000": {
+      "ALLOW_COD": 0.0,
+      "VERIFY_ADDRESS": 2.0,
+      "REQUIRE_DEPOSIT": 7.0,
+      "PREPAID_ONLY": 0.0
+    }
+  },
+  "ltv_sensitivity": {
+    "0x_margin": {
+      "deposit_friction_inr": 7.0,
+      "realized_savings_inr": 54936.4
+    },
+    "0.5x_margin": {
+      "deposit_friction_inr": 40.08,
+      "realized_savings_inr": 44812.1
+    },
+    "1.0x_margin": {
+      "deposit_friction_inr": 73.15,
+      "realized_savings_inr": 34190.5
+    },
+    "2.0x_margin": {
+      "deposit_friction_inr": 139.3,
+      "realized_savings_inr": 13840.2
+    }
+  }
+}

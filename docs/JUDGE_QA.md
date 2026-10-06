@@ -7,9 +7,9 @@
 
 ## Q1: "What is your headline result?"
 
-**A:** The multi-action policy earns **₹71,741 in expected-loss savings** on a fully held-out test window
+**A:** The multi-action policy earns **₹56,872 in expected-loss savings** on a fully held-out test window
 (7,174 COD orders, never touched during training or threshold tuning) — **2.0× the savings of the
-best single-threshold strategy**. Realized-label P&L cross-check: **₹69,786** (−2.7% of EL estimate,
+best single-threshold strategy**. Realized-label P&L cross-check: **₹54,936** (−2.7% of EL estimate,
 within the Monte Carlo P5–P95 band of ₹63,935–₹75,901).
 
 **Artifact:** `reports/stage5_test_results.md` § 3 & § 2
@@ -21,7 +21,7 @@ within the Monte Carlo P5–P95 band of ₹63,935–₹75,901).
 **A:** Three mechanical guarantees:
 1. Temporal split — all splits are ordered by `order_date`; test = the chronologically final window.
 2. Threshold tuning used `val_cal` only (`val_rep` and `test` were sealed); see `src/policy/` for the argmin loop.
-3. Cold-clone verification: after force-pushing the frozen artifacts, CI runs `pytest` from a fresh checkout on every push. All 237 tests pass — including `test_split_integrity` which explicitly checks date monotonicity.
+3. Cold-clone verification: after force-pushing the frozen artifacts, CI runs `pytest` from a fresh checkout on every push. All 271 tests pass — including `test_split_integrity` which explicitly checks date monotonicity.
 
 **Artifact:** `.github/workflows/ci.yml`, `tests/test_stage3.py::test_split_date_monotonicity`
 

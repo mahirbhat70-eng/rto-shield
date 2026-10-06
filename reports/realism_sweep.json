@@ -1,0 +1,76 @@
+{
+  "config_sha256": "5e88aa8f235f1b53d7753f88e9873a3492592264dda5cf59d521e30f5d5c5658",
+  "git_commit_hash": "d7bde4683fa8bbec91fc52706376cacf3a44e752",
+  "regimes": {
+    "(a) baseline": {
+      "n_cod": 7174,
+      "pr_auc": 0.3262,
+      "model_savings_inr": 55558.61,
+      "model_savings_per_1k_cod_inr": 7744.44,
+      "pincode_rule_inr": 40691.15,
+      "pincode_rule_per_1k_cod_inr": 5672.03,
+      "lift_pct": 36.5,
+      "survival_pct": 100.0
+    },
+    "(b) noise_0.10": {
+      "n_cod": 7174,
+      "pr_auc": 0.3208,
+      "model_savings_inr": 55247.66,
+      "model_savings_per_1k_cod_inr": 7701.1,
+      "pincode_rule_inr": 36832.11,
+      "pincode_rule_per_1k_cod_inr": 5134.11,
+      "lift_pct": 50.0,
+      "survival_pct": 99.44
+    },
+    "(c) noise_0.20": {
+      "n_cod": 7174,
+      "pr_auc": 0.3119,
+      "model_savings_inr": 51436.79,
+      "model_savings_per_1k_cod_inr": 7169.89,
+      "pincode_rule_inr": 28541.39,
+      "pincode_rule_per_1k_cod_inr": 3978.45,
+      "lift_pct": 80.2,
+      "survival_pct": 92.58
+    },
+    "(d) rolling_30d_lag_0": {
+      "n_cod": 7174,
+      "pr_auc": 0.3098,
+      "model_savings_inr": 53606.04,
+      "model_savings_per_1k_cod_inr": 7472.27,
+      "pincode_rule_inr": 39913.75,
+      "pincode_rule_per_1k_cod_inr": 5563.67,
+      "lift_pct": 34.3,
+      "survival_pct": 96.49
+    },
+    "(d') rolling_30d_lag_10d": {
+      "n_cod": 7174,
+      "pr_auc": 0.3089,
+      "model_savings_inr": 51189.68,
+      "model_savings_per_1k_cod_inr": 7135.44,
+      "pincode_rule_inr": 38688.15,
+      "pincode_rule_per_1k_cod_inr": 5392.83,
+      "lift_pct": 32.3,
+      "survival_pct": 92.14
+    },
+    "(e) zipf_1.1": {
+      "n_cod": 7137,
+      "pr_auc": 0.2994,
+      "model_savings_inr": 41583.4,
+      "model_savings_per_1k_cod_inr": 5826.45,
+      "pincode_rule_inr": 30175.18,
+      "pincode_rule_per_1k_cod_inr": 4228.0,
+      "lift_pct": 37.8,
+      "survival_pct": 74.85
+    }
+  },
+  "pincode_density": {
+    "uniform_regime_share_under_5_orders_pct": 0.0,
+    "zipf_regime_share_under_5_orders_pct": 66.1,
+    "zipf_orders_per_pincode_per_month": {
+      "p10": 1.5,
+      "median": 3.1,
+      "p90": 17.4
+    },
+    "shrinkage_m_constant": 10.0
+  }
+}

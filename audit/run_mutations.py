@@ -100,8 +100,8 @@ mutations = [
         "id": 6,
         "name": "Friction/verification cost: set to 0, then 1000",
         "file": "configs/cost_config.yaml",
-        "old": "friction_cost: 2",
-        "new": "friction_cost: 1000",
+        "old": "friction_cost: 2.00",
+        "new": "friction_cost: 1000.00",
         "tests": ["tests/test_cost_engine.py", "tests/test_serving_validation.py"]
     },
     {
@@ -121,11 +121,19 @@ mutations = [
         "tests": ["tests/test_scorer.py", "tests/test_app_logic.py", "tests/test_serving_validation.py"]
     },
     {
-        "id": 9,
-        "name": "Split: make temporal split random (shuffle before splitting)",
+        "id": "9a",
+        "name": "Split: shuffle-then-filter (scrambles chronological row order)",
         "file": "src/data/split.py",
         "old": "train_df = df[df['_ts'] <= train_cutoff].copy()",
         "new": "df = df.sample(frac=1.0, random_state=42).reset_index(drop=True)\n    train_df = df[df['_ts'] <= train_cutoff].copy()",
+        "tests": ["tests/test_stage2.py"]
+    },
+    {
+        "id": "9b",
+        "name": "Split: true random assignment across splits (violates time boundaries)",
+        "file": "src/data/split.py",
+        "old": "train_df = df[df['_ts'] <= train_cutoff].copy()\n    \n    val_cal_cutoff = train_cutoff + (val_cutoff - train_cutoff) / 2\n    val_cal_df = df[(df['_ts'] > train_cutoff) & (df['_ts'] <= val_cal_cutoff)].copy()\n    val_rep_df = df[(df['_ts'] > val_cal_cutoff) & (df['_ts'] <= val_cutoff)].copy()\n    \n    test_df = df[df['_ts'] > val_cutoff].copy()",
+        "new": "shuffled = df.sample(frac=1.0, random_state=42).reset_index(drop=True)\n    n = len(df)\n    train_df = shuffled.iloc[:int(n*0.70)].copy()\n    val_cal_df = shuffled.iloc[int(n*0.70):int(n*0.775)].copy()\n    val_rep_df = shuffled.iloc[int(n*0.775):int(n*0.85)].copy()\n    test_df = shuffled.iloc[int(n*0.85):].copy()",
         "tests": ["tests/test_stage2.py"]
     },
     {
@@ -215,12 +223,52 @@ mutations = [
         "old": "if benefit < cutoff:",
         "new": "if benefit >= cutoff:",
         "tests": ["tests/test_guardrails.py"]
+    },
+    {
+        "id": 21,
+        "name": "Deposit gateway fee percentage set to zero",
+        "file": "configs/cost_config.yaml",
+        "old": "payment_gateway_fee_deposit_pct: 0.02",
+        "new": "payment_gateway_fee_deposit_pct: 0.00",
+        "tests": ["tests/test_cost_engine.py"]
+    },
+    {
+        "id": 22,
+        "name": "Ranked cap uses benefit with the wrong quantile tail",
+        "file": "src/serve/guardrails.py",
+        "old": "cutoff = float(np.quantile(self.recent_benefits, 1.0 - self.max_intervention_rate))",
+        "new": "cutoff = float(np.quantile(self.recent_benefits, self.max_intervention_rate))",
+        "tests": ["tests/test_guardrails.py"]
+    },
+    {
+        "id": 23,
+        "name": "Guardrail uses point estimate instead of lower bound",
+        "file": "src/serve/guardrails.py",
+        "old": "if lower_95_bound_per_order <= safety_margin_per_order:",
+        "new": "if mean_diff <= safety_margin_per_order:",
+        "tests": ["tests/test_guardrails.py"]
+    },
+    {
+        "id": 24,
+        "name": "Production fail-closed digest check disabled",
+        "file": "src/serve/scorer.py",
+        "old": "elif not is_dev:\n        # FAIL CLOSED: unset, unrecognised, or explicitly production requires pinned digests",
+        "new": "elif False and not is_dev:\n        # FAIL CLOSED: unset, unrecognised, or explicitly production requires pinned digests",
+        "tests": ["tests/test_artifact_integrity.py"]
+    },
+    {
+        "id": 25,
+        "name": "Narrative generator hardcodes an old verify friction value",
+        "file": "scripts/generate_narrative_blocks.py",
+        "old": "iv['VERIFY_ADDRESS']['friction_cost']",
+        "new": "0.00",
+        "tests": ["tests/test_no_stale_numbers.py"]
     }
 ]
 
 def main():
     print("=" * 80)
-    print(f"STARTING 20-MUTATION SABOTAGE SUITE (Total: {len(mutations)})")
+    print(f"STARTING 25-MUTATION SABOTAGE SUITE (Total: {len(mutations)})")
     print("=" * 80 + "\n")
 
 

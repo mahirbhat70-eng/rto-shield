@@ -165,11 +165,13 @@ def validate(df, expected_rows):
 
 
 # ─── Generator ─────────────────────────────────────────────────────────
-def generate(n_rows=100000, seed=42, pincode_zipf_a=None):
+def generate(n_rows=100000, seed=42, pincode_zipf_a=None, generator_version="v2"):
     """
     Generate a synthetic e-commerce order dataset using a probabilistic
     latent-risk logistic-Bernoulli process. Returns a pd.DataFrame with
     exactly 19 columns. No file I/O.
+    Supports generator_version='v2' (canonical additive baseline) and
+    'v3' (realistic non-linear interactions for tree evaluation).
     """
     rng = np.random.default_rng(seed)
 
@@ -299,7 +301,28 @@ def generate(n_rows=100000, seed=42, pincode_zipf_a=None):
 
     # Documented starting intercept. Tuned to land RTO rate in [0.15, 0.30].
     # Starting point: -2.5 per spec. Adjusted to -2.7 after testing.
+    # Documented starting intercept. Tuned to land RTO rate in [0.15, 0.30].
+    # Starting point: -2.5 per spec. Adjusted to -2.7 after testing.
     beta_0 = -2.7
+
+    if generator_version == "v3":
+        # Generator v3: realistic non-linear feature interactions (Phase 6)
+        # Shift baseline intercept to maintain overall RTO rate in [0.15, 0.30]
+        beta_0 = -3.10
+        # 1. High order value x Tier-3 pincode (expensive items delivered to remote areas)
+        inter_ov_tier = 0.75 * (pincode_tiers == 3).astype(float) * np.log1p(np.maximum(0.0, order_values - 1500.0) / 500.0)
+        # 2. New customer x Discount x COD (promo abuse impulse orders)
+        is_new = (account_age_days < 14).astype(float)
+        inter_new_disc_cod = 1.10 * is_new * (discount_pcts / 50.0) * is_cod
+        # 3. Courier x Pincode Tier mismatch (weak couriers D/E struggling in Tier 3)
+        is_weak_courier = np.isin(courier_ids, ["Courier_D", "Courier_E"]).astype(float)
+        inter_courier_tier = 0.60 * is_weak_courier * (pincode_tiers == 3).astype(float)
+        # 4. Velocity x Device cluster syndicate (bot clusters placing rapid orders)
+        inter_bot_cluster = 0.85 * np.log1p(np.maximum(0, orders_last_24h - 2)) * np.log1p(np.maximum(0, dcs - 2))
+
+        interactions_term = inter_ov_tier + inter_new_disc_cod + inter_courier_tier + inter_bot_cluster
+    else:
+        interactions_term = 0.0
 
     # Category risk
     cat_risk_map = {
@@ -332,6 +355,7 @@ def generate(n_rows=100000, seed=42, pincode_zipf_a=None):
         + courier_risk                                       # courier
         + tier_risk                                          # tier
         + 0.005 * discount_pcts                              # discount
+        + interactions_term                                  # non-linear domain interactions (v3 only)
         + rng.normal(0, 0.80, size=n_rows)                   # stochastic noise (std ≈ 0.8)
     )
 

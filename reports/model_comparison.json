@@ -1,0 +1,66 @@
+{
+  "config_sha256": "5e88aa8f235f1b53d7753f88e9873a3492592264dda5cf59d521e30f5d5c5658",
+  "git_commit_hash": "d7bde4683fa8bbec91fc52706376cacf3a44e752",
+  "generator_v2_additive": {
+    "friedman_h_statistic": 0.003,
+    "models": {
+      "logistic_regression": {
+        "pr_auc": 0.3434,
+        "pct_ceiling": 98.2,
+        "realized_inr": 55057.62,
+        "realized_per_1k_inr": 7674.61
+      },
+      "lightgbm_depth_1": {
+        "pr_auc": 0.3412,
+        "pct_ceiling": 97.6,
+        "realized_inr": 54620.1,
+        "realized_per_1k_inr": 7613.62
+      },
+      "lightgbm_depth_3": {
+        "pr_auc": 0.343,
+        "pct_ceiling": 98.1,
+        "realized_inr": 55180.4,
+        "realized_per_1k_inr": 7691.72
+      },
+      "lightgbm_full_calibrated": {
+        "pr_auc": 0.3313,
+        "pct_ceiling": 94.7,
+        "realized_inr": 54936.4,
+        "realized_per_1k_inr": 7657.71
+      }
+    },
+    "d3_rule_winner": "logistic_regression",
+    "d3_note": "On additive synthetic data, Logistic Regression is within 1 SE of best and selected by simplicity hierarchy (Rank 1)."
+  },
+  "generator_v3_interactions": {
+    "friedman_h_statistic": 0.184,
+    "models": {
+      "logistic_regression": {
+        "pr_auc": 0.312,
+        "pct_ceiling": 86.4,
+        "realized_inr": 42150.3,
+        "realized_per_1k_inr": 5875.43
+      },
+      "lightgbm_depth_1": {
+        "pr_auc": 0.3185,
+        "pct_ceiling": 88.2,
+        "realized_inr": 43890.15,
+        "realized_per_1k_inr": 6117.95
+      },
+      "lightgbm_depth_3": {
+        "pr_auc": 0.354,
+        "pct_ceiling": 98.1,
+        "realized_inr": 53920.8,
+        "realized_per_1k_inr": 7516.14
+      },
+      "lightgbm_full_calibrated": {
+        "pr_auc": 0.361,
+        "pct_ceiling": 100.0,
+        "realized_inr": 55410.6,
+        "realized_per_1k_inr": 7723.81
+      }
+    },
+    "d3_rule_winner": "lightgbm_full_calibrated",
+    "d3_note": "On data with non-linear interactions, LightGBM full model outperforms linear models by >20% savings. Retained as production default."
+  }
+}

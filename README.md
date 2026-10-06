@@ -6,7 +6,7 @@
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Streamlit%20App-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://rto-shield-nlthpydtndpkupyfgfl3yy.streamlit.app)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![LightGBM](https://img.shields.io/badge/Model-LightGBM%20%2B%20TreeSHAP-2ECC71?style=for-the-badge)](https://lightgbm.readthedocs.io)
-[![Tests](https://img.shields.io/badge/Tests-263%20Passing-brightgreen?style=for-the-badge&logo=pytest&logoColor=white)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-271%20Passing-brightgreen?style=for-the-badge&logo=pytest&logoColor=white)](tests/)
 [![Latency](https://img.shields.io/badge/Inference-8--10ms%20p50-blue?style=for-the-badge)](#-decision-engine-latency)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
 
@@ -27,6 +27,8 @@
 > 1. **Synthetic Data Only:** All benchmarks, distributions, and models were evaluated strictly on synthetic order data generated from parametric processes. Real merchant traffic features fraud rings, carrier NDR fake-delivery attempts, and customer address spoofing not modeled here.
 > 2. **Assumed Intervention Effects:** RTO reductions (80% deposit, 30% verification) and customer drop-offs (40% deposit, 5% verification) are **unvalidated parametric modeling assumptions**, not empirical counterfactuals measured on live human shoppers.
 > 3. **No Real Merchant Validation:** This codebase is a research prototype. It has **NOT** been piloted or validated on real merchant stores. Autonomous live intervention routing must remain disabled pending staged shadow and randomized control pilot testing (see [Pilot Design](audit/PILOT_DESIGN.md)).
+> 4. **Simulated Counterfactuals:** All reported savings figures are simulated counterfactuals evaluated under fixed model assumptions rather than observed merchant cash flow.
+> 5. **Long-Term Customer Value Not Modelled:** Long-term customer brand equity and lifetime value (LTV) forfeiture from repeated checkout intervention friction are not modeled in the core policy.
 
 ---
 
@@ -42,7 +44,7 @@
 | **6. Hard questions** | [`docs/JUDGE_QA.md`](docs/JUDGE_QA.md) — 10 questions with evidence-backed answers |
 | **7. Adversarial audit** | [`audit/REVIEW_PACKET.md`](audit/REVIEW_PACKET.md) — 15 reconciled audit tasks & sensitivity bounds |
 
-All frozen model artifacts and reports are committed. **Full test suite passes: (263/263 passed).**
+All frozen model artifacts and reports are committed. **Full test suite passes: (271/271 passed).**
 
 ```bash
 # 1. Clone repository
@@ -52,7 +54,7 @@ cd rto-shield
 # 2. Install dependencies
 pip install -r requirements.txt
 
-# 3. Run full automated test suite (263 passing tests)
+# 3. Run full automated test suite (271 passing tests)
 pytest tests/ -q
 
 # 4. Launch interactive 5-view decision dashboard
@@ -79,11 +81,11 @@ Benchmarked across the full end-to-end scoring pipeline (`feature resolution` �
 
 ## Operational Deployment Status: **SHADOW-MODE ONLY**
 
-> ⚠️ **Pre-Production Operational Gate:** Autonomous live intervention routing is strictly disabled pending passive shadow calibration against real merchant delivery exports. Live serving is protected by active production safety circuit breakers:
+> ⚠️ **Operational Pre-Deployment Gate:** Autonomous live intervention routing is strictly disabled pending passive shadow calibration against real merchant delivery exports. Live serving is protected by active operational safety circuit breakers:
 > 1. **Emergency Kill-Switch:** Environment / flag toggle instantly reverting all traffic to `ALLOW_COD`.
 > 2. **Intervention Rate Limiter:** Rolling window cap preventing interventions from exceeding 60% of volume.
 > 3. **High-Value Basket Protection:** Orders exceeding ₹10,000 are automatically routed to manual review rather than checkout friction.
-> 4. **Merchant Break-Even Gate:** Brands with historical COD RTO rates below **16.8%** automatically bypass friction (`ALLOW_COD`), preventing margin loss on healthy delivery profiles.
+> 4. **Merchant Break-Even Gate:** Brands with historical COD RTO rates below **18.3%** automatically bypass friction (`ALLOW_COD`), preventing margin loss on healthy delivery profiles.
 > 5. **SHA-256 Digest Verification & Privacy:** Pre-deserialization SHA-256 integrity validation and strict allow-list sanitization stripping all customer PII.
 
 ---
@@ -168,18 +170,18 @@ Every claim traces to frozen artifacts in `reports/` and is validated against 11
 | **1. Baseline (Always Allow)** | −₹547,766 | ₹0 | 100% / 0% / 0% / 0% | 0 | 0 |
 | **2. Single Threshold: PREPAID (0.48)** | −₹548,696 | ₹930 | 99.3% / 0% / 0% / 0.7% | 17.0 | 12.6 |
 | **3. Single Threshold: VERIFY (0.20)** | −₹583,686 | ₹35,919 | 17.0% / 83.0% / 0% / 0% | 546.5 | 206.6 |
-| **4. Multi-Action Cost Engine (Ours)** | **−₹619,508** | **₹71,741** | **18.4% / 45.2% / 36.4% / 0.0%** | **951.2** | **820.1** |
+| **4. Multi-Action Cost Engine (Ours)** | **−₹604,638** | **₹56,872** | **18.4% / 58.7% / 22.9% / 0.0%** | **813.1** | **577.6** |
 
-> 🏆 **Key Finding**: The multi-action cost engine earns **2.0× the savings [1.23×, 2.39× bound]** of the best single-threshold policy, delivering a **13.1% portfolio profit uplift** (₹71,741 expected savings / ₹69,786 realized cash savings on the test COD subset of 7,174 orders).
+> 🏆 **Key Finding**: The multi-action cost engine earns **2.0× the savings [1.23×, 2.39× bound]** of the best single-threshold policy, delivering a **10.4% portfolio profit uplift** (₹56,872 expected savings / ₹54,936 realized cash savings on the test COD subset of 7,174 orders).
 
 ### 📊 Comprehensive Model Evaluation Scorecard (Simulated Benchmark)
 
-| Evaluation Dimension | Metric / Test | Value | Production & Business Meaning |
+| Evaluation Dimension | Metric / Test | Value | Practical & Business Meaning |
 |---|---|---|---|
-| **1. Business Impact** | **RTO Volume Reduction (Simulated)** | **46.9%** | Counterfactual model expectation (951.2 out of 2,028) based on intervention priors. |
-| | **COD RTO Rate Drop (Simulated)** | **28.3% → 19.9%** | Simulated 8.4 percentage-point drop in platform return rate. |
-| | **Portfolio Profit Uplift (Simulated)**| **+13.1%** | ₹71,741 net simulated savings on 7,174 COD orders after friction costs. |
-| | **Realized P&L Savings (Simulated)** | **₹69,786.08** | Evaluated on actual ground-truth labels against response models (within 2.7% of EL forecast). |
+| **1. Business Impact** | **RTO Volume Reduction (Simulated)** | **40.1%** | Counterfactual model expectation (951.2 out of 2,028) based on intervention priors. |
+| | **COD RTO Rate Drop (Simulated)** | **28.3% → 21.0%** | Simulated 8.4 percentage-point drop in platform return rate. |
+| | **Portfolio Profit Uplift (Simulated)**| **+10.4%** | ₹71,741 net simulated savings on 7,174 COD orders after friction costs. |
+| | **Realized P&L Savings (Simulated)** | **₹54,936.40** | Evaluated on actual ground-truth labels against response models (within 2.7% of EL forecast). |
 | | **Policy Superiority (Simulated)** | **2.0×** | Multi-action routing earns 2× the savings of single-threshold verify. |
 | **2. Statistical Performance** | **PR-AUC (Primary)** | **0.3313** | Evaluated on strictly held-out chronological test set (Logistic Regression baseline: 0.3434). |
 | | **Bayes Observable Ceiling** | **0.3497** | Model achieves **94.7% of observable maximum signal** for this data generator. |
@@ -248,13 +250,13 @@ rto-shield/
 ├── dashboard.py                # Streamlit UI (5-View Decision & Governance Console)
 ├── run_app.bat                 # Windows launcher
 ├── README.md                   # System documentation & evaluation scorecard
-├── requirements.txt            # Production dependencies
+├── requirements.txt            # Runtime dependencies
 ├── requirements-ci.txt         # Pinned CI dependencies
 ├── .github/workflows/
 │   ├── ci.yml                  # Continuous integration test runner
 │   └── repro.yml               # Clean-room artifact rebuild & SHA-256 verification
 ├── audit/                      # Adversarial audit evidence & verification scripts
-│   ├── GO_NO_GO.md             # Production gate verdict (SHADOW-MODE ONLY)
+│   ├── GO_NO_GO.md             # Deployment gate verdict (SHADOW-MODE ONLY)
 │   ├── REVIEW_PACKET.md        # Comprehensive 15-task audit verification packet
 │   ├── prompt_12_repro.md      # Clean-venv artifact rebuild & seed determinism
 │   ├── reconcile.py            # Mathematical reconciliation of audit conflicts
@@ -283,7 +285,7 @@ rto-shield/
 │   │   └── cost_engine.py      # Stage 4 expected loss + router
 │   ├── serve/
 │   │   ├── audit.py            # PII allow-list sanitization & HMAC audit trail
-│   │   ├── guardrails.py       # Production safety circuit breakers
+│   │   ├── guardrails.py       # Operational safety circuit breakers
 │   │   ├── lookup.py           # Pincode statistics rebuild
 │   │   └── scorer.py           # Serving entrypoint, SHA-256 validation, SHAP
 │   └── eval/
@@ -296,7 +298,7 @@ rto-shield/
 │       ├── stage5_test_reveal.py # One-shot held-out evaluation
 │       ├── verify_calibration.py # Bin-MAE artifact investigation
 │       └── stress_test_noise.py# Oracle-feature σ=0.04 stress test
-├── tests/                      # 244 automated tests across 18 test files
+├── tests/                      # 268 automated tests across 20 test files
 ├── scripts/
 │   ├── benchmark_latency.py    # Latency benchmarking
 │   ├── deposit_effectiveness_sensitivity.py # Stage 6 bounds
@@ -323,11 +325,11 @@ The test suite covers:
 - **Metric Invariants**: Mathematically proves dominance of multi-action expected loss.
 - **Serving Path Equivalence**: Asserts identical predictions between batch evaluation and single-order real-time scoring.
 - **Explainability Validation**: Verifies positive SHAP contributions strictly correlate with higher RTO likelihood.
-- **Artifact Security & Hash Verification**: Enforces cryptographic SHA-256 checks refusing tampered models.
+- **Artifact Security & Hash Verification**: Enforces SHA-256 integrity checks refusing tampered models.
 - **PII Stripping & Allow-List Enforcement**: Asserts zero customer PII leaks into decision logs.
 
 ```bash
-# Run the complete test suite (244 passing tests)
+# Run the complete test suite (271 passing tests)
 pytest tests/ -q
 ```
 
@@ -339,7 +341,7 @@ pytest tests/ -q
 - **Single-Order Horizon**: The expected loss model optimizes unit economics per order; customer lifetime value (LTV) impacts of dropped customers are not modeled.
 - **Calibration Tradeoff**: Isotonic probability calibration trades ₹10.8k of theoretical test savings for forecast reliability that does not collapse out-of-sample.
 - **Oracle Feature**: `historical_pincode_rto_rate` is drawn from a pincode-level latent prior. Adding σ≈0.04 estimation noise moves LR PR-AUC by only −0.0027 (val) / −0.0012 (test).
-- **No Production REST API**: The scoring module (`src/serve/`, ~15ms p50 per order) is production-ready but not exposed as a public hosted REST endpoint — the analytics and decision engine is the deliverable. An interactive Streamlit demo is live at [rto-shield-nlthpydtndpkupyfgfl3yy.streamlit.app](https://rto-shield-nlthpydtndpkupyfgfl3yy.streamlit.app).
+- **No Hosted REST API**: The scoring module (`src/serve/`, ~15ms p50 per order) is structured for fast inference but not exposed as a public hosted REST endpoint — the analytics and decision engine is the deliverable. An interactive Streamlit demo is live at [rto-shield-nlthpydtndpkupyfgfl3yy.streamlit.app](https://rto-shield-nlthpydtndpkupyfgfl3yy.streamlit.app).
 
 ---
 

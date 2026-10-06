@@ -84,6 +84,11 @@ class TestCostEngineConfig:
         assert "REQUIRE_DEPOSIT" in engine.interventions
         assert "PREPAID_ONLY" in engine.interventions
 
+    def test_interventions_match_decomposed_totals(self, engine):
+        """Verify that interventions section friction costs match decomposed operational totals."""
+        assert abs(engine.interventions["REQUIRE_DEPOSIT"]["friction_cost"] - engine.compute_decomposed_friction("REQUIRE_DEPOSIT")) < 1e-4
+        assert abs(engine.interventions["VERIFY_ADDRESS"]["friction_cost"] - engine.compute_decomposed_friction("VERIFY_ADDRESS")) < 1e-4
+
 
 # ── evaluate_interventions (single order) ─────────────────────────────────────
 
@@ -208,4 +213,59 @@ def test_deposit_operational_costs_nonzero(engine):
     assumed = cfg.get("assumed_operational_costs", {})
     deposit_friction = assumed.get("total_assumed_deposit_friction_cost", 0.0)
     assert deposit_friction > 0, "Deposit operational friction costs must be greater than zero"
+
+
+def test_all_deposit_cost_components_nonzero(engine):
+    """Ensure every individual decomposed operational cost component is strictly positive (Task 8 & Mutation 21)."""
+    cfg = engine.config
+    assumed = cfg.get("assumed_operational_costs", {})
+    assert assumed.get("payment_gateway_fee_deposit_pct", 0.0) > 0.0, "PG fee percentage must be > 0"
+    assert assumed.get("payment_gateway_fee_deposit_fixed", 0.0) > 0.0, "Fixed PG fee must be > 0"
+    assert assumed.get("refund_processing_cost_unit", 0.0) > 0.0, "Refund fee must be > 0"
+    assert assumed.get("support_ticket_cost_unit", 0.0) > 0.0, "Support ticket fee must be > 0"
+    assert assumed.get("whatsapp_otp_template_cost", 0.0) > 0.0, "Messaging fee must be > 0"
+
+
+def test_deposit_components_flow_into_expected_loss(engine):
+    """Verify that deposit friction cost flows directly through to the evaluated expected loss."""
+    ov, p = 1500.0, 0.60
+    el_standard = engine.evaluate_interventions(ov, p)["REQUIRE_DEPOSIT"]
+    # Decomposed calculation
+    friction = engine.interventions["REQUIRE_DEPOSIT"]["friction_cost"]
+    assert abs(friction - 7.00) < 1e-4, f"Engine deposit friction must be 7.00, got {friction}"
+    p_success = (1.0 - p) * (1.0 - engine.interventions["REQUIRE_DEPOSIT"]["success_drop_pct"])
+    p_rto_after = p * (1.0 - engine.interventions["REQUIRE_DEPOSIT"]["rto_reduction_pct"])
+    margin = ov * engine.average_margin_pct
+    expected_manual = friction + (p_rto_after * engine.rto_logistics_cost) - (p_success * margin)
+    assert abs(el_standard - expected_manual) < 1e-6
+
+
+def test_deposit_component_zero_mutation_changes_engine_loss():
+    """Mutation check: zeroing any individual cost component MUST change the engine's expected loss."""
+    import copy
+    base_eng = CostEngine()
+    ov, p = 1000.0, 0.50
+    base_loss = base_eng.evaluate_interventions(ov, p)["REQUIRE_DEPOSIT"]
+
+    components_to_zero = [
+        ("payment_gateway_fee_deposit_fixed", 1.80),
+        ("payment_gateway_fee_deposit_pct", 0.02 * 100.0),
+        ("refund_processing_cost_unit", 3.00 * 0.40),
+        ("support_ticket_cost_unit", 5.00 * 0.25),
+        ("whatsapp_otp_template_cost", 0.75),
+    ]
+
+    for key, expected_delta in components_to_zero:
+        cfg_mut = copy.deepcopy(base_eng.config)
+        cfg_mut["assumed_operational_costs"][key] = 0.0
+        mut_eng = CostEngine()
+        mut_eng.config = cfg_mut
+        mut_eng.assumed_operational_costs = cfg_mut["assumed_operational_costs"]
+        # Trigger dynamic re-wiring
+        mut_eng.interventions["REQUIRE_DEPOSIT"]["friction_cost"] = mut_eng.compute_decomposed_friction("REQUIRE_DEPOSIT")
+        mut_loss = mut_eng.evaluate_interventions(ov, p)["REQUIRE_DEPOSIT"]
+        diff = base_loss - mut_loss
+        assert abs(diff - expected_delta) < 1e-4, (
+            f"Zeroing {key} did not flow through to expected loss: expected delta {expected_delta}, got {diff}"
+        )
 

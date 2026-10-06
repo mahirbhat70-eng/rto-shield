@@ -24,6 +24,7 @@ from sklearn.metrics import (
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, ROOT)
+os.environ.setdefault("RTO_SHIELD_ENV", "development")
 
 from src.policy.cost_engine import CostEngine
 from src.eval.stage4_evaluate import get_cod_subset, eval_multi_action, calc_operational_metrics
@@ -244,17 +245,43 @@ def generate_numbers():
     else:
         five_seed_stats = {}
 
+    # Config hash and git commit
+    import hashlib
+    with open(os.path.join(ROOT, "configs/cost_config.yaml"), "rb") as f:
+        cfg_sha256 = hashlib.sha256(f.read()).hexdigest()
+    try:
+        git_hash = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.strip()
+    except Exception:
+        git_hash = "UNKNOWN"
+
+    oracle_ceiling_inr = round(float(113.0 * y_cod.sum()), 2)
+    pct_oracle_ceiling = round(realized_savings / oracle_ceiling_inr * 100.0, 2)
+    savings_per_1k = round(realized_savings / n_cod * 1000.0, 2)
+    expected_savings_per_1k = round(expected_savings / n_cod * 1000.0, 2)
+
+    primary_note = (
+        f"Seed 42 is a single draw; 5-seed mean realized savings is Rs "
+        f"{five_seed_stats.get('realized_savings_mean_inr', realized_savings):,.2f} +/- "
+        f"{five_seed_stats.get('realized_savings_std_inr', 0.0):,.2f}"
+    )
+
     results = {
+        "config_sha256": cfg_sha256,
+        "git_commit_hash": git_hash,
         "cod_subset_size": n_cod,
         "cod_base_rto_rate": round(cod_base_rto, 4),
         "cod_base_rto_pct": round(cod_base_rto * 100.0, 2),
         "baseline_cod_rtos": baseline_cod_rtos,
         "models": model_metrics,
         "primary_model": "lgbm_isotonic",
-        "primary_model_note": "Seed 42 is a single draw (best of 5 seeds); 5-seed mean realized savings is Rs 66,333.14 +/- 2,148.16",
+        "primary_model_note": primary_note,
         "single_draw_label": "seed_42_single_draw",
         "expected_savings_inr": expected_savings,
+        "expected_savings_per_1k_cod_inr": expected_savings_per_1k,
         "realized_savings_inr": realized_savings,
+        "savings_per_1k_cod_inr": savings_per_1k,
+        "oracle_ceiling_inr": oracle_ceiling_inr,
+        "pct_of_oracle_ceiling": pct_oracle_ceiling,
         "seed_42_single_draw_realized_savings_inr": realized_savings,
         "five_seed_sweep_shipped_model": five_seed_stats,
         "expected_rtos_prevented": round(float(rtos_prev_exp), 2),

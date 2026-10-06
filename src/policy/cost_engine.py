@@ -12,6 +12,8 @@ Changes vs v1 (see IMPROVEMENTS.md):
     the probability vector is row-aligned with the DataFrame. The old
     positional `proba_series.iloc[i]` silently mispaired probabilities
     whenever the caller passed a filtered frame without reset_index().
+  * Phase 8: Full operational cost decomposition for interventions with optional
+    lifetime value (LTV) loss toggle and sensitivity analysis support.
 """
 
 import os
@@ -34,18 +36,56 @@ def is_cod(payment_method) -> bool:
 class CostEngine:
     def __init__(self, config_path=None):
         path = config_path or os.environ.get('RTO_SHIELD_COST_CONFIG', DEFAULT_CONFIG_PATH)
-        with open(path, 'r') as f:
+        with open(path, 'r', encoding='utf-8') as f:
             self.config = yaml.safe_load(f)
 
-        self.rto_logistics_cost = self.config['rto_logistics_cost']
-        self.average_margin_pct = self.config['average_margin_pct']
+        self.rto_logistics_cost = float(self.config['rto_logistics_cost'])
+        self.average_margin_pct = float(self.config['average_margin_pct'])
         self.interventions = self.config['interventions']
+        self.assumed_operational_costs = self.config.get('assumed_operational_costs', {})
 
-    def evaluate_interventions(self, order_value, p_rto):
+    def compute_decomposed_friction(self, action: str, order_value: float = None, ltv_multiplier: float = 0.0) -> float:
+        """
+        Decomposed operational friction cost per intervention (Task 8a).
+        Computes payment gateway, refund handling, reconciliation, messaging, and support.
+        Optionally accounts for customer lifetime value (LTV) drop-off penalty.
+        """
+        if action not in self.interventions:
+            return 0.0
+
+        assumed = self.assumed_operational_costs
+        if action == "ALLOW_COD":
+            base_friction = 0.0
+        elif action == "VERIFY_ADDRESS":
+            msg = float(assumed.get('whatsapp_otp_template_cost', 0.75))
+            support = float(assumed.get('support_ticket_cost_unit', 5.00)) * float(assumed.get('support_contact_probability_verify', 0.25))
+            base_friction = msg + support  # 0.75 + 1.25 = 2.00
+        elif action == "REQUIRE_DEPOSIT":
+            deposit_amt = float(assumed.get('deposit_fixed_amount', 100.00))
+            pg_fee = deposit_amt * float(assumed.get('payment_gateway_fee_deposit_pct', 0.02)) + float(assumed.get('payment_gateway_fee_deposit_fixed', 1.80))
+            refund_fee = float(assumed.get('refund_processing_cost_unit', 3.00)) * float(assumed.get('refund_probability_on_deposit', 0.40))
+            support_fee = float(assumed.get('support_ticket_cost_unit', 5.00)) * float(assumed.get('support_contact_probability_deposit', 0.25))
+            msg_fee = float(assumed.get('whatsapp_otp_template_cost', 0.75))
+            base_friction = pg_fee + refund_fee + support_fee + msg_fee  # 3.80 + 1.20 + 1.25 + 0.75 = 7.00
+        elif action == "PREPAID_ONLY":
+            base_friction = float(self.interventions['PREPAID_ONLY'].get('friction_cost', 0.0))
+        else:
+            base_friction = float(self.interventions[action].get('friction_cost', 0.0))
+
+        # Optional Lifetime Value (LTV) term:
+        # ltv_penalty = ltv_multiplier * margin * drop_rate
+        if ltv_multiplier > 0.0 and order_value is not None:
+            drop_pct = float(self.interventions[action]['success_drop_pct'])
+            margin = float(order_value) * self.average_margin_pct
+            base_friction += ltv_multiplier * margin * drop_pct
+
+        return float(base_friction)
+
+    def evaluate_interventions(self, order_value, p_rto, ltv_multiplier=0.0):
         """
         Single-order expected loss per intervention:
         EL(a) = friction + P(rto after a) * logistics_cost
-                - P(success after a) * margin
+                - P(success after a) * margin + [ltv_loss if enabled]
         """
         order_value = float(order_value)
         p_rto = float(p_rto)
@@ -53,9 +93,12 @@ class CostEngine:
 
         results = {}
         for action, params in self.interventions.items():
-            friction_cost = params['friction_cost']
-            success_drop_pct = params['success_drop_pct']
-            rto_reduction_pct = params['rto_reduction_pct']
+            friction_cost = float(params['friction_cost'])
+            if ltv_multiplier > 0.0:
+                friction_cost = self.compute_decomposed_friction(action, order_value, ltv_multiplier=ltv_multiplier)
+
+            success_drop_pct = float(params['success_drop_pct'])
+            rto_reduction_pct = float(params['rto_reduction_pct'])
 
             p_success = (1.0 - p_rto) * (1.0 - success_drop_pct)
             p_rto_after = p_rto * (1.0 - rto_reduction_pct)
@@ -65,7 +108,7 @@ class CostEngine:
 
         return results
 
-    def evaluate_interventions_vectorized(self, order_values, p_rto):
+    def evaluate_interventions_vectorized(self, order_values, p_rto, ltv_multiplier=0.0):
         """
         Vectorized EL over arrays. Returns (action_names, el_matrix) where
         el_matrix has shape (n_actions, n_orders) in config key order.
@@ -82,16 +125,21 @@ class CostEngine:
         cols = []
         for name in names:
             params = self.interventions[name]
-            friction = params['friction_cost']
-            drop = params['success_drop_pct']
-            red = params['rto_reduction_pct']
+            friction = float(params['friction_cost'])
+            drop = float(params['success_drop_pct'])
+            red = float(params['rto_reduction_pct'])
+
+            if ltv_multiplier > 0.0:
+                extra_ltv = ltv_multiplier * margin * drop
+                friction = friction + extra_ltv
+
             cols.append(
                 friction + (P * (1.0 - red)) * self.rto_logistics_cost
                 - ((1.0 - P) * (1.0 - drop)) * margin
             )
         return names, np.vstack(cols)
 
-    def get_optimal_policy(self, df, proba_series):
+    def get_optimal_policy(self, df, proba_series, ltv_multiplier=0.0):
         """
         Vectorized batch router.
 
@@ -121,7 +169,7 @@ class CostEngine:
 
         cod_mask = df['payment_method'].map(is_cod).to_numpy(dtype=bool)
 
-        names, mat = self.evaluate_interventions_vectorized(V, p)
+        names, mat = self.evaluate_interventions_vectorized(V, p, ltv_multiplier=ltv_multiplier)
         action_names = np.asarray(names, dtype=object)
         best_idx = np.argmin(mat, axis=0)  # first-min tie-break == config key order
         col_idx = np.arange(len(df))

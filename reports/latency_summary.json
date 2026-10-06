@@ -1,0 +1,41 @@
+{
+  "config_sha256": "5e88aa8f235f1b53d7753f88e9873a3492592264dda5cf59d521e30f5d5c5658",
+  "git_commit_hash": "d7bde4683fa8bbec91fc52706376cacf3a44e752",
+  "hardware": {
+    "processor": "AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD",
+    "cpu_model": "AMD Ryzen 5 5600H with Radeon Graphics",
+    "physical_cores": 6,
+    "logical_processors": 12,
+    "ram_gb": 15.3,
+    "python_version": "3.13.13",
+    "os": "Windows-11-10.0.26200-SP0",
+    "os_build": "10.0.26200"
+  },
+  "latency_benchmark_ranges": {
+    "with_shap_p50_ms_range": [
+      9.6,
+      11.8
+    ],
+    "with_shap_p95_ms_range": [
+      24.0,
+      27.0
+    ],
+    "with_shap_p99_ms_range": [
+      38.0,
+      45.0
+    ],
+    "with_shap_cold_start_ms": 46.0,
+    "without_shap_p50_ms_range": [
+      5.0,
+      6.6
+    ],
+    "without_shap_p95_ms_range": [
+      10.0,
+      14.0
+    ],
+    "without_shap_p99_ms_range": [
+      18.0,
+      25.0
+    ]
+  }
+}

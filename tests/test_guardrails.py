@@ -128,15 +128,15 @@ def test_merchant_break_even_simulation_gate():
 
 
 def test_ranked_cap_drops_lowest_benefit_orders():
-    """Verify ranked cap drops lowest-benefit orders and preserves highest-benefit orders (Task 2 & Mutation 20)."""
-    gr = ProductionGuardrails(kill_switch=False, max_intervention_rate=0.50, window_size=100, cap_mode='ranked')
+    """Verify ranked cap drops lowest-benefit orders and preserves highest-benefit orders (Task 2 & Mutation 20 & 22)."""
+    gr = ProductionGuardrails(kill_switch=False, max_intervention_rate=0.60, window_size=100, cap_mode='ranked')
 
     # Seed 60 orders with varying benefits
     for b in range(1, 61):
         gr.recent_benefits.append(float(b))
         gr.recent_actions.append(1)
 
-    # Low benefit order (benefit = 5 < cutoff ~30): must be dropped to ALLOW_COD
+    # Low benefit order (benefit = 5 < cutoff ~24.6): must be dropped to ALLOW_COD
     low_order = {
         'order_value': 800.0,
         'pincode': '110001'
@@ -150,7 +150,22 @@ def test_ranked_cap_drops_lowest_benefit_orders():
     assert res_low['recommended_action'] == 'ALLOW_COD'
     assert 'INTERVENTION_CAP_RANKED' in res_low['guardrail_applied']
 
-    # High benefit order (benefit = 50 > cutoff ~30): must be kept
+    # Mid benefit order (benefit = 30.0): above 40th percentile (~24.6), so kept under 60% cap
+    # (Catches Mutation 22 which calculates quantile tail inverted at 60th percentile ~36.4)
+    mid_order = {
+        'order_value': 800.0,
+        'pincode': '110001'
+    }
+    mid_model = lambda f: {
+        'recommended_action': 'REQUIRE_DEPOSIT',
+        'probability': 0.60,
+        'el_table': {'ALLOW_COD': 100.0, 'REQUIRE_DEPOSIT': 70.0}  # benefit = 30.0
+    }
+    res_mid = gr.evaluate(mid_order, mid_model)
+    assert res_mid['recommended_action'] == 'REQUIRE_DEPOSIT'
+    assert res_mid['guardrail_applied'] == 'NONE'
+
+    # High benefit order (benefit = 50 > cutoff): must be kept
     high_order = {
         'order_value': 800.0,
         'pincode': '110001'
@@ -163,6 +178,25 @@ def test_ranked_cap_drops_lowest_benefit_orders():
     res_high = gr.evaluate(high_order, high_model)
     assert res_high['recommended_action'] == 'REQUIRE_DEPOSIT'
     assert res_high['guardrail_applied'] == 'NONE'
+
+
+def test_merchant_break_even_requires_lower_bound_not_point_estimate():
+    """Verify that merchant break-even gate rejects positive point estimates whose lower 95% CI is below margin (Mutation 23)."""
+    from src.serve.guardrails import merchant_break_even
+    costs = {
+        'rto_cost': 150.0,
+        'margin_pct': 0.20,
+        'safety_margin_per_order': 0.25
+    }
+    basket_1500 = [800.0] * 1500
+    # At 20.8% COD RTO, point estimate is well positive (+Rs 0.46/order > Rs 0.25 margin), but lower 95% CI is only +Rs 0.12/order (<= Rs 0.25)
+    res = merchant_break_even(costs, basket_1500, historical_cod_rto_rate=0.208)
+    assert res['expected_net_savings'] > 0.25 * 1500, "Point estimate must be strictly above safety margin"
+    assert res['lower_95_ci_savings'] <= 0.25 * 1500, "Lower bound must fail safety margin"
+    assert not res['allowed'], "Guardrail must block friction when lower 95% CI fails safety threshold"
+    assert res['status'] == 'BLOCKED'
+    assert res['action'] == 'ALLOW_COD'
+
 
 
 

@@ -32,6 +32,29 @@ def get_cpu_info():
     except Exception as e:
         return f"{platform.processor()} ({e})"
 
+
+def get_hardware_spec():
+    cpu_model = get_cpu_info()
+    mem_gb = "N/A"
+    try:
+        if platform.system() == "Windows":
+            res = subprocess.run("wmic computersystem get TotalPhysicalMemory /format:csv",
+                                 capture_output=True, text=True, shell=True)
+            lines = [l.strip() for l in res.stdout.splitlines() if l.strip() and not l.startswith("Node")]
+            if len(lines) >= 2:
+                mem_bytes = int(lines[1].split(",")[1])
+                mem_gb = f"{mem_bytes / (1024**3):.1f} GB"
+    except Exception:
+        pass
+
+    return {
+        "processor": platform.processor(),
+        "cpu_model": cpu_model,
+        "python_version": sys.version.split()[0],
+        "os": platform.platform(),
+        "ram": mem_gb,
+    }
+
 def benchmark_run(n_requests=1000):
     clean, _ = validate_and_clean(SAMPLE_ORDER)
     pin_info, _ = resolve_pincode_info(clean['pincode'])

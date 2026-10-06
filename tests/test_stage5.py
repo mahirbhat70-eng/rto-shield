@@ -31,12 +31,13 @@ def test_data():
 
 def test_stage5_frozen_thresholds_and_prepaid_never_argmin(engine, test_data):
     # This test asserts that the optimal thresholds from val_cal (0.48 for PREPAID, 0.20 for VERIFY)
-    # are valid for evaluation, but more importantly, PREPAID_ONLY is never argmin on test P.
+    # are valid for evaluation, but more importantly, PREPAID_ONLY is never argmin on held-out COD test orders.
     test, proba = test_data
+    test_cod, proba_cod = get_cod_subset(test, proba)
     
-    # Assert PREPAID_ONLY is never argmin on test P
-    for i, row in test.iterrows():
-        losses = engine.evaluate_interventions(row['order_value'], proba[i])
+    # Assert PREPAID_ONLY is never argmin on test COD orders
+    for i, (_, row) in enumerate(test_cod.iterrows()):
+        losses = engine.evaluate_interventions(row['order_value'], proba_cod[i])
         best_action = min(losses, key=losses.get)
         assert best_action != "PREPAID_ONLY"
         
@@ -83,8 +84,9 @@ def test_primary_savings_uplift(engine, test_data):
     
     # Pre-registered check: Primary savings uplift [8%, 18%] of baseline loss (reports/stage5_test_results.md § 3)
     assert 0.08 <= uplift <= 0.18
-    assert np.isclose(uplift, 0.131, atol=0.005)
-    assert np.isclose(primary_savings, 71741.02, atol=1.0)
+    # Under canonical config with deposit friction Rs 7: uplift is 10.38% (Rs 56,871.59 savings vs old zero-friction Rs 71,741.02 / 13.1%)
+    assert np.isclose(uplift, 0.104, atol=0.005)
+    assert np.isclose(primary_savings, 56871.59, atol=1.0)
 
 def test_bayes_ceiling():
     test = pd.read_csv("data/processed/test.csv", dtype={'pincode': str})

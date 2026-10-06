@@ -54,7 +54,7 @@
 | 1. Baseline | 0.00 | 100.0% / 0.0% / 0.0% / 0.0% | 0 | 0 | - | - |
 | 2. Binary PREPAID | 929.63 | 99.3% / 0.0% / 0.0% / 0.7% | 49 | 0 | 17.02 | 12.63 |
 | 3. Binary VERIFY | 35,919.42 | 17.0% / 83.0% / 0.0% / 0.0% | 5,954 | 11,908 | 546.48 | 206.62 |
-| 4. Primary (Cal) | 71,741.02 | 18.4% / 45.2% / 36.4% / 0.0% | 5,856 | 6,488 | 951.16 | 820.08 |
+| 4. Primary (Cal) | 56,871.59 | 18.4% / 58.7% / 22.9% / 0.0% | 5,856 | 19,927 | 813.11 | 577.57 |
 | 5. Sens (Uncal) | 82,579.63 | 18.7% / 46.5% / 34.8% / 0.0% | 5,832 | 6,672 | - | - |
 | 6. Sens (Clipped) | 71,881.29 | 18.4% / 45.2% / 36.4% / 0.0% | 5,856 | 6,488 | - | - |
 
@@ -71,6 +71,11 @@
 - *Pre-Registered Check:* Noisy savings within ±10% of clean: **PASS** (+2.7%)
 
 ## Stage 5.2: Operating-Point Metrics & Realized P&L
+
+> **Canonical Recomputed Realized P&L (deposit friction = ₹7.00):**
+> Under frozen canonical config, multi-action policy delivers **₹54,936.40** realized savings (expected savings: **₹56,871.59**; primary PR-AUC: **0.3313**; RTOs prevented: **813.11**; drops: **577.57**).
+> Historical uncalibrated-friction comparison anchor: ₹69,786.08 (zero deposit friction).
+
 
 ### 1. Policy Operating-Point P/R (Binary: VERIFY/DEPOSIT = Positive)
 - **Precision:** 0.2963
