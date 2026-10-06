@@ -7,14 +7,14 @@
 ## 1. Staged Deployment Architecture
 
 ```mermaid
-graph TD
-    A[Merchant Historical Export] -->|Stage 1: Offline Replay| B(Shadow Scoring & Calibration Check)
-    B -->|Gate 1 Passed| C[Live Traffic Ingestion]
-    C -->|Stage 2: 80/20 A/B Split| D{Randomized Slice: VERIFY Only}
-    D -->|Control 50%| E[Status Quo: Always Allow COD]
-    D -->|Treatment 50%| F[Model Action: VERIFY vs ALLOW]
-    F -->|Gate 2 Passed: Conversion & Effect Measured| G[Stage 3: Full Multi-Action Policy]
-    G --> H[DEPOSIT + VERIFY + ALLOW with Measured Parameters]
+flowchart TD
+    A["Merchant Historical Export<br/>(30–60 Days Replay)"] -->|"Stage 1: Offline Replay"| B["Shadow Scoring &amp; Calibration<br/>(Zero Merchant Impact)"]
+    B -->|"Gate 1 Passed"| C["Live Traffic Ingestion<br/>(Production Checkout)"]
+    C -->|"Stage 2: 80/20 A/B Split"| D{"Randomized 20% Slice<br/>(VERIFY Only)"}
+    D -->|"Control 50%"| E["Status Quo Arm<br/>(Always Allow COD)"]
+    D -->|"Treatment 50%"| F["RTO Shield Arm<br/>(VERIFY vs ALLOW)"]
+    F -->|"Gate 2 Passed:<br/>Conversion Confirmed"| G["Stage 3: Full Multi-Action Policy"]
+    G --> H["DEPOSIT + VERIFY + ALLOW<br/>(Measured Parameters)"]
 ```
 
 ### Stage 1: Offline Shadow Replay (Zero Merchant Impact)
@@ -34,13 +34,15 @@ graph TD
 - **Execution:**
   1. Score all COD orders historically without serving interventions.
   2. Compute merchant-specific base COD RTO rate and evaluate break-even gate:
-     $$\text{net\_savings} = \text{simulate\_frozen\_policy}(\text{merchant\_baskets}, \text{merchant\_costs}, \text{base\_rto})$$
-  3. Verify merchant break-even: If merchant base RTO $< 16.6\%$, block friction and log reason.
+     ```python
+     net_savings = simulate_frozen_policy(merchant_baskets, merchant_costs, base_rto)
+     ```
+  3. Verify merchant break-even: If merchant base RTO < 16.6%, block friction and log reason.
   4. Inspect calibration curve and compute empirical Brier score, ECE, and PR-AUC.
 - **Stage 1 Exit Gate:**
-  - Model PR-AUC $\ge 90\%$ of observable ceiling on merchant data.
-  - Expected net savings $> 0$ with $p < 0.01$.
-  - Data sample contains $\ge 1,000$ COD orders.
+  - Model PR-AUC ≥ 90% of observable ceiling on merchant data.
+  - Expected net savings > 0 with $p < 0.01$.
+  - Data sample contains ≥ 1,000 COD orders.
 
 ---
 
@@ -51,14 +53,14 @@ graph TD
   - **Control Arm (50% of slice):** Status Quo (100% `ALLOW_COD`, zero friction).
   - **Treatment Arm (50% of slice):** RTO Shield routing (`VERIFY_ADDRESS` if $p \ge p^*_{\text{verify}}$, else `ALLOW_COD`).
 - **Measurements Captured:**
-  - Verification drop-off rate ($\delta_{\text{verify}}^{\text{measured}}$): fraction of customers who abandon checkout when prompted for address verification.
-  - Causal RTO reduction ($\Delta_{\text{verify}}^{\text{measured}}$): difference in delivery success between verified orders and control.
-  - Verification friction cost ($C_{\text{friction}}^{\text{measured}}$): actual WhatsApp/SMS API provider charge per prompt (₹1.50–₹2.50).
+  - Verification drop-off rate ($\delta_{\text{verify}}$): fraction of customers who abandon checkout when prompted for address verification.
+  - Causal RTO reduction ($\Delta_{\text{verify}}$): difference in delivery success between verified orders and control.
+  - Verification friction cost ($C_{\text{friction}}$): actual WhatsApp/SMS API provider charge per prompt (₹1.50–₹2.50).
 
 ---
 
 ### Stage 3: Full Multi-Action Policy (Deposit Activation)
-- **Constraint:** Activated **only after Stage 2 empirically confirms** that drop-off $\le 8\%$ and verification delivers positive net margin.
+- **Constraint:** Activated **only after Stage 2 empirically confirms** that drop-off ≤ 8% and verification delivers positive net margin.
 - **Actions Enabled:** `ALLOW_COD`, `VERIFY_ADDRESS`, `REQUIRE_DEPOSIT`.
 - **Parameter Replacement:** Frozen cost engine constants are updated with empirical Stage 2 measurements.
 - **Holdout Control:** A continuous 10% global holdout arm is maintained to monitor long-term customer lifetime value (LTV) and ensure no latent brand churn.
@@ -70,7 +72,7 @@ graph TD
 To detect a minimum clinically meaningful RTO reduction from baseline $p_1 = 0.28$ (28%) down to $p_2 = 0.23$ (23%, a 5 percentage point absolute reduction) at **80% statistical power** ($\beta = 0.20$) and **5% significance** ($\alpha = 0.05$, two-sided):
 
 ### Closed-Form Formula (Two-Proportion Z-Test)
-$$N_{\text{per arm}} = \frac{\left(Z_{\alpha/2}\sqrt{2\bar{p}(1-\bar{p})} + Z_{\beta}\sqrt{p_1(1-p_1) + p_2(1-p_2)}\right)^2}{(p_1 - p_2)^2}$$
+$$N_{\text{arm}} = \frac{\left(Z_{\alpha/2}\sqrt{2\bar{p}(1-\bar{p})} + Z_{\beta}\sqrt{p_1(1-p_1) + p_2(1-p_2)}\right)^2}{(p_1 - p_2)^2}$$
 
 Where:
 - $Z_{\alpha/2} = 1.960$ (for 95% confidence)
@@ -86,7 +88,7 @@ Where:
 4. $Z_{\beta} \times 0.6154 = 0.842 \times 0.6154 = 0.5182$
 5. Numerator $= (1.2081 + 0.5182)^2 = (1.7263)^2 \approx 2.980$
 6. Denominator $= (0.28 - 0.23)^2 = (0.05)^2 = 0.0025$
-7. $N_{\text{per arm}} = \frac{2.980}{0.0025} \approx \mathbf{1,192\text{ orders}}$
+7. $N_{\text{arm}} = \frac{2.980}{0.0025} \approx \mathbf{1,192\text{ orders}}$
 8. **Total Sample Size:** $2 \times 1,192 \approx \mathbf{2,384\text{ orders}}$
 
 At 500 COD orders/day on a 20% slice (100 orders/day in pilot):
@@ -100,11 +102,11 @@ The pilot engine evaluates circuit breakers hourly. Any trigger automatically en
 
 | Trigger | Metric Threshold | Evaluation Window | Action Taken |
 |---|---|---|---|
-| **Conversion Collapse** | Funnel checkout completion drops $> 3.0\%$ vs control | Rolling 24 hours | Kill switch trip; alert merchant oncall |
-| **Excessive Drop-off** | Verification prompt abandonment $> 10.0\%$ | Rolling 100 interventions | Freeze `VERIFY_ADDRESS`, fallback to `ALLOW_COD` |
-| **Financial Net Loss** | Realized cumulative margin in Treatment $<$ Control by $\ge ₹15,000$ | Cumulative since launch | Kill switch trip; full post-mortem audit |
-| **Model Drift** | Observed RTO rate exceeds model-predicted $P$ by $> 8.0\%$ | Rolling 500 orders | Trigger recalibration; disable interventions |
-| **Ops Latency Spill** | p95 inference latency $> 50\text{ ms}$ | 5-minute rolling window | Bypass scoring, return passthrough |
+| **Conversion Collapse** | Funnel checkout completion drops > 3.0% vs control | Rolling 24 hours | Kill switch trip; alert merchant oncall |
+| **Excessive Drop-off** | Verification prompt abandonment > 10.0% | Rolling 100 interventions | Freeze `VERIFY_ADDRESS`, fallback to `ALLOW_COD` |
+| **Financial Net Loss** | Realized cumulative margin in Treatment < Control by ≥ ₹15,000 | Cumulative since launch | Kill switch trip; full post-mortem audit |
+| **Model Drift** | Observed RTO rate exceeds model-predicted $P$ by > 8.0% | Rolling 500 orders | Trigger recalibration; disable interventions |
+| **Ops Latency Spill** | p95 inference latency > 50 ms | 5-minute rolling window | Bypass scoring, return passthrough |
 
 ---
 
@@ -114,11 +116,11 @@ Assumed synthetic parameters vs actual empirical values that replace them during
 
 | Engine Parameter | Synthetic Baseline Value | Empirical Pilot Metric | Measurement Method |
 |---|---|---|---|
-| **Verification Drop-off** | $\delta_{\text{verify}} = 0.05$ (5%) | $\delta_{\text{verify}}^{\text{measured}}$ | Prompted vs Completed OTPs in Stage 2 |
-| **Verification RTO Reduction** | $\Delta_{\text{verify}} = 0.20$ (20%) | $\Delta_{\text{verify}}^{\text{measured}}$ | Control RTO rate minus Treatment RTO rate |
-| **Deposit Drop-off** | $\delta_{\text{deposit}} = 0.50$ (50%) | $\delta_{\text{deposit}}^{\text{measured}}$ | Partial prepayment gateway drop-off in Stage 3 |
-| **Deposit RTO Reduction** | $\Delta_{\text{deposit}} = 0.60$ (60%) | $\Delta_{\text{deposit}}^{\text{measured}}$ | Delivery rate on deposit-paid orders vs control |
-| **Forward Delivery Cost** | $C_{\text{delivery}} = ₹0$ (assumed free) | $C_{\text{delivery}}^{\text{actual}}$ | Merchant carrier invoice (typically ₹40–₹70/order) |
-| **Reverse Logistics Cost** | $C_{\text{rto}} = ₹150$ | $C_{\text{rto}}^{\text{actual}}$ | Carrier freight + reverse manifest + repackaging fee |
-| **Net Gross Margin** | $m = 0.20$ (20%) | $m_{\text{actual}}$ | SKU-level gross margin exported from ERP |
-| **Friction / WhatsApp Fee** | $C_{\text{friction}} = ₹2.00$ | $C_{\text{friction}}^{\text{actual}}$ | Per-message conversation API billing from Meta BSP |
+| **Verification Drop-off** | $\delta_{\text{verify}} = 0.05$ (5%) | $\delta_{\text{verify}}^{\text{obs}}$ | Prompted vs Completed OTPs in Stage 2 |
+| **Verification RTO Reduction** | $\Delta_{\text{verify}} = 0.20$ (20%) | $\Delta_{\text{verify}}^{\text{obs}}$ | Control RTO rate minus Treatment RTO rate |
+| **Deposit Drop-off** | $\delta_{\text{deposit}} = 0.50$ (50%) | $\delta_{\text{deposit}}^{\text{obs}}$ | Partial prepayment gateway drop-off in Stage 3 |
+| **Deposit RTO Reduction** | $\Delta_{\text{deposit}} = 0.60$ (60%) | $\Delta_{\text{deposit}}^{\text{obs}}$ | Delivery rate on deposit-paid orders vs control |
+| **Forward Delivery Cost** | $C_{\text{delivery}}$ = ₹0 (assumed free) | $C_{\text{delivery}}^{\text{obs}}$ | Merchant carrier invoice (typically ₹40–₹70/order) |
+| **Reverse Logistics Cost** | $C_{\text{rto}}$ = ₹150 | $C_{\text{rto}}^{\text{obs}}$ | Carrier freight + reverse manifest + repackaging fee |
+| **Net Gross Margin** | $m = 0.20$ (20%) | $m_{\text{obs}}$ | SKU-level gross margin exported from ERP |
+| **Friction / WhatsApp Fee** | $C_{\text{friction}}$ = ₹2.00 | $C_{\text{friction}}^{\text{obs}}$ | Per-message conversation API billing from Meta BSP |

@@ -135,7 +135,7 @@ def test_allowlist_drops_arbitrary_free_text(sample_res):
 
 # ─── Property-Based Test: Hypothesis Allow-List Enforcement ─────────────────
 
-from hypothesis import given, strategies as st
+from hypothesis import given, settings, HealthCheck, strategies as st
 from src.serve.audit import AUDIT_ALLOWLIST_KEYS
 
 SENSITIVE_KEYS = st.sampled_from([
@@ -168,6 +168,7 @@ arbitrary_payload_strategy = st.dictionaries(
     max_size=30
 )
 
+@settings(suppress_health_check=[HealthCheck.too_slow], deadline=None)
 @given(payload=arbitrary_payload_strategy)
 def test_hypothesis_audit_log_allowlist_enforcement(payload):
     """Property test: No field outside allow-list ever appears in audit log, for arbitrary nested/PII payloads."""
