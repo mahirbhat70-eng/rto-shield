@@ -70,8 +70,8 @@ def test_cod_charge_positive_for_cod(df_small):
 
 
 def test_pincode_string_6digit(df_small):
-    assert df_small['pincode'].dtype == object
-    assert (df_small['pincode'].str.len() == 6).all()
+    assert pd.api.types.is_string_dtype(df_small['pincode'])
+    assert (df_small['pincode'].astype(str).str.len() == 6).all()
 
 
 def test_historical_pincode_rto_rate_range(df_small):

@@ -118,8 +118,8 @@ def validate(df, expected_rows):
         "prior_rto_count > prior_orders"
 
     # pincode: string, 6-char
-    assert df['pincode'].dtype == object, "pincode must be string dtype"
-    assert (df['pincode'].str.len() == 6).all(), "pincode must be 6 digits"
+    assert pd.api.types.is_string_dtype(df['pincode']), "pincode must be string dtype"
+    assert (df['pincode'].astype(str).str.len() == 6).all(), "pincode must be 6 digits"
     n_pincodes = df['pincode'].nunique()
     if expected_rows >= 10000:
         assert 800 <= n_pincodes <= 1500, f"Distinct pincodes {n_pincodes} outside [800, 1500]"
@@ -127,7 +127,7 @@ def validate(df, expected_rows):
         assert n_pincodes > 1, f"Only {n_pincodes} distinct pincodes in small dataset"
 
     # courier_id
-    assert df['courier_id'].dtype == object, "courier_id must be object dtype"
+    assert pd.api.types.is_string_dtype(df['courier_id']), "courier_id must be string dtype"
     n_couriers = df['courier_id'].nunique()
     assert 4 <= n_couriers <= 6, f"Distinct couriers {n_couriers} outside [4, 6]"
 

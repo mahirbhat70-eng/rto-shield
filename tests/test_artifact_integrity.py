@@ -137,4 +137,59 @@ def test_out_of_boundary_pinned_digest_enforcement(tmp_path, monkeypatch):
         _verify_and_load(str(fake_model), manifest_path=str(in_repo_manifest))
 
 
+def test_hash_file_completeness():
+    """Assert every file under models/ and data/ is recorded in artifact_hashes.json."""
+    with open(MANIFEST, encoding="utf-8") as f:
+        manifest = json.load(f)
+
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    missing = []
+    total_found = 0
+
+    for root_dir in ["models", "data"]:
+        full_dir = os.path.join(repo_root, root_dir)
+        for dirpath, _, filenames in os.walk(full_dir):
+            for fname in filenames:
+                rel = os.path.relpath(os.path.join(dirpath, fname), repo_root).replace("\\", "/")
+                # Skip the manifest itself and transient/hidden files
+                if rel in ("models/artifact_hashes.json",) or fname.startswith("."):
+                    continue
+                total_found += 1
+                if rel not in manifest:
+                    missing.append(rel)
+
+    assert total_found >= 13, f"Expected at least 13 tracked files, found {total_found}"
+    assert not missing, (
+        f"File(s) exist on disk under models/ or data/ but are missing from models/artifact_hashes.json:\n"
+        + "\n".join(f"  - {m}" for m in missing)
+        + "\nRun scripts/freeze_artifact_hashes.py to update the manifest."
+    )
+
+
+def test_verify_and_load_fail_closed_in_production(monkeypatch):
+    """Refuse to load models in production if RTO_SHIELD_PINNED_DIGESTS is unset."""
+    import pytest
+    from src.serve.scorer import _verify_and_load, SecurityError
+
+    monkeypatch.setenv("RTO_SHIELD_ENV", "production")
+    monkeypatch.delenv("RTO_SHIELD_PINNED_DIGESTS", raising=False)
+
+    with pytest.raises(SecurityError, match="In production mode"):
+        _verify_and_load("tree_model.pkl")
+
+
+def test_verify_and_load_warns_and_loads_in_dev(monkeypatch):
+    """In development mode, warn when RTO_SHIELD_PINNED_DIGESTS is unset and fall back to repo manifest."""
+    import pytest
+    from src.serve.scorer import _verify_and_load
+
+    monkeypatch.setenv("RTO_SHIELD_ENV", "development")
+    monkeypatch.delenv("RTO_SHIELD_PINNED_DIGESTS", raising=False)
+
+    with pytest.warns(UserWarning, match="RTO_SHIELD_PINNED_DIGESTS is unset in development mode"):
+        model = _verify_and_load("tree_model.pkl")
+    assert model is not None
+
+
+
 

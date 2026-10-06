@@ -132,3 +132,70 @@ def test_allowlist_drops_arbitrary_free_text(sample_res):
     assert "gift_message" not in record["payload"]
     assert "order_value" in record["payload"]
 
+
+# ─── Property-Based Test: Hypothesis Allow-List Enforcement ─────────────────
+
+from hypothesis import given, strategies as st
+from src.serve.audit import AUDIT_ALLOWLIST_KEYS
+
+SENSITIVE_KEYS = st.sampled_from([
+    "phone", "mobile", "telephone", "email", "email_address",
+    "address", "street", "house_no", "aadhaar", "aadhar_num",
+    "pan_card", "ssn", "credit_card_number", "cvv", "notes",
+    "customer_name", "secret_token", "unicode_field_\u092d\u093e\u0930\u0924"
+])
+
+SENSITIVE_VALUES = st.one_of(
+    st.from_regex(r"\+91[6-9]\d{9}", fullmatch=True),
+    st.from_regex(r"[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}", fullmatch=True),
+    st.from_regex(r"\d{4} \d{4} \d{4}", fullmatch=True),
+    st.text(alphabet=st.characters(blacklist_categories=("Cs",)), max_size=50),
+    st.dictionaries(keys=st.text(min_size=1, max_size=10), values=st.text(max_size=20), max_size=3),
+    st.lists(st.integers(), max_size=5)
+)
+
+arbitrary_payload_strategy = st.dictionaries(
+    keys=st.one_of(
+        st.sampled_from(list(AUDIT_ALLOWLIST_KEYS)),
+        SENSITIVE_KEYS,
+        st.text(min_size=1, max_size=25)
+    ),
+    values=st.one_of(
+        st.floats(min_value=0, max_value=1e5, allow_nan=False, allow_infinity=False),
+        st.integers(min_value=0, max_value=1000),
+        SENSITIVE_VALUES
+    ),
+    max_size=30
+)
+
+@given(payload=arbitrary_payload_strategy)
+def test_hypothesis_audit_log_allowlist_enforcement(payload):
+    """Property test: No field outside allow-list ever appears in audit log, for arbitrary nested/PII payloads."""
+    fake_res = {
+        "probability": 0.25,
+        "recommended_action": "ALLOW_COD",
+        "el_table": {"ALLOW_COD": 10.0},
+        "shap_top_factors": [],
+        "model_version": "2e6b0c5198dd",
+        "warnings": []
+    }
+    record = build_audit_record(payload, fake_res)
+    logged_payload = record["payload"]
+
+    # Invariant 1: No key in logged_payload may exist outside AUDIT_ALLOWLIST_KEYS
+    for k in logged_payload.keys():
+        assert k.lower() in AUDIT_ALLOWLIST_KEYS, f"Leaked key '{k}' in audit payload!"
+
+    # Invariant 2: Permitted customer_id is strictly hashed, never raw PII
+    if "customer_id" in logged_payload and logged_payload["customer_id"] is not None:
+        assert str(logged_payload["customer_id"]).startswith("HASH_")
+
+    # Invariant 3: Record itself only has approved schema fields
+    ALLOWED_RECORD_KEYS = {
+        "decision_id", "timestamp", "model_version", "latency_ms", "payload",
+        "probability", "recommended_action", "expected_losses", "el_table",
+        "top_factors", "shap_top_factors", "warnings"
+    }
+    assert set(record.keys()) == ALLOWED_RECORD_KEYS
+
+

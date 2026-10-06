@@ -50,3 +50,6 @@ venv.bak/
 .idea/
 .DS_Store
 Thumbs.db
+audit/clean_env/
+audit/_backup/
+

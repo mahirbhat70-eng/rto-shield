@@ -8,3 +8,5 @@ joblib==1.4.2
 pyyaml==6.0.3
 pytest==9.1.1
 streamlit>=1.30.0
+httpx>=0.24.0
+hypothesis>=6.0.0

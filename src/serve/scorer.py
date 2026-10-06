@@ -57,14 +57,29 @@ def _verify_and_load(filename: str, manifest_path: str = None, pinned_digests: d
     
     # 1. Check out-of-boundary env var first (e.g. pinned in CI / cloud secret)
     hashes = {}
+    is_prod = os.getenv("RTO_SHIELD_ENV", "").lower() in ("production", "prod")
+    env_digests = os.getenv("RTO_SHIELD_PINNED_DIGESTS")
+
     if pinned_digests:
         hashes.update(pinned_digests)
-    elif env_digests := os.getenv("RTO_SHIELD_PINNED_DIGESTS"):
+    elif env_digests:
         try:
             import json
             hashes.update(json.loads(env_digests))
-        except Exception:
-            pass
+        except Exception as e:
+            raise SecurityError(f"SecurityError: Malformed RTO_SHIELD_PINNED_DIGESTS JSON: {e}")
+    elif is_prod:
+        # FAIL CLOSED in production mode
+        raise SecurityError(
+            "SecurityError: In production mode (RTO_SHIELD_ENV=production), "
+            "RTO_SHIELD_PINNED_DIGESTS must be set. Refusing to load models without pinned digests."
+        )
+    else:
+        import warnings
+        warnings.warn(
+            "RTO_SHIELD_PINNED_DIGESTS is unset in development mode; using repo hashes from artifact_hashes.json.",
+            UserWarning
+        )
             
     # 2. Check external or default manifest file
     hash_file = manifest_path or os.getenv("RTO_SHIELD_HASH_MANIFEST", os.path.join(MODEL_DIR, 'artifact_hashes.json'))

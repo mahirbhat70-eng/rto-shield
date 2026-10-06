@@ -25,9 +25,13 @@ PINNED_ARTIFACTS = [
     "models/logistic_baseline.pkl",
     "data/processed/pincode_rate_lookup.csv",
     "data/processed/test.csv",
+    "data/processed/train.csv",
+    "data/processed/val.csv",
     "data/processed/val_cal.csv",
     "data/processed/val_rep.csv",
-    "data/processed/train.csv",
+    "data/raw/synthetic_orders.csv",
+    "data/raw_v2/orders_v2.csv",
+    "data/raw_v2/potential_outcomes_v2.csv",
 ]
 
 
