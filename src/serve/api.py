@@ -165,6 +165,18 @@ def action_to_narrative(action: str) -> str:
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+@app.get("/")
+def root():
+    """Root endpoint welcoming visitors and linking to interactive docs."""
+    return {
+        "service": "FlipPrice AI Decision Engine",
+        "tagline": "Blocklists guess. We price.",
+        "status": "online",
+        "docs_url": "/docs",
+        "health_check": "/health",
+        "version": "2.0.0",
+    }
+
 @app.get("/health")
 def health_check():
     """Verify system health, loaded model hashes, and uptime."""
