@@ -79,7 +79,13 @@ class SubscribeRequest(BaseModel):
 # ---------------------------------------------------------------------------
 # Webhook Endpoint (A-02, A-05, A-06, A-12)
 # ---------------------------------------------------------------------------
+@router.get("/webhooks/orders/create")
+@router.get("/webhooks/orders-create")
+def webhook_ping():
+    return {"status": "ok", "message": "Shopify order webhook endpoint is ready."}
+
 @router.post("/webhooks/orders/create", response_model=WebhookResponse)
+@router.post("/webhooks/orders-create", response_model=WebhookResponse)
 async def handle_order_created_webhook(
     request: Request,
     x_shopify_hmac_sha256: Optional[str] = Header(None),
