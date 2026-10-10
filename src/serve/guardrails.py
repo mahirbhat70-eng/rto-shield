@@ -82,13 +82,23 @@ def merchant_break_even(merchant_costs: dict,
     rto_cost = float(merchant_costs.get('rto_cost', merchant_costs.get('rto_logistics_cost', 150.0)))
     margin_pct = float(merchant_costs.get('margin_pct', merchant_costs.get('average_margin_pct', 0.20)))
 
-    # Interventions parameters from merchant_costs or defaults
-    iv = merchant_costs.get('interventions', {
-        'ALLOW_COD': {'friction_cost': 0.0, 'rto_reduction_pct': 0.0, 'success_drop_pct': 0.0},
-        'VERIFY_ADDRESS': {'friction_cost': 1.50, 'rto_reduction_pct': 0.20, 'success_drop_pct': 0.05},
-        'REQUIRE_DEPOSIT': {'friction_cost': 0.0, 'rto_reduction_pct': 0.80, 'success_drop_pct': 0.40},
-        'PREPAID_ONLY': {'friction_cost': 0.0, 'rto_reduction_pct': 1.0, 'success_drop_pct': 0.85},
-    })
+    # Interventions parameters from merchant_costs or canonical cost_config.yaml
+    iv = merchant_costs.get('interventions')
+    if iv is None:
+        try:
+            import yaml
+            cfg_path = os.path.join(os.path.dirname(__file__), "..", "..", "configs", "cost_config.yaml")
+            with open(cfg_path, "r", encoding="utf-8") as f:
+                iv = yaml.safe_load(f).get("interventions", {})
+        except Exception:
+            iv = {}
+    if not iv:
+        iv = {
+            'ALLOW_COD': {'friction_cost': 0.0, 'rto_reduction_pct': 0.0, 'success_drop_pct': 0.0},
+            'VERIFY_ADDRESS': {'friction_cost': 2.00, 'rto_reduction_pct': 0.30, 'success_drop_pct': 0.05},
+            'REQUIRE_DEPOSIT': {'friction_cost': 7.00, 'rto_reduction_pct': 0.80, 'success_drop_pct': 0.40},
+            'PREPAID_ONLY': {'friction_cost': 0.0, 'rto_reduction_pct': 0.55, 'success_drop_pct': 0.70},
+        }
 
     # Model scores (using representative benchmark distribution centered at ~0.28)
     rng = np.random.default_rng(42)

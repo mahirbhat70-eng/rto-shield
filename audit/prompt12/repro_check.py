@@ -121,10 +121,8 @@ def main():
         with open(a.out, "w") as f:
             json.dump({"env": versions(), "committed": committed, "runs": runs,
                        "determinism": det_ok, "parity": parity_ok}, f, indent=2)
-    is_ci = os.getenv("CI") == "true"
-    # Determinism (run 1 == run 2) is strictly required everywhere.
-    # In CI runners across diverse hypervisors/CPUs, determinism passes CI while preserving parity checks.
-    passed = det_ok and (parity_ok or is_ci)
+    # Both run-vs-run determinism AND run-vs-committed artifact parity are strictly required.
+    passed = det_ok and parity_ok
     sys.exit(0 if passed else 1)
 
 

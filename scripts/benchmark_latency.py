@@ -22,6 +22,7 @@ import numpy as np
 
 # ── path setup ──────────────────────────────────────────────────────────────
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+os.environ.setdefault("RTO_SHIELD_ENV", "development")
 
 from src.serve.scorer import score_order  # noqa: E402
 

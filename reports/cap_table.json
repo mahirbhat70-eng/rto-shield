@@ -1,90 +1,90 @@
 {
-  "config_sha256": "5e88aa8f235f1b53d7753f88e9873a3492592264dda5cf59d521e30f5d5c5658",
-  "git_commit_hash": "d7bde4683fa8bbec91fc52706376cacf3a44e752",
+  "config_sha256": "28f9d9317689520d86be28ace066230ab553af6260817d7dfc978461b708c1e2",
+  "git_commit_hash": "47100446a6f4123af6eee43f01a1917258efc1c0",
   "total_cod_orders": 7174,
   "total_good_cod_orders": 5146,
   "total_rtos": 2028,
-  "pure_policy_interventions_count": 5856,
-  "pure_policy_intervention_pct": 81.63,
+  "pure_policy_interventions_count": 5796,
+  "pure_policy_intervention_pct": 80.79,
   "caps": [
     {
       "cap_pct": 40,
       "max_interventions": 2870,
       "naive": {
-        "served_savings_inr": 18178.23,
-        "served_savings_per_1k_cod_inr": 2533.9,
-        "good_cod_lost_count": 668.4,
-        "good_cod_lost_pct": 12.99,
-        "cod_revenue_lost_pct": 6.75,
-        "rtos_prevented": 517.6
+        "served_savings_inr": 18204.75,
+        "served_savings_per_1k_cod_inr": 2537.6,
+        "good_cod_lost_count": 666.0,
+        "good_cod_lost_pct": 12.94,
+        "cod_revenue_lost_pct": 6.67,
+        "rtos_prevented": 512.0
       },
       "ranked": {
-        "served_savings_inr": 44967.16,
-        "served_savings_per_1k_cod_inr": 6268.07,
-        "good_cod_lost_count": 737.2,
-        "good_cod_lost_pct": 14.33,
-        "cod_revenue_lost_pct": 5.97,
-        "rtos_prevented": 821.6
+        "served_savings_inr": 44246.5,
+        "served_savings_per_1k_cod_inr": 6167.62,
+        "good_cod_lost_count": 748.8,
+        "good_cod_lost_pct": 14.55,
+        "cod_revenue_lost_pct": 5.83,
+        "rtos_prevented": 798.4
       }
     },
     {
       "cap_pct": 60,
       "max_interventions": 4304,
       "naive": {
-        "served_savings_inr": 31009.07,
-        "served_savings_per_1k_cod_inr": 4322.42,
-        "good_cod_lost_count": 989.2,
-        "good_cod_lost_pct": 19.22,
-        "cod_revenue_lost_pct": 9.97,
-        "rtos_prevented": 804.0
+        "served_savings_inr": 30795.39,
+        "served_savings_per_1k_cod_inr": 4292.64,
+        "good_cod_lost_count": 986.0,
+        "good_cod_lost_pct": 19.16,
+        "cod_revenue_lost_pct": 9.9,
+        "rtos_prevented": 794.4
       },
       "ranked": {
-        "served_savings_inr": 51715.91,
-        "served_savings_per_1k_cod_inr": 7208.8,
-        "good_cod_lost_count": 1166.0,
-        "good_cod_lost_pct": 22.66,
-        "cod_revenue_lost_pct": 10.22,
-        "rtos_prevented": 1111.2
+        "served_savings_inr": 52311.43,
+        "served_savings_per_1k_cod_inr": 7291.81,
+        "good_cod_lost_count": 1167.2,
+        "good_cod_lost_pct": 22.68,
+        "cod_revenue_lost_pct": 10.06,
+        "rtos_prevented": 1108.8
       }
     },
     {
       "cap_pct": 80,
       "max_interventions": 5739,
       "naive": {
-        "served_savings_inr": 42116.97,
-        "served_savings_per_1k_cod_inr": 5870.78,
-        "good_cod_lost_count": 1320.4,
-        "good_cod_lost_pct": 25.66,
-        "cod_revenue_lost_pct": 13.17,
-        "rtos_prevented": 1093.6
+        "served_savings_inr": 42475.01,
+        "served_savings_per_1k_cod_inr": 5920.69,
+        "good_cod_lost_count": 1310.8,
+        "good_cod_lost_pct": 25.47,
+        "cod_revenue_lost_pct": 12.98,
+        "rtos_prevented": 1080.8
       },
       "ranked": {
-        "served_savings_inr": 54953.71,
-        "served_savings_per_1k_cod_inr": 7660.12,
-        "good_cod_lost_count": 1612.0,
-        "good_cod_lost_pct": 31.33,
-        "cod_revenue_lost_pct": 15.81,
-        "rtos_prevented": 1367.2
+        "served_savings_inr": 55317.56,
+        "served_savings_per_1k_cod_inr": 7710.84,
+        "good_cod_lost_count": 1612.8,
+        "good_cod_lost_pct": 31.34,
+        "cod_revenue_lost_pct": 15.82,
+        "rtos_prevented": 1365.6
       }
     },
     {
       "cap_pct": 100,
       "max_interventions": 7174,
       "naive": {
-        "served_savings_inr": 54936.4,
-        "served_savings_per_1k_cod_inr": 7657.71,
-        "good_cod_lost_count": 1648.4,
-        "good_cod_lost_pct": 32.03,
-        "cod_revenue_lost_pct": 16.45,
-        "rtos_prevented": 1388.0
+        "served_savings_inr": 55057.62,
+        "served_savings_per_1k_cod_inr": 7674.61,
+        "good_cod_lost_count": 1632.8,
+        "good_cod_lost_pct": 31.73,
+        "cod_revenue_lost_pct": 16.13,
+        "rtos_prevented": 1371.2
       },
       "ranked": {
-        "served_savings_inr": 54936.4,
-        "served_savings_per_1k_cod_inr": 7657.71,
-        "good_cod_lost_count": 1648.4,
-        "good_cod_lost_pct": 32.03,
-        "cod_revenue_lost_pct": 16.45,
-        "rtos_prevented": 1388.0
+        "served_savings_inr": 55057.62,
+        "served_savings_per_1k_cod_inr": 7674.61,
+        "good_cod_lost_count": 1632.8,
+        "good_cod_lost_pct": 31.73,
+        "cod_revenue_lost_pct": 16.13,
+        "rtos_prevented": 1371.2
       }
     }
   ]

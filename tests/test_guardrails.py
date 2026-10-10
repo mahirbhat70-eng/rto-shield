@@ -189,8 +189,8 @@ def test_merchant_break_even_requires_lower_bound_not_point_estimate():
         'safety_margin_per_order': 0.25
     }
     basket_1500 = [800.0] * 1500
-    # At 20.8% COD RTO, point estimate is well positive (+Rs 0.46/order > Rs 0.25 margin), but lower 95% CI is only +Rs 0.12/order (<= Rs 0.25)
-    res = merchant_break_even(costs, basket_1500, historical_cod_rto_rate=0.208)
+    # Under canonical cost_config, at 17.8% COD RTO, point estimate is positive (+Rs 0.31/order > Rs 0.25 margin), but lower 95% CI is only +Rs 0.09/order (<= Rs 0.25)
+    res = merchant_break_even(costs, basket_1500, historical_cod_rto_rate=0.178)
     assert res['expected_net_savings'] > 0.25 * 1500, "Point estimate must be strictly above safety margin"
     assert res['lower_95_ci_savings'] <= 0.25 * 1500, "Lower bound must fail safety margin"
     assert not res['allowed'], "Guardrail must block friction when lower 95% CI fails safety threshold"

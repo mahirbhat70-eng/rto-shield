@@ -14,7 +14,7 @@ import joblib
 import numpy as np
 import pandas as pd
 import yaml
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, LogisticRegressionCV
 from sklearn.metrics import (
     average_precision_score,
     roc_auc_score,
@@ -135,17 +135,48 @@ def generate_numbers():
     lgbm_uncal = joblib.load(os.path.join(ROOT, "models/tree_model.pkl"))
     lgbm_iso = joblib.load(os.path.join(ROOT, "models/tree_model_calibrated.pkl"))
 
-    # Platt fitting
-    p_val_cal_uncal = lgbm_uncal.predict_proba(X_val_cal)[:, 1]
-    platt = LogisticRegression(C=1.0, solver="lbfgs")
-    platt.fit(p_val_cal_uncal.reshape(-1, 1), y_val_cal)
+    # Standard Platt fitting on logits via LogisticRegressionCV (Task 0.3)
+    eps = 1e-12
+    p_val_cal_uncal = np.clip(lgbm_uncal.predict_proba(X_val_cal)[:, 1], eps, 1.0 - eps)
+    logits_val = np.log(p_val_cal_uncal / (1.0 - p_val_cal_uncal)).reshape(-1, 1)
+
+    platt = LogisticRegressionCV(Cs=10, cv=5, scoring="neg_log_loss", random_state=42)
+    platt.fit(logits_val, y_val_cal)
+
+    p_test_uncal = np.clip(lgbm_uncal.predict_proba(X_test)[:, 1], eps, 1.0 - eps)
+    logits_test = np.log(p_test_uncal / (1.0 - p_test_uncal)).reshape(-1, 1)
+
+    # Isotonic acceptance gate on held-out validation data (Task 0.3)
+    p_val_iso = lgbm_iso.predict_proba(X_val_cal)[:, 1]
+    brier_val_uncal = brier_score_loss(y_val_cal, p_val_cal_uncal)
+    brier_val_iso = brier_score_loss(y_val_cal, p_val_iso)
+    ece_val_uncal = compute_ece(y_val_cal, p_val_cal_uncal, n_bins=10)
+    ece_val_iso = compute_ece(y_val_cal, p_val_iso, n_bins=10)
+
+    top_decile_thresh = np.percentile(p_val_iso, 90)
+    tail_mask = p_val_iso >= top_decile_thresh
+    tail_pred_mean = float(p_val_iso[tail_mask].mean()) if np.any(tail_mask) else 1.0
+    tail_emp_mean = float(y_val_cal[tail_mask].mean()) if np.any(tail_mask) else 1.0
+    tail_bias = abs(tail_pred_mean - tail_emp_mean)
+
+    isotonic_accepted = bool((ece_val_iso < ece_val_uncal) and (brier_val_iso <= brier_val_uncal) and (tail_bias < 0.25))
+    calibration_gate_report = {
+        "isotonic_accepted": isotonic_accepted,
+        "ece_val_uncal": round(float(ece_val_uncal), 6),
+        "ece_val_iso": round(float(ece_val_iso), 6),
+        "brier_val_uncal": round(float(brier_val_uncal), 6),
+        "brier_val_iso": round(float(brier_val_iso), 6),
+        "tail_pred_mean": round(tail_pred_mean, 4),
+        "tail_emp_mean": round(tail_emp_mean, 4),
+        "tail_bias": round(tail_bias, 4),
+    }
 
     # Test predictions
     preds = {
         "logistic_regression": lr.predict_proba(X_test)[:, 1],
         "lgbm_uncalibrated": lgbm_uncal.predict_proba(X_test)[:, 1],
         "lgbm_isotonic": lgbm_iso.predict_proba(X_test)[:, 1],
-        "lgbm_platt": platt.predict_proba(lgbm_uncal.predict_proba(X_test)[:, 1].reshape(-1, 1))[:, 1],
+        "lgbm_platt": platt.predict_proba(logits_test)[:, 1],
     }
 
     model_metrics = {}
@@ -159,12 +190,15 @@ def generate_numbers():
             "ece": round(compute_ece(y_test, p, n_bins=10), 6),
         }
 
+    # Primary model selection per config / D3 rule (Task 0.2)
+    primary_model_name = cfg.get("primary_model", "logistic_regression")
+
     # COD Subset evaluation
     cod_mask = (test['payment_method'] == 'COD').values
     test_cod = test[cod_mask].reset_index(drop=True)
     y_cod = test_cod['rto_label'].values
     V_cod = test_cod['order_value'].values
-    p_cod = preds["lgbm_isotonic"][cod_mask]
+    p_cod = preds[primary_model_name][cod_mask]
 
     cod_base_rto = float(y_cod.mean())
     baseline_cod_rtos = int(y_cod.sum())
@@ -230,17 +264,22 @@ def generate_numbers():
 
     if os.path.exists(sweep_csv_path):
         sweep_df = pd.read_csv(sweep_csv_path)
-        iso_realized = sweep_df["LGBM_iso_realized_Rs"].values
-        iso_expected = sweep_df["LGBM_iso_expected_Rs"].values
-        iso_gap = sweep_df["LGBM_iso_gap_pct"].values
+        if primary_model_name == "logistic_regression":
+            m_realized = sweep_df["LR_realized_Rs"].values
+            m_expected = sweep_df["LR_expected_Rs"].values
+            m_gap = sweep_df["LR_gap_pct"].values
+        else:
+            m_realized = sweep_df["LGBM_iso_realized_Rs"].values
+            m_expected = sweep_df["LGBM_iso_expected_Rs"].values
+            m_gap = sweep_df["LGBM_iso_gap_pct"].values
         five_seed_stats = {
             "description": "5-seed sweep over seeds [42, 101, 2024, 777, 999]",
-            "expected_savings_mean_inr": round(float(np.mean(iso_expected)), 2),
-            "expected_savings_std_inr": round(float(np.std(iso_expected, ddof=1)), 2),
-            "realized_savings_mean_inr": round(float(np.mean(iso_realized)), 2),
-            "realized_savings_std_inr": round(float(np.std(iso_realized, ddof=1)), 2),
-            "gap_pct_mean": round(float(np.mean(iso_gap)), 2),
-            "gap_pct_std": round(float(np.std(iso_gap, ddof=1)), 2),
+            "expected_savings_mean_inr": round(float(np.mean(m_expected)), 2),
+            "expected_savings_std_inr": round(float(np.std(m_expected, ddof=1)), 2),
+            "realized_savings_mean_inr": round(float(np.mean(m_realized)), 2),
+            "realized_savings_std_inr": round(float(np.std(m_realized, ddof=1)), 2),
+            "gap_pct_mean": round(float(np.mean(m_gap)), 2),
+            "gap_pct_std": round(float(np.std(m_gap, ddof=1)), 2),
         }
     else:
         five_seed_stats = {}
@@ -273,8 +312,10 @@ def generate_numbers():
         "cod_base_rto_pct": round(cod_base_rto * 100.0, 2),
         "baseline_cod_rtos": baseline_cod_rtos,
         "models": model_metrics,
-        "primary_model": "lgbm_isotonic",
+        "calibration_gate": calibration_gate_report,
+        "primary_model": primary_model_name,
         "primary_model_note": primary_note,
+
         "single_draw_label": "seed_42_single_draw",
         "expected_savings_inr": expected_savings,
         "expected_savings_per_1k_cod_inr": expected_savings_per_1k,

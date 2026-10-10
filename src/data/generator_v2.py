@@ -14,8 +14,10 @@ This simulator generates a *causal* world:
   * LOGGING POLICY: a legacy merchant heuristic assigns actions with known
     propensities (>=1% exploration floor on every action — the positivity
     assumption that makes off-policy evaluation possible).
-  * DELAYED LABELS: RTO outcomes resolve 5-28 days after the order; the
-    prior_* features are strictly point-in-time (only resolved history).
+  * DELAYED LABELS: RTO outcomes resolve 5-28 days after order placement
+    (recorded in label_arrival_delay_days). Note: prior order/RTO history
+    accumulation across repeat customers is deferred in v2 (prior_* are 0
+    cold-start baseline; within-customer correlation is driven by u_c).
   * CUSTOMER RANDOM EFFECTS: u_c ~ N(0, 0.8) creates within-customer
     correlation (fraud rings / chronic refusers) that v1 lacked.
   * FESTIVE SEASONALITY: Oct/Nov volume + risk spikes (the regime the v1
@@ -165,7 +167,7 @@ def generate(n_rows=120000, seed=42):
         c = cust_idx[i]
         t = ts_vals[i]
         hist = history.setdefault(c, [])
-        # resolved history as of t (delayed labels!)
+        # ponytail: sequential multi-order history append deferred; prior_orders and prior_rto are 0 cold-start baseline
         n_res = 0
         n_rto = 0
         for arr, was_rto in hist:

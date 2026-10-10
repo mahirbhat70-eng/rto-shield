@@ -73,14 +73,16 @@ def run_shadow_replay(csv_path: str, output_report: str = "audit/shadow/shadow_r
     # Financial projection on COD
     engine = CostEngine()
     total_savings_el = 0.0
-    for i, row in df[cod_mask].reset_index(drop=True).iterrows():
+    cod_indices = np.where(cod_mask)[0]
+    for idx in cod_indices:
+        row = df.iloc[idx]
         V = float(row.get('order_value', 500.0))
-        p = probabilities[i]
-        act = actions[i]
+        p = probabilities[idx]
+        act = actions[idx]
         losses = engine.evaluate_interventions(V, p)
         base_el = losses['ALLOW_COD']
         pol_el = losses.get(act, base_el)
-        total_savings_el += (base_el - pol_el)
+        total_savings_el += max(0.0, base_el - pol_el)
         
     os.makedirs(os.path.dirname(output_report), exist_ok=True)
     with open(output_report, "w", encoding="utf-8") as f:

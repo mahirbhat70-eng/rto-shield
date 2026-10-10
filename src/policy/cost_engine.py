@@ -41,7 +41,15 @@ class CostEngine:
 
         self.rto_logistics_cost = float(self.config['rto_logistics_cost'])
         self.average_margin_pct = float(self.config['average_margin_pct'])
-        self.interventions = self.config['interventions']
+        active_policy = self.config.get('active_policy', 'constants_p1')
+        if active_policy == 'learned_p2' and 'learned_policy_p2' in self.config:
+            import copy
+            self.interventions = copy.deepcopy(self.config['interventions'])
+            for act, params in self.config['learned_policy_p2'].items():
+                if act in self.interventions:
+                    self.interventions[act].update(params)
+        else:
+            self.interventions = self.config['interventions']
         self.assumed_operational_costs = self.config.get('assumed_operational_costs', {})
 
     def compute_decomposed_friction(self, action: str, order_value: float = None, ltv_multiplier: float = 0.0) -> float:

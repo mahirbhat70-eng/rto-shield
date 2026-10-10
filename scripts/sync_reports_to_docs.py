@@ -18,13 +18,15 @@ def main():
     exp_sav = int(round(data["expected_savings_inr"]))
     real_sav = int(round(data["realized_savings_inr"]))
     uplift = f"{data['uplift_pct']:.1f}%"
-    pr_auc = f"{data['models']['lgbm_isotonic']['pr_auc']:.4f}"
+    primary_model = data.get("primary_model", "logistic_regression")
+    pr_auc = f"{data['models'][primary_model]['pr_auc']:.4f}"
     rto_vol = f"{data['rtos_prevented_pct']:.1f}%"
     rto_pre = f"{data['cod_base_rto_pct']:.1f}%"
     rto_post = f"{data['effective_post_policy_rto_pct']:.1f}%"
     rto_prev = int(round(data["expected_rtos_prevented"]))
     drops = int(round(data["good_customer_drops"]))
     friction = int(round(data["friction_spend_inr"]))
+
 
     print(f"Syncing docs with headline values:")
     print(f"  Test count: {test_count}")

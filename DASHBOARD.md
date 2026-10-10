@@ -43,7 +43,7 @@ Built to adhere to the requested Razorpay aesthetic:
 |---|---|---|
 | **01 · Command Center** | Act 1 & Act 3 (0:00–1:00) | Hero statement (*"We don't predict the coin flip. We price it."*), 8 headline KPI cards (₹71,741 expected savings, ₹69,786 realized, 2.0× threshold beat, 94.7% Bayes ceiling, 13.1% profit uplift, 100% Monte Carlo confidence), and 4-step pricing workflow. |
 | **02 · Live Decision Engine** | Act 4 (1:30–3:00) | Instant presets (`VERIFY`, `ALLOW`, `DEPOSIT`, and `Random holdout order`), live pincode intelligence preview, `SCORE THIS ORDER` live timer (<100 ms), calibrated $P(\text{RTO})$ meter, **Expected-Loss Price Menu with ROUTED · ARGMIN highlight**, top-8 signed TreeSHAP bars, input intelligence, tamper-evident SHA-256 decision fingerprinting, and session `.jsonl` audit trail export. |
-| **03 · Policy Frontier** | Act 2 (3:00–3:30) | Live recomputation on 3,673 COD orders (`val_cal.csv`): interactive Altair visualization comparing Binary VERIFY and Binary PREPAID curves against the horizontal Argmin Routing line. Displays best single cutoffs ($t=0.20$ and $t=0.48$) and the edge of the line (+₹18,331 / 5.9%). |
+| **03 · Policy Frontier** | Act 2 (3:00–3:30) | Live recomputation on 3,673 COD orders (`val_cal.csv`): interactive Altair visualization comparing Binary VERIFY and Binary PREPAID curves against the horizontal Argmin Routing line. Displays best single cutoffs ($t=0.20$ and $t=0.48$) and the edge of the line (+₹18,326 / 6.0%). |
 | **04 · Portfolio Evidence** | Act 3 (3:30–4:00) | Frozen Stage-5 results on 14,980 test orders: Expected vs. Realized savings (−2.7% error), Action distribution donut chart (81.6% touched, 0% PREPAID_ONLY), Monte Carlo 5,000-draw confidence band, Precision/Recall (0.2963 / 0.8555), Per-action calibration table ($|\Delta| \le 0.0032$), and copy-paste reproduction commands. |
 | **05 · Adversarial Audit & Governance** | Phase E & Production Gates | 17-point adversarial audit reconciliation, the 5 reconciled audit conflicts, 9 cryptographically pinned SHA-256 artifacts, behavioral misspecification sensitivity bounds (Drop-off & Reverse Logistics), and 5-seed determinism sweep. |
 | **06 · Staged Pilot Protocol** | Phase F & Production Rollout | 3-stage controlled pilot architecture with interactive Mermaid flowchart, 3 deployment stage cards (Offline Shadow Replay, Randomized VERIFY-Only Slice, Full Policy), statistical power calculator (2,384 orders / 24 days), automated stopping rules (Kill Switch & 5 circuit breakers), and empirical parameter replacement matrix. |
@@ -84,7 +84,7 @@ ALL-PASS: All 7 acceptance gates passed successfully!
 And full CI test suite:
 ```bash
 python -m pytest tests/ -q
-# 244 passed
+# 271 passed
 ```
 
 ---

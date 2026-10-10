@@ -1,6 +1,6 @@
 {
-  "config_sha256": "5e88aa8f235f1b53d7753f88e9873a3492592264dda5cf59d521e30f5d5c5658",
-  "git_commit_hash": "d7bde4683fa8bbec91fc52706376cacf3a44e752",
+  "config_sha256": "28f9d9317689520d86be28ace066230ab553af6260817d7dfc978461b708c1e2",
+  "git_commit_hash": "47100446a6f4123af6eee43f01a1917258efc1c0",
   "cod_subset_size": 7174,
   "cod_base_rto_rate": 0.2827,
   "cod_base_rto_pct": 28.27,
@@ -30,63 +30,73 @@
     "lgbm_platt": {
       "pr_auc": 0.343297,
       "roc_auc": 0.688278,
-      "brier": 0.147691,
-      "log_loss": 0.463856,
-      "ece": 0.020323
+      "brier": 0.147266,
+      "log_loss": 0.461964,
+      "ece": 0.005802
     }
   },
-  "primary_model": "lgbm_isotonic",
-  "primary_model_note": "Seed 42 is a single draw; 5-seed mean realized savings is Rs 52,214.96 +/- 1,738.03",
+  "calibration_gate": {
+    "isotonic_accepted": true,
+    "ece_val_uncal": 0.006097,
+    "ece_val_iso": 0.0,
+    "brier_val_uncal": 0.15119,
+    "brier_val_iso": 0.150369,
+    "tail_pred_mean": 0.4193,
+    "tail_emp_mean": 0.4193,
+    "tail_bias": 0.0
+  },
+  "primary_model": "logistic_regression",
+  "primary_model_note": "Seed 42 is a single draw; 5-seed mean realized savings is Rs 52,803.49 +/- 1,489.11",
   "single_draw_label": "seed_42_single_draw",
-  "expected_savings_inr": 56871.59,
-  "expected_savings_per_1k_cod_inr": 7927.46,
-  "realized_savings_inr": 54936.4,
-  "savings_per_1k_cod_inr": 7657.71,
+  "expected_savings_inr": 55705.75,
+  "expected_savings_per_1k_cod_inr": 7764.95,
+  "realized_savings_inr": 55057.62,
+  "savings_per_1k_cod_inr": 7674.61,
   "oracle_ceiling_inr": 229164.0,
-  "pct_of_oracle_ceiling": 23.97,
-  "seed_42_single_draw_realized_savings_inr": 54936.4,
+  "pct_of_oracle_ceiling": 24.03,
+  "seed_42_single_draw_realized_savings_inr": 55057.62,
   "five_seed_sweep_shipped_model": {
     "description": "5-seed sweep over seeds [42, 101, 2024, 777, 999]",
-    "expected_savings_mean_inr": 57230.01,
-    "expected_savings_std_inr": 2939.19,
-    "realized_savings_mean_inr": 52214.96,
-    "realized_savings_std_inr": 1738.03,
-    "gap_pct_mean": 9.65,
-    "gap_pct_std": 5.56
+    "expected_savings_mean_inr": 55712.82,
+    "expected_savings_std_inr": 1643.51,
+    "realized_savings_mean_inr": 52803.49,
+    "realized_savings_std_inr": 1489.11,
+    "gap_pct_mean": 5.54,
+    "gap_pct_std": 3.05
   },
-  "expected_rtos_prevented": 813.11,
-  "rtos_prevented_pct": 40.09,
-  "good_customer_drops": 577.57,
-  "friction_spend_inr": 19927.0,
+  "expected_rtos_prevented": 798.23,
+  "rtos_prevented_pct": 39.36,
+  "good_customer_drops": 571.96,
+  "friction_spend_inr": 19680.0,
   "action_mix_counts": {
-    "ALLOW_COD": 1318,
-    "REQUIRE_DEPOSIT": 1643,
-    "VERIFY_ADDRESS": 4213,
-    "PREPAID_ONLY": 0
+    "ALLOW_COD": 1378,
+    "PREPAID_ONLY": 1,
+    "REQUIRE_DEPOSIT": 1618,
+    "VERIFY_ADDRESS": 4177
   },
   "action_mix_pct": {
-    "ALLOW_COD": 18.37,
-    "REQUIRE_DEPOSIT": 22.9,
-    "VERIFY_ADDRESS": 58.73,
-    "PREPAID_ONLY": 0.0
+    "ALLOW_COD": 19.21,
+    "PREPAID_ONLY": 0.01,
+    "REQUIRE_DEPOSIT": 22.55,
+    "VERIFY_ADDRESS": 58.22
   },
-  "effective_post_policy_rto_pct": 21.01,
-  "uplift_pct": 10.38,
-  "binary_verify_expected_savings_inr": 35919.42,
-  "ratio_vs_single_threshold": 1.5833,
+  "effective_post_policy_rto_pct": 21.19,
+  "uplift_pct": 9.97,
+  "binary_verify_expected_savings_inr": 35238.84,
+  "ratio_vs_single_threshold": 1.5808,
   "latency": {
     "with_shap": {
-      "p50_ms": 9.74,
-      "p95_ms": 38.48,
-      "p99_ms": 48.51,
-      "mean_ms": 14.38
+      "p50_ms": 12.19,
+      "p95_ms": 17.25,
+      "p99_ms": 18.95,
+      "mean_ms": 12.91
     },
     "without_shap": {
-      "p50_ms": 5.46,
-      "p95_ms": 7.78,
-      "p99_ms": 8.23,
-      "mean_ms": 5.9
+      "p50_ms": 6.81,
+      "p95_ms": 9.31,
+      "p99_ms": 9.98,
+      "mean_ms": 7.18
     }
   },
-  "test_count": 271
+  "test_count": 304
 }

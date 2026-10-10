@@ -133,13 +133,19 @@ def run_all():
     }
 
     print("\n--- PHASE 1: HEADLINE NUMBERS & 5-SEED SWEEP ---")
-    p_cod_iso = preds["lgbm_isotonic"][cod_mask]
-    actions_iso, el_iso = engine.get_optimal_policy(test_cod.assign(payment_method="COD"), p_cod_iso)
-    actions_iso = np.asarray(actions_iso)
+    primary_model_name = cfg.get("primary_model", "logistic_regression")
+    p_cod_primary = preds[primary_model_name][cod_mask]
+    p_cod_iso = p_cod_primary
+    actions_primary, el_primary = engine.get_optimal_policy(test_cod.assign(payment_method="COD"), p_cod_primary)
+    actions_primary = np.asarray(actions_primary)
+    actions_iso = actions_primary
+    el_iso = el_primary
 
-    baseline_loss = (p_cod_iso * cfg["rto_logistics_cost"] - (1.0 - p_cod_iso) * (cfg["average_margin_pct"] * V_cod)).sum()
-    expected_savings = float(baseline_loss - el_iso.sum())
-    realized_savings = canonical_realized_pl(actions_iso, y_cod, V_cod, cfg)
+
+    baseline_loss = (p_cod_primary * cfg["rto_logistics_cost"] - (1.0 - p_cod_primary) * (cfg["average_margin_pct"] * V_cod)).sum()
+    expected_savings = float(baseline_loss - el_primary.sum())
+    realized_savings = canonical_realized_pl(actions_primary, y_cod, V_cod, cfg)
+
 
     # 5-seed sweep across all 4 models on full 100k generated order splits
     seeds = [42, 101, 2024, 777, 999]

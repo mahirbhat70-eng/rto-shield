@@ -1,6 +1,6 @@
-<!-- BEGIN_GENERATED_COST_NARRATIVE (SHA256: 5e88aa8f235f1b53d7753f88e9873a3492592264dda5cf59d521e30f5d5c5658) -->
+<!-- BEGIN_GENERATED_COST_NARRATIVE (SHA256: 28f9d9317689520d86be28ace066230ab553af6260817d7dfc978461b708c1e2) -->
 ### Cost Engine & Operational Friction Parameters
-*Auto-generated from `configs/cost_config.yaml` (SHA-256: `5e88aa8f235f1b53...`)*
+*Auto-generated from `configs/cost_config.yaml` (SHA-256: `28f9d9317689520d...`)*
 
 - **RTO Logistics Cost:** ₹150 per failed delivery attempt (reverse freight + re-packaging).
 - **Gross Merchandise Margin:** 20% benchmark on delivered orders.

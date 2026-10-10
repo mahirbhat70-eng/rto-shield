@@ -1,0 +1,57 @@
+{
+  "dataset_cod_orders": 7174,
+  "primary_model": "logistic_regression",
+  "priced_policy_realized_savings_inr": 55057.62,
+  "tau_grid_simulation": [
+    {
+      "tau": 0.2,
+      "pincodes_blocked": 571,
+      "good_orders_killed": 2107,
+      "bad_orders_blocked": 1068,
+      "savings_if_lost_inr": -189730.01,
+      "savings_if_100_prepaid_inr": 420543.51,
+      "breakeven_conversion": 0.69,
+      "conversion_to_match_priced": 1.0
+    },
+    {
+      "tau": 0.25,
+      "pincodes_blocked": 410,
+      "good_orders_killed": 1366,
+      "bad_orders_blocked": 772,
+      "savings_if_lost_inr": -114316.98,
+      "savings_if_100_prepaid_inr": 282301.13,
+      "breakeven_conversion": 0.67,
+      "conversion_to_match_priced": 1.0
+    },
+    {
+      "tau": 0.3,
+      "pincodes_blocked": 268,
+      "good_orders_killed": 824,
+      "bad_orders_blocked": 478,
+      "savings_if_lost_inr": -67573.41,
+      "savings_if_100_prepaid_inr": 171744.74,
+      "breakeven_conversion": 0.66,
+      "conversion_to_match_priced": 1.0
+    },
+    {
+      "tau": 0.35,
+      "pincodes_blocked": 159,
+      "good_orders_killed": 459,
+      "bad_orders_blocked": 274,
+      "savings_if_lost_inr": -34262.43,
+      "savings_if_100_prepaid_inr": 94199.31,
+      "breakeven_conversion": 0.65,
+      "conversion_to_match_priced": 1.0
+    }
+  ],
+  "tau_25_details": {
+    "total_blacklisted": 2138,
+    "kept_alive_as_sales": 2138,
+    "derisked_verify_or_deposit": 1937,
+    "shipped_as_is": 201
+  },
+  "sales_kill_quotes": [
+    "Blocking a pincode to stop one bad order costs you \u20b9165 of forfeited margin on the good ones \u2014 before you've saved a rupee of the \u20b9150 RTO. We don't block coin flips. We price them.",
+    "A static blacklist loses \u20b93.44 lakh on a cohort like yours unless 68% of blocked COD orders convert to prepaid. Real-world conversion is nowhere near that. We keep 2138 of those 2138 orders as sales."
+  ]
+}

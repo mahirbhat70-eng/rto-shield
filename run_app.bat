@@ -1,4 +1,4 @@
 @echo off
-echo Starting RTO Shield Scorer App...
-python -m streamlit run app.py
+echo Starting RTO Shield Decision Engine Dashboard...
+python -m streamlit run dashboard.py
 pause

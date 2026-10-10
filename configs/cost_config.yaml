@@ -1,6 +1,28 @@
 rto_logistics_cost: 150      # PUBLISHED: Industry prior (Forward + reverse + packaging; Shiprocket/Ecom Express benchmark)
 average_margin_pct: 0.20     # ASSUMED: Industry prior benchmark for Indian D2C gross merchandise margin
 
+# Primary / Production model selection per D3 1-SE rule (D3 winner: logistic_regression)
+primary_model: "logistic_regression"
+
+# Policy selection: "constants_p1" (v1 frozen assumptions) or "learned_p2" (Stage-6 learned uplift +Rs 12,557)
+active_policy: "constants_p1"
+
+# Stage-6 Learned Policy (P2 Global-Learned via IPW T-Learner on Generator v2):
+# Captures +Rs 12,557 uplift (76% of oracle ceiling vs 74% under v1 constants)
+learned_policy_p2:
+  VERIFY_ADDRESS:
+    friction_cost: 2.00
+    rto_reduction_pct: 0.466
+    success_drop_pct: 0.017
+  REQUIRE_DEPOSIT:
+    friction_cost: 7.00
+    rto_reduction_pct: 0.745
+    success_drop_pct: 0.353
+  PREPAID_ONLY:
+    friction_cost: 0.00
+    rto_reduction_pct: 0.857
+    success_drop_pct: 0.583
+
 interventions:
   ALLOW_COD:
     friction_cost: 0.0         # BASELINE: Zero friction cost

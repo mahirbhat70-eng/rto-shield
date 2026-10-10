@@ -1,155 +1,155 @@
 {
-  "config_sha256": "5e88aa8f235f1b53d7753f88e9873a3492592264dda5cf59d521e30f5d5c5658",
-  "git_commit_hash": "d7bde4683fa8bbec91fc52706376cacf3a44e752",
+  "config_sha256": "28f9d9317689520d86be28ace066230ab553af6260817d7dfc978461b708c1e2",
+  "git_commit_hash": "47100446a6f4123af6eee43f01a1917258efc1c0",
   "n_cod": 7174,
   "natural_cod_rto_rate": 0.2827,
-  "natural_cod_realized_savings_inr": 54936.4,
-  "natural_cod_savings_per_1k_inr": 7657.71,
-  "reweighting_crossover_pct": 17.02,
+  "natural_cod_realized_savings_inr": 55057.62,
+  "natural_cod_savings_per_1k_inr": 7674.61,
+  "reweighting_crossover_pct": 16.85,
   "reweighting_crossover_bootstrap_95_ci": [
-    16.46,
-    17.66
+    16.29,
+    17.44
   ],
-  "overall_platform_crossover_pct": 8.15,
-  "slope_inr_per_pct_point": 4884.48,
-  "slope_per_1k_cod_inr_per_pct_point": 680.86,
+  "overall_platform_crossover_pct": 8.07,
+  "slope_inr_per_pct_point": 4821.0,
+  "slope_per_1k_cod_inr_per_pct_point": 672.01,
   "odds_shift_crossover_point_pct": 17.4,
   "guardrail_safety_gated_crossover_pct": 18.25,
   "reweighting_sweep": [
     {
       "rate": 0.08,
-      "mean_savings_inr": -44065.89,
-      "savings_per_1k_cod_inr": -6142.44
+      "mean_savings_inr": -42657.96,
+      "savings_per_1k_cod_inr": -5946.19
     },
     {
       "rate": 0.09,
-      "mean_savings_inr": -39181.41,
-      "savings_per_1k_cod_inr": -5461.59
+      "mean_savings_inr": -37836.96,
+      "savings_per_1k_cod_inr": -5274.18
     },
     {
       "rate": 0.1,
-      "mean_savings_inr": -34296.93,
-      "savings_per_1k_cod_inr": -4780.73
+      "mean_savings_inr": -33015.97,
+      "savings_per_1k_cod_inr": -4602.17
     },
     {
       "rate": 0.11,
-      "mean_savings_inr": -29412.46,
-      "savings_per_1k_cod_inr": -4099.87
+      "mean_savings_inr": -28194.97,
+      "savings_per_1k_cod_inr": -3930.16
     },
     {
       "rate": 0.12,
-      "mean_savings_inr": -24527.98,
-      "savings_per_1k_cod_inr": -3419.01
+      "mean_savings_inr": -23373.97,
+      "savings_per_1k_cod_inr": -3258.15
     },
     {
       "rate": 0.13,
-      "mean_savings_inr": -19643.5,
-      "savings_per_1k_cod_inr": -2738.15
+      "mean_savings_inr": -18552.97,
+      "savings_per_1k_cod_inr": -2586.14
     },
     {
       "rate": 0.14,
-      "mean_savings_inr": -14759.02,
-      "savings_per_1k_cod_inr": -2057.29
+      "mean_savings_inr": -13731.98,
+      "savings_per_1k_cod_inr": -1914.13
     },
     {
       "rate": 0.15,
-      "mean_savings_inr": -9874.54,
-      "savings_per_1k_cod_inr": -1376.43
+      "mean_savings_inr": -8910.98,
+      "savings_per_1k_cod_inr": -1242.12
     },
     {
       "rate": 0.16,
-      "mean_savings_inr": -4990.06,
-      "savings_per_1k_cod_inr": -695.58
+      "mean_savings_inr": -4089.98,
+      "savings_per_1k_cod_inr": -570.11
     },
     {
       "rate": 0.17,
-      "mean_savings_inr": -105.58,
-      "savings_per_1k_cod_inr": -14.72
+      "mean_savings_inr": 731.01,
+      "savings_per_1k_cod_inr": 101.9
     },
     {
       "rate": 0.18,
-      "mean_savings_inr": 4778.9,
-      "savings_per_1k_cod_inr": 666.14
+      "mean_savings_inr": 5552.01,
+      "savings_per_1k_cod_inr": 773.91
     },
     {
       "rate": 0.19,
-      "mean_savings_inr": 9663.38,
-      "savings_per_1k_cod_inr": 1347.0
+      "mean_savings_inr": 10373.01,
+      "savings_per_1k_cod_inr": 1445.92
     },
     {
       "rate": 0.2,
-      "mean_savings_inr": 14547.86,
-      "savings_per_1k_cod_inr": 2027.86
+      "mean_savings_inr": 15194.01,
+      "savings_per_1k_cod_inr": 2117.93
     },
     {
       "rate": 0.21,
-      "mean_savings_inr": 19432.34,
-      "savings_per_1k_cod_inr": 2708.72
+      "mean_savings_inr": 20015.0,
+      "savings_per_1k_cod_inr": 2789.94
     },
     {
       "rate": 0.22,
-      "mean_savings_inr": 24316.82,
-      "savings_per_1k_cod_inr": 3389.58
+      "mean_savings_inr": 24836.0,
+      "savings_per_1k_cod_inr": 3461.95
     },
     {
       "rate": 0.23,
-      "mean_savings_inr": 29201.3,
-      "savings_per_1k_cod_inr": 4070.44
+      "mean_savings_inr": 29657.0,
+      "savings_per_1k_cod_inr": 4133.96
     },
     {
       "rate": 0.24,
-      "mean_savings_inr": 34085.78,
-      "savings_per_1k_cod_inr": 4751.29
+      "mean_savings_inr": 34477.99,
+      "savings_per_1k_cod_inr": 4805.97
     },
     {
       "rate": 0.25,
-      "mean_savings_inr": 38970.26,
-      "savings_per_1k_cod_inr": 5432.15
+      "mean_savings_inr": 39298.99,
+      "savings_per_1k_cod_inr": 5477.97
     },
     {
       "rate": 0.26,
-      "mean_savings_inr": 43854.74,
-      "savings_per_1k_cod_inr": 6113.01
+      "mean_savings_inr": 44119.99,
+      "savings_per_1k_cod_inr": 6149.98
     },
     {
       "rate": 0.27,
-      "mean_savings_inr": 48739.22,
-      "savings_per_1k_cod_inr": 6793.87
+      "mean_savings_inr": 48940.99,
+      "savings_per_1k_cod_inr": 6821.99
     },
     {
       "rate": 0.28,
-      "mean_savings_inr": 53623.7,
-      "savings_per_1k_cod_inr": 7474.73
+      "mean_savings_inr": 53761.98,
+      "savings_per_1k_cod_inr": 7494.0
     },
     {
       "rate": 0.29,
-      "mean_savings_inr": 58508.18,
-      "savings_per_1k_cod_inr": 8155.59
+      "mean_savings_inr": 58582.98,
+      "savings_per_1k_cod_inr": 8166.01
     },
     {
       "rate": 0.3,
-      "mean_savings_inr": 63392.66,
-      "savings_per_1k_cod_inr": 8836.45
+      "mean_savings_inr": 63403.98,
+      "savings_per_1k_cod_inr": 8838.02
     },
     {
       "rate": 0.31,
-      "mean_savings_inr": 68277.14,
-      "savings_per_1k_cod_inr": 9517.3
+      "mean_savings_inr": 68224.98,
+      "savings_per_1k_cod_inr": 9510.03
     },
     {
       "rate": 0.32,
-      "mean_savings_inr": 73161.62,
-      "savings_per_1k_cod_inr": 10198.16
+      "mean_savings_inr": 73045.97,
+      "savings_per_1k_cod_inr": 10182.04
     },
     {
       "rate": 0.33,
-      "mean_savings_inr": 78046.1,
-      "savings_per_1k_cod_inr": 10879.02
+      "mean_savings_inr": 77866.97,
+      "savings_per_1k_cod_inr": 10854.05
     },
     {
       "rate": 0.34,
-      "mean_savings_inr": 82930.58,
-      "savings_per_1k_cod_inr": 11559.88
+      "mean_savings_inr": 82687.97,
+      "savings_per_1k_cod_inr": 11526.06
     }
   ]
 }

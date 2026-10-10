@@ -52,13 +52,14 @@ TRUTH_CSV = "data/raw_v2/potential_outcomes_v2.csv"
 RTO_COST = 150.0
 MARGIN_PCT = 0.20
 VERIFY_FRICTION = 2.0
+DEPOSIT_FRICTION = 7.0  # configs/cost_config.yaml canonical friction
 ACTIONS = ["ALLOW", "VERIFY", "DEPOSIT", "PREPAID"]
 CLAIMED = {  # configs/cost_config.yaml, the v1 "industry prior" constants
     "VERIFY":   {"r": 0.30, "d": 0.05},
     "DEPOSIT":  {"r": 0.80, "d": 0.40},
     "PREPAID":  {"r": 0.55, "d": 0.70},
 }
-FRICTION = {"ALLOW": 0.0, "VERIFY": VERIFY_FRICTION, "DEPOSIT": 0.0, "PREPAID": 0.0}
+FRICTION = {"ALLOW": 0.0, "VERIFY": VERIFY_FRICTION, "DEPOSIT": DEPOSIT_FRICTION, "PREPAID": 0.0}
 
 FEATURES_NUM = ["order_value", "quantity", "discount_pct", "cod_charge",
                 "account_age_days", "prior_orders", "prior_rto_count",

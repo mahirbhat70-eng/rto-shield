@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  flipprice-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: flipprice-api
+    ports:
+      - "8000:8000"
+    environment:
+      - RTO_SHIELD_ENV=production
+      - FLIPPRICE_PII_SALT=rto_shield_dpdp_2026_salt
+      - PORT=8000
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped

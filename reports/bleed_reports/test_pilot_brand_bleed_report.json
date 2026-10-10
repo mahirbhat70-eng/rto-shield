@@ -1,0 +1,182 @@
+{
+  "merchant_name": "Test Pilot Brand",
+  "audit_timestamp": "2026-10-08 21:23:42.174345",
+  "ingest_metadata": {
+    "source": "Shopify Orders CSV",
+    "total_raw_rows": 250,
+    "total_unique_orders": 250,
+    "cod_orders_count": 250,
+    "cod_orders_pct": 100.0,
+    "cold_start_pincodes_filled": 0,
+    "pii_hashed_records": 250,
+    "date_range": {
+      "start": "2026-08-01 00:00:00",
+      "end": "2026-09-01 03:00:00"
+    },
+    "unmappable_features_cold_started": [
+      {
+        "feature": "cod_charge",
+        "default": 0.0,
+        "reason": "Not broken out by standard Shopify order exports"
+      },
+      {
+        "feature": "device_cluster_size",
+        "default": 1,
+        "reason": "Device fingerprinting requires client JavaScript snippet"
+      }
+    ]
+  },
+  "calibration_metadata": {
+    "recalibrated": false,
+    "disclosure": "No outcome labels in CSV; calibrated using pre-trained prior distribution."
+  },
+  "headline_findings": {
+    "total_orders_analyzed": 250,
+    "cod_orders_analyzed": 250,
+    "cod_share_pct": 100.0,
+    "status_quo_rto_bleed_inr": 10200,
+    "measured_rupees_saved_inr": 342.29,
+    "expected_rupees_saved_inr": 342.29,
+    "action_distribution": {
+      "ALLOW_COD": 165,
+      "VERIFY_ADDRESS": 85
+    },
+    "action_percentages": {
+      "ALLOW_COD": 66.0,
+      "VERIFY_ADDRESS": 34.0
+    }
+  },
+  "segment_analysis": {
+    "tier_breakdown": {
+      "2": 250
+    },
+    "category_breakdown": {
+      "Apparel": 124,
+      "Electronics": 71,
+      "Footwear": 55
+    },
+    "avg_order_value_cod": 1935.39,
+    "total_gmv_cod": 483846.44
+  },
+  "static_blacklist_vs_pricing": {
+    "tau_grid": [
+      {
+        "threshold": 0.2,
+        "orders_blocked": 0,
+        "good_orders_killed": 0,
+        "bad_orders_blocked": 0,
+        "net_inr_lost_under_static_block": 0.0,
+        "breakeven_conversion_required": 0.0
+      },
+      {
+        "threshold": 0.25,
+        "orders_blocked": 0,
+        "good_orders_killed": 0,
+        "bad_orders_blocked": 0,
+        "net_inr_lost_under_static_block": 0.0,
+        "breakeven_conversion_required": 0.0
+      },
+      {
+        "threshold": 0.3,
+        "orders_blocked": 0,
+        "good_orders_killed": 0,
+        "bad_orders_blocked": 0,
+        "net_inr_lost_under_static_block": 0.0,
+        "breakeven_conversion_required": 0.0
+      },
+      {
+        "threshold": 0.35,
+        "orders_blocked": 0,
+        "good_orders_killed": 0,
+        "bad_orders_blocked": 0,
+        "net_inr_lost_under_static_block": 0.0,
+        "breakeven_conversion_required": 0.0
+      }
+    ],
+    "orders_rescued_from_blacklist": 0,
+    "orders_blocked_by_blacklist": 0
+  },
+  "sample_order_actions": [
+    {
+      "order_id": "#1036",
+      "pincode": "110001",
+      "category": "Apparel",
+      "order_value": 552.6877717755414,
+      "predicted_risk": 0.2964,
+      "action": "VERIFY_ADDRESS"
+    },
+    {
+      "order_id": "#1041",
+      "pincode": "560038",
+      "category": "Apparel",
+      "order_value": 561.0817860418232,
+      "predicted_risk": 0.2964,
+      "action": "VERIFY_ADDRESS"
+    },
+    {
+      "order_id": "#1022",
+      "pincode": "110001",
+      "category": "Apparel",
+      "order_value": 565.4839911442436,
+      "predicted_risk": 0.2964,
+      "action": "VERIFY_ADDRESS"
+    },
+    {
+      "order_id": "#1171",
+      "pincode": "400001",
+      "category": "Apparel",
+      "order_value": 512.1044025335583,
+      "predicted_risk": 0.2951,
+      "action": "VERIFY_ADDRESS"
+    },
+    {
+      "order_id": "#1138",
+      "pincode": "110001",
+      "category": "Apparel",
+      "order_value": 767.2835893728281,
+      "predicted_risk": 0.2951,
+      "action": "VERIFY_ADDRESS"
+    },
+    {
+      "order_id": "#1125",
+      "pincode": "500001",
+      "category": "Apparel",
+      "order_value": 858.1284548807942,
+      "predicted_risk": 0.2945,
+      "action": "VERIFY_ADDRESS"
+    },
+    {
+      "order_id": "#1218",
+      "pincode": "400001",
+      "category": "Apparel",
+      "order_value": 860.1608687521798,
+      "predicted_risk": 0.2945,
+      "action": "VERIFY_ADDRESS"
+    },
+    {
+      "order_id": "#1124",
+      "pincode": "400001",
+      "category": "Apparel",
+      "order_value": 888.596110737499,
+      "predicted_risk": 0.2943,
+      "action": "VERIFY_ADDRESS"
+    },
+    {
+      "order_id": "#1088",
+      "pincode": "500001",
+      "category": "Apparel",
+      "order_value": 661.9289783529127,
+      "predicted_risk": 0.2942,
+      "action": "VERIFY_ADDRESS"
+    },
+    {
+      "order_id": "#1015",
+      "pincode": "500001",
+      "category": "Apparel",
+      "order_value": 913.1483404793624,
+      "predicted_risk": 0.2941,
+      "action": "VERIFY_ADDRESS"
+    }
+  ],
+  "sales_kill_quote": "A static pincode blocklist would kill 0 orders in your cohort, forfeiting precious margins. FlipPrice safely keeps 0 of those orders alive as real revenue."
+}

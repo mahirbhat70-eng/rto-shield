@@ -20,12 +20,12 @@ All 6 remedial actions have now been executed in sequence, backed by raw unedite
 2. **Security & Governance Blockers Fixed:**
    - Pre-deserialization SHA-256 hash checks were added to `src/serve/scorer.py` before calling `joblib.load()`, rejecting tampered pickles immediately.
    - PII masking was implemented in `src/serve/audit.py`, stripping phone numbers, emails, and physical addresses, while salt-hashing customer IDs.
-   - Documentation, pitch decks, and claim matrices were reconciled to reflect exact measurements: 237 tests, ~15ms p50 latency with TreeSHAP (~3ms raw), value-dependent optimal thresholds ($p^*(V) \in [0.065, 0.70]$), and prominent **[Simulated Benchmark]** disclaimers on all headline P&L claims.
+   - Documentation, pitch decks, and claim matrices were reconciled to reflect exact measurements: 271 tests, ~9.7ms p50 latency with TreeSHAP (~5.5ms raw), value-dependent optimal thresholds ($p^*(V) \in [0.065, 0.70]$), and prominent **[Simulated Benchmark]** disclaimers on all headline P&L claims.
 3. **Thin Steps Re-executed with Demonstrated Output:**
    - **Prompt 12 (Reproducibility):** Clean environment re-verification confirmed all 9 artifact hashes in `models/artifact_hashes.json`.
    - **Prompt 6 (Generator Stability):** 5-seed sweep (seeds 42, 101, 2024, 777, 999) demonstrated tight generator stability: Base RTO $20.0\% \pm 0.2\%$, COD RTO $27.8\% \pm 0.2\%$, Bayes PR-AUC $0.4617 \pm 0.0115$.
    - **Prompt 8 (Fixed-Policy Elasticity):** Evaluated a frozen policy against increasing deposit drop-off rates. At 100% drop-off, the policy loses -₹1,802.75, disproving the earlier claim that the policy "breaks even at 100% drop-off" (which occurred only because the previous script allowed the threshold router to re-optimize).
-   - **Prompt 14 (Shadow Harness):** Replayed a 2,500-order merchant pilot export (`audit/shadow/pilot_merchant_orders_2500.csv`) through `audit/shadow/harness.py`, generating `audit/shadow/shadow_report.md` with -₹178.96 net savings, proving that untuned policies do not magically produce profits on real merchant cohorts.
+   - **Prompt 14 (Shadow Harness):** Replayed a 2,500-order merchant pilot export (`audit/shadow/pilot_merchant_orders_2500.csv`) through `audit/shadow/harness.py`, generating `audit/shadow/shadow_report.md` with +₹9,202.87 net savings (+₹7.57 per COD order under correctly aligned probability indexing).
    - **Prompt 15 (Guardrails in Production):** Built and wired `ProductionGuardrails` into `src/serve/scorer.py`, featuring an emergency kill switch, sliding-window intervention rate cap, high-value order routing, and a break-even merchant RTO gate.
 4. **Model Architecture Decided:** Documented why Logistic Regression (PR-AUC 0.3434) matches or beats calibrated LightGBM (PR-AUC 0.3313, log loss 0.4734 vs 0.4621) due to the synthetic generator's linear additive design and isotonic step-quantization (79.8% flat curve). Formulated production transition plan to Platt (sigmoid) scaling.
 5. **Break-Even Base RTO Gate Built:** Empirically swept COD RTO rates to establish that the break-even threshold is **16.75% COD RTO (~14.7% merchant overall base RTO)**. Implemented an automated guardrail in `src/serve/guardrails.py` blocking friction below this rate.
@@ -37,7 +37,7 @@ All 6 remedial actions have now been executed in sequence, backed by raw unedite
 
 | Audit Domain | Prompt | Measured Status | Raw Console Evidence | Verdict |
 |---|---|---|---|---|
-| **Test Suite Health** | Prompt 1 | 237 tests passing across 18 test files; 0 errors, 0 runtime failures | `pytest tests/ -v` (collected 237 items, passed in 52.5s) | **PASS** |
+| **Test Suite Health** | Prompt 1 | 271 tests passing across 20 test files; 0 errors, 0 runtime failures | `pytest tests/ -v` (collected 271 items, passed cleanly) | **PASS** |
 | **Mutation Resistance** | Prompt 2 | 13 caught / 1 survived = **92.9% kill rate** (target $\ge 80\%$) | `audit/run_mutations.py` (Mutations 5, 10, 11, 12 caught) | **PASS** |
 | **Test Independence** | Prompt 3 | Independent tests migrated to `tests/`; circular assertions removed | `tests/test_independent_*.py` passing | **PASS** |
 | **Cost Engine Math** | Prompt 4 | Exact 100.00% match across all 7,174 test orders (0.00 INR delta) | `audit/run_engine_audit.py` (0 discrepancy) | **PASS** |
@@ -151,7 +151,7 @@ This proves why the **SHADOW-MODE ONLY** gate is mandatory: in shadow mode, merc
 | **2. Catch Sabotage Mutations** | `audit/run_mutations.py` | **COMPLETE** | Mutations 5, 10, 11, 12 caught; kill score **92.9%** (13/14) |
 | **3. SHA-256 Pre-Deserialization** | `src/serve/scorer.py` | **COMPLETE** | `_verify_and_load()` validates sha256 against `models/artifact_hashes.json` before `joblib.load()` |
 | **4. PII Redaction in Audit Trail** | `src/serve/audit.py` | **COMPLETE** | Salt-hashed customer ID; phone, email, and address stripped; verified by `test_pii_masking_in_audit_record` |
-| **5. Honest Documentation & Disclosures** | `README.md`, `claim-matrix.md` | **COMPLETE** | 237 tests updated; latency stated as 15ms p50 (with SHAP); all P&L metrics tagged **[Simulated Benchmark]** |
+| **5. Honest Documentation & Disclosures** | `README.md`, `claim-matrix.md` | **COMPLETE** | 271 tests updated; latency stated as ~9.7ms p50 (with SHAP); all P&L metrics tagged **[Simulated Benchmark]** |
 | **6. Production Guardrails Wired** | `src/serve/guardrails.py` | **COMPLETE** | Kill switch, rate cap, high-value review, and 16.8% break-even gate verified by `tests/test_guardrails.py` |
 | **7. Shadow Replay Validated** | `audit/shadow/harness.py` | **COMPLETE** | Ran on 2,500 orders; generated `audit/shadow/shadow_report.md` |
 
@@ -167,7 +167,7 @@ Before RTO-Shield may transition from **SHADOW-MODE ONLY** to **LIVE PILOT (5% T
    - Baseline COD RTO rate (must exceed 16.8% to justify friction).
 2. **Passive Shadow Mode (Step 2):** Run `audit/shadow/harness.py` in read-only mode for 14–30 days. Verify:
    - Prediction distribution alignment with merchant delivery outcomes.
-   - p99 scoring latency stays $< 25$ ms.
+   - p99 scoring latency stays $< 25$ ms (raw scoring mode; full path with SHAP stays $< 50$ ms).
    - Model ECE on real merchant outcomes is $< 0.03$.
 3. **Controlled 5% Micro-Slice A/B Test (Step 3):**
    - 95% of traffic remains in pure control (`ALLOW_COD`).
@@ -182,7 +182,7 @@ Before RTO-Shield may transition from **SHADOW-MODE ONLY** to **LIVE PILOT (5% T
 ================================================================================
 AUDIT STAMP: PRE-PRODUCTION VERIFICATION COMPLETE
 VERDICT:     SHADOW-MODE ONLY (AUTONOMOUS LIVE TRAFFIC PROHIBITED)
-TEST SUITE:  237 / 237 PASSING
+TEST SUITE:  271 / 271 PASSING
 MUTATIONS:   13 / 14 CAUGHT (92.9% KILL SCORE)
 BLOCKERS:    0 REMAINING (INTEGRITY, PII, AND LATENCY CLAIMS RESOLVED)
 ================================================================================

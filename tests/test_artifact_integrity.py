@@ -153,8 +153,8 @@ def test_hash_file_completeness():
         for dirpath, _, filenames in os.walk(full_dir):
             for fname in filenames:
                 rel = os.path.relpath(os.path.join(dirpath, fname), repo_root).replace("\\", "/")
-                # Skip the manifest itself and transient/hidden files
-                if rel in ("models/artifact_hashes.json",) or fname.startswith("."):
+                # Skip the manifest itself, runtime DBs, and transient/hidden files
+                if rel in ("models/artifact_hashes.json",) or fname.startswith(".") or fname.endswith((".db", ".db-journal", ".sqlite")):
                     continue
                 total_found += 1
                 if rel not in manifest:

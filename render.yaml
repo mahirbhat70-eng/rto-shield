@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: flipprice-api
+    env: docker
+    plan: starter
+    region: singapore # Lowest latency (~35ms) to Indian merchant checkouts
+    healthCheckPath: /health
+    disk:
+      name: flipprice-data
+      mountPath: /app/data
+      sizeGB: 1
+    envVars:
+      - key: RTO_SHIELD_ENV
+        value: development
+      - key: FLIPPRICE_PII_SALT
+        generateValue: true
+      - key: SHOPIFY_API_SECRET
+        sync: false

@@ -51,4 +51,4 @@ venv.bak/
 Thumbs.db
 audit/clean_env/
 audit/_backup/
-
+*.db

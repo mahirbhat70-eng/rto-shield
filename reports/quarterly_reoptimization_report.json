@@ -1,0 +1,17 @@
+{
+  "status": "COMPLETED",
+  "current_realized_savings_inr": 55057.62,
+  "reoptimized_realized_savings_inr": 121106.32,
+  "incremental_uplift_inr": 66048.7,
+  "best_parameters": {
+    "REQUIRE_DEPOSIT": {
+      "success_drop_pct": 0.3,
+      "rto_reduction_pct": 0.85
+    },
+    "VERIFY_ADDRESS": {
+      "success_drop_pct": 0.017,
+      "rto_reduction_pct": 0.466
+    }
+  },
+  "cadence": "quarterly"
+}

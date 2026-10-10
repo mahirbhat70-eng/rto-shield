@@ -139,3 +139,15 @@ All five bugs were caught and fixed across the project lifecycle. The frozen tes
 **Symptom:** `python scripts/benchmark_latency.py` threw `KeyError: device_cluster_size` and failed on pincode `400001`.  
 **Root cause:** Synthetic benchmark order used outdated schema key `device_cluster` instead of `device_cluster_size` and a placeholder pincode not in the frozen lookup table.  
 **Fix applied:** Updated payload key to `device_cluster_size`, pinned valid pincode `597542`, added console encoding safety (`cp1252` compatibility), and verified reproducible execution (`python scripts/benchmark_latency.py`).
+
+---
+
+### Audit Reconciliation: Realized P&L Test & Strict CI Artifact Parity
+
+**When:** Post-submission methodological audit  
+**Catches & Fixes applied:**
+1. **Canonical Realized P&L Anchor:** `tests/test_independent_realized_pl.py` previously hardcoded zero deposit friction (verifying the legacy ₹69,786 anchor). Updated to verify the canonical ₹54,936.40 realized savings under canonical ₹7 deposit friction per `cost_config.yaml`, while retaining the legacy zero-friction anchor check.
+2. **Strict CI Reproducibility:** `audit/prompt12/repro_check.py` previously had `passed = det_ok and (parity_ok or is_ci)`, which bypassed byte-parity checks in CI. Changed to `passed = det_ok and parity_ok` — enforcing full byte-level artifact parity across all 13 frozen files.
+3. **Guardrails Config Drift:** `src/serve/guardrails.py` hardcoded fallback interventions that contradicted `cost_config.yaml`. Updated to load directly from `configs/cost_config.yaml`.
+4. **Latency Synchronization:** README, claim matrix, and Judge Q&A latency numbers aligned with canonical `reports/headline_numbers.json` (9.7ms p50, 38.5ms p95, 48.5ms p99 with TreeSHAP).
+5. **Benchmark Environment Default:** Added `os.environ.setdefault("RTO_SHIELD_ENV", "development")` to `scripts/benchmark_latency.py` to prevent false `SecurityError` exceptions when run directly from terminal.

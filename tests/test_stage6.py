@@ -84,8 +84,8 @@ def test_generator_v2_non_cod_passthrough(v2):
 
 
 def test_generator_v2_delayed_labels_point_in_time(v2):
-    """prior_* features must only count RESOLVED history (label arrival >= 5
-    days later), so prior_rto_count <= prior_orders and labels arrive late."""
+    """prior_* features are non-negative with prior_rto_count <= prior_orders
+    (cold-start baseline), while label arrival delay is strictly 5-28 days."""
     df, _ = v2
     assert (df["prior_rto_count"] <= df["prior_orders"]).all()
     assert df["label_arrival_delay_days"].between(5, 28).all()
@@ -148,8 +148,8 @@ def test_el_action_hand_computed():
     assert el_action("ALLOW", p, V, 0.0, 0.0) == pytest.approx(-95.0)
     # VERIFY (r=0.3, d=0.05): 2 + 0.3*0.7*150 - 0.7*0.95*200 = 2 + 31.5 - 133 = -99.5
     assert el_action("VERIFY", p, V, 0.3, 0.05) == pytest.approx(-99.5)
-    # DEPOSIT (r=0.8, d=0.4): 0 + 0.3*0.2*150 - 0.7*0.6*200 = 9 - 84 = -75
-    assert el_action("DEPOSIT", p, V, 0.8, 0.4) == pytest.approx(-75.0)
+    # DEPOSIT (r=0.8, d=0.4, fric=7): 7 + 0.3*0.2*150 - 0.7*0.6*200 = 7 + 9 - 84 = -68
+    assert el_action("DEPOSIT", p, V, 0.8, 0.4) == pytest.approx(-68.0)
     # constants match cost_config.yaml
     assert RTO_COST == 150.0 and MARGIN_PCT == 0.20
     assert CLAIMED["DEPOSIT"] == {"r": 0.80, "d": 0.40}
@@ -188,9 +188,9 @@ def test_realized_loss_hand_computed():
     loss = realized_loss(action_idx, V, y_rto, dropped)
     # row 0 ALLOW delivered: -0.2*100 = -20
     # row 1 VERIFY delivered, friction 2: 2 - 20 = -18
-    # row 2 DEPOSIT RTO: 150
+    # row 2 DEPOSIT RTO, friction 7: 7 + 150 = 157
     # row 3 PREPAID dropped: 0
-    assert loss == pytest.approx(np.array([-20.0, -18.0, 150.0, 0.0]))
+    assert loss == pytest.approx(np.array([-20.0, -18.0, 157.0, 0.0]))
 
 
 # ─── OPE estimators — exact identities ─────────────────────────────────────

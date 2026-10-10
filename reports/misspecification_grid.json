@@ -1,22 +1,22 @@
 {
-  "config_sha256": "5e88aa8f235f1b53d7753f88e9873a3492592264dda5cf59d521e30f5d5c5658",
-  "git_commit_hash": "d7bde4683fa8bbec91fc52706376cacf3a44e752",
+  "config_sha256": "28f9d9317689520d86be28ace066230ab553af6260817d7dfc978461b708c1e2",
+  "git_commit_hash": "47100446a6f4123af6eee43f01a1917258efc1c0",
   "n_cod": 7174,
   "total_cells": 81,
   "frozen_policy": {
     "win_rate_vs_allow_pct": 32.1,
-    "min_savings_inr": -131313.15,
-    "median_savings_inr": -20278.58,
-    "max_savings_inr": 78577.54,
-    "min_savings_per_1k_cod_inr": -18304.04,
-    "median_savings_per_1k_cod_inr": -2826.68,
-    "max_savings_per_1k_cod_inr": 10953.1
+    "min_savings_inr": -128283.57,
+    "median_savings_inr": -19076.27,
+    "max_savings_inr": 78251.5,
+    "min_savings_per_1k_cod_inr": -17881.74,
+    "median_savings_per_1k_cod_inr": -2659.08,
+    "max_savings_per_1k_cod_inr": 10907.65
   },
   "reoptimized_policy": {
     "win_rate_vs_allow_pct": 100.0,
-    "min_savings_inr": 8550.68,
-    "median_savings_inr": 22941.83,
-    "max_savings_inr": 79349.57
+    "min_savings_inr": 11326.41,
+    "median_savings_inr": 24315.25,
+    "max_savings_inr": 79897.89
   },
   "profitable_parameter_rule": "Frozen policy is profitable when (deposit_drop <= 0.50 AND deposit_rto_red >= 0.50) OR (verify_drop <= 0.10 AND verify_rto_red >= 0.20)"
 }

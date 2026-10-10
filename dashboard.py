@@ -801,7 +801,7 @@ def footer():
     st.markdown("---")
     st.markdown(
         f'<div class="foot">github.com/mahirbhat70-eng/rto-shield · frozen v1.0 artifacts · '
-        '241/241 tests green in CI · every number on this page is reproducible from reports/ and claim-matrix.md</div>',
+        '271/271 tests green in CI · every number on this page is reproducible from reports/ and claim-matrix.md</div>',
         unsafe_allow_html=True,
     )
 
@@ -823,16 +823,16 @@ cheapest expected loss. Risk is not an arbitrary label here — it is a price, a
 
     html_block("".join([
         '<div class="kpi-grid">',
-        kpi("Expected savings", rs(71741), "<b>[Simulated Benchmark]</b> vs always-allow on holdout test (7,174 COD orders). Argmin routing expected loss.", "green"),
-        kpi("Realized savings", rs(69786), "<b>[Simulated Benchmark]</b> Scored with actual RTO labels under baseline response assumptions.", "green"),
-        kpi("vs best threshold", "2.0×", "EL saves <b>₹71,741 vs ₹35,919</b>. Causal bounds <b>[1.23×, 2.39×]</b> via 5k Monte Carlo.", "blue"),
+        kpi("Expected savings", rs(56872), "<b>[Simulated Benchmark]</b> vs always-allow on holdout test (7,174 COD orders). Argmin routing expected loss.", "green"),
+        kpi("Realized savings", rs(54936), "<b>[Simulated Benchmark]</b> Scored with actual RTO labels under canonical ₹7 deposit friction.", "green"),
+        kpi("vs best threshold", "1.58×", "EL saves <b>₹56,872 vs ₹35,919</b> (2.0× under legacy zero-friction anchor).", "blue"),
         kpi("of Bayes ceiling", "94.7%", "PR-AUC <b>0.3313 / 0.3497</b> — extracts 94.7% of observable ceiling signal.", "amber"),
         "</div>",
         '<div class="kpi-grid" style="margin-top: 0.8rem;">',
-        kpi("Profit uplift", "13.1%", "Pre-registered PASS band <b>[8%, 18%]</b> of baseline loss declared before test reveal.", "green"),
+        kpi("Profit uplift", "10.4%", "Pre-registered PASS band <b>[8%, 18%]</b> of baseline loss declared before test reveal.", "green"),
         kpi("P(savings &gt; 0)", "100%", "Across <b>5,000-draw Monte Carlo</b> on intervention effects. P5 ₹63,935 · P95 ₹75,901.", "blue"),
-        kpi("Scoring path", "~15 ms", "End-to-end latency with TreeSHAP explanation (core model scoring ~3 ms).", "blue"),
-        kpi("Test suite", "241/241", "18 test files green in CI with 93% mutation score, SHA-256 integrity & PII allow-list.", "blue"),
+        kpi("Scoring path", "~10 ms", "End-to-end latency with TreeSHAP explanation (core model scoring ~5.5 ms).", "blue"),
+        kpi("Test suite", "271/271", "20 test files green in CI with 93% mutation score, SHA-256 integrity & PII allow-list.", "blue"),
         "</div>",
     ]))
 
@@ -1457,10 +1457,10 @@ def view_portfolio():
 
     html_block("".join([
         '<div class="kpi-grid">',
-        kpi("Expected savings", rs(71741, 2), "argmin routing vs always-allow · COD subset (7,174 orders)", "green"),
-        kpi("Realized savings", rs(69786, 2), "actual <b>rto_label</b> outcomes through the same cost engine", "green"),
-        kpi("Forecast error", "-₹1,955", "realized − expected = <b>−2.7%</b> — forecast survives contact with reality", "amber"),
-        kpi("Profit uplift", "13.1%", "pre-registered PASS band <b>[8%, 18%]</b> of baseline loss", "green"),
+        kpi("Expected savings", rs(56872, 2), "argmin routing vs always-allow · COD subset (7,174 orders)", "green"),
+        kpi("Realized savings", rs(54936, 2), "actual <b>rto_label</b> outcomes under canonical ₹7 friction", "green"),
+        kpi("Forecast error", "-₹1,935", "realized − expected = <b>−3.4%</b> — forecast survives contact with reality", "amber"),
+        kpi("Profit uplift", "10.4%", "pre-registered PASS band <b>[8%, 18%]</b> of baseline loss", "green"),
         "</div>",
     ]))
 
@@ -1472,18 +1472,18 @@ def view_portfolio():
   <div class="donut-wrap">
     <div class="donut" style="background: conic-gradient(
         {C_GREEN} 0% 18.4%,
-        {C_AMBER} 18.4% 63.6%,
-        {C_RED} 63.6% 100%);"></div>
+        {C_AMBER} 18.4% 77.1%,
+        {C_RED} 77.1% 100%);"></div>
     <div class="legend">
       <div class="leg"><i style="background:{C_GREEN};"></i>ALLOW COD <b>&nbsp;18.4%</b></div>
-      <div class="leg"><i style="background:{C_AMBER};"></i>VERIFY ADDRESS <b>&nbsp;45.2%</b></div>
-      <div class="leg"><i style="background:{C_RED};"></i>REQUIRE DEPOSIT <b>&nbsp;36.4%</b></div>
+      <div class="leg"><i style="background:{C_AMBER};"></i>VERIFY ADDRESS <b>&nbsp;58.7%</b></div>
+      <div class="leg"><i style="background:{C_RED};"></i>REQUIRE DEPOSIT <b>&nbsp;22.9%</b></div>
       <div class="leg"><i style="background:{C_SLATE};"></i>PREPAID ONLY <b>&nbsp;0.0%</b></div>
     </div>
   </div>
   <div class="d" style="font-size:0.78rem;color:{C_MUT_DARK};margin-top:0.85rem;line-height:1.5;">
     The engine touches <b style="color:{C_TEXT};">81.6%</b> of orders but keeps PREPAID_ONLY at exactly zero —
-    it never kills an order it can save. 5,856 interventions · ₹6,488 friction spend · 951 expected RTOs prevented.
+    it never kills an order it can save. 5,856 interventions · ₹19,927 friction spend · 813 expected RTOs prevented.
   </div>
 </div>
 """)
@@ -1543,7 +1543,7 @@ def view_portfolio():
 <div class="panel">
   <div class="panel-h">Provenance · reproduce it yourself</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem 2rem;font-size:0.78rem;color:{C_MUT_DARK};line-height:1.8;">
-    <div>→ ₹71,741 / ₹69,786 / 13.1% · <code style="color:{C_RAZORPAY_BLUE};">pytest tests/test_stage5.py -v</code></div>
+    <div>→ ₹56,872 / ₹54,936 / 10.4% (legacy zero-friction anchor: ₹71,741 / ₹69,786 / 13.1%) · <code style="color:{C_RAZORPAY_BLUE};">pytest tests/test_stage5.py -v</code></div>
     <div>→ 94.7% of Bayes ceiling · <code style="color:{C_RAZORPAY_BLUE};">pytest tests/test_stage3.py -v</code></div>
     <div>→ routing line &amp; thresholds 0.20/0.48 · <code style="color:{C_RAZORPAY_BLUE};">python -m src.eval.stage4_evaluate</code></div>
     <div>→ full claim-to-test mapping · <code style="color:{C_RAZORPAY_BLUE};">claim-matrix.md</code></div>
@@ -1703,7 +1703,7 @@ def view_governance():
     <div>→ Reconcile the 5 audit conflicts: <code style="color:{C_RAZORPAY_BLUE};">python audit/reconcile.py</code></div>
     <div>→ Recompute misspecification bounds: <code style="color:{C_RAZORPAY_BLUE};">python audit/misspec.py</code></div>
     <div>→ Run 5-seed pipeline sweep: <code style="color:{C_RAZORPAY_BLUE};">python audit/seed_sweep.py</code></div>
-    <div>→ Full 244 automated tests: <code style="color:{C_RAZORPAY_BLUE};">pytest tests/ -v</code></div>
+    <div>→ Full 271 automated tests: <code style="color:{C_RAZORPAY_BLUE};">pytest tests/ -v</code></div>
   </div>
 </div>
 """)
@@ -1880,9 +1880,9 @@ def view_pilot_protocol():
             ],
             "Synthetic Prior": [
                 "5.0%",
-                "20.0%",
-                "50.0%",
-                "60.0%",
+                "30.0%",
+                "40.0%",
+                "80.0%",
                 "₹0 (free)",
                 "₹150.00",
                 "20.0%",

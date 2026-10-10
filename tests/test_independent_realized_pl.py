@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import joblib
 
-def compute_realized_savings(test_df, proba, rto_cost=150.0, margin_pct=0.20, verify_cost=2.0):
+def compute_realized_savings(test_df, proba, rto_cost=150.0, margin_pct=0.20, verify_cost=2.0, deposit_friction=7.0):
     cod_mask = (test_df['payment_method'] == 'COD').values
     cod_df = test_df[cod_mask].copy().reset_index(drop=True)
     p_cod = proba[cod_mask]
@@ -23,13 +23,13 @@ def compute_realized_savings(test_df, proba, rto_cost=150.0, margin_pct=0.20, ve
     # Multi-Action: Pointwise minimum expected loss
     el_allow = p_cod * rto_cost - (1.0 - p_cod) * margin
     el_verify = verify_cost + (p_cod * (1.0 - 0.30)) * rto_cost - (1.0 - p_cod) * (1.0 - 0.05) * margin
-    el_deposit = (p_cod * (1.0 - 0.80)) * rto_cost - (1.0 - p_cod) * (1.0 - 0.40) * margin
+    el_deposit = deposit_friction + (p_cod * (1.0 - 0.80)) * rto_cost - (1.0 - p_cod) * (1.0 - 0.40) * margin
     el_prepaid = (p_cod * (1.0 - 0.55)) * rto_cost - (1.0 - p_cod) * (1.0 - 0.70) * margin
 
     el_matrix = np.vstack([el_allow, el_verify, el_deposit, el_prepaid])
     chosen_actions = np.argmin(el_matrix, axis=0)
 
-    frics = np.array([0.0, 2.0, 0.0, 0.0])
+    frics = np.array([0.0, verify_cost, deposit_friction, 0.0])
     succ_drops = np.array([0.0, 0.05, 0.40, 0.70])
     rto_reds = np.array([0.0, 0.30, 0.80, 0.55])
 
@@ -44,10 +44,17 @@ def compute_realized_savings(test_df, proba, rto_cost=150.0, margin_pct=0.20, ve
     return realized_savings
 
 def test_independent_realized_pl_calculation():
+    """Verify canonical realized savings under cost_config.yaml (Rs 7 deposit friction)
+    as well as the legacy zero-deposit-friction anchor."""
     test = pd.read_csv("data/processed/test.csv", dtype={'pincode': str})
     model = joblib.load("models/tree_model_calibrated.pkl")
     X = test.drop(columns=['rto_label', 'timestamp', 'order_id'], errors='ignore')
     proba = model.predict_proba(X)[:, 1]
 
-    savings = compute_realized_savings(test, proba)
-    assert np.isclose(savings, 69786.08, atol=1.0), f"Expected 69786.08 realized savings, got {savings}"
+    # 1. Canonical realized savings under cost_config.yaml (Rs 7 deposit friction) -> Rs 54,936.40
+    canonical_savings = compute_realized_savings(test, proba, deposit_friction=7.0)
+    assert np.isclose(canonical_savings, 54936.40, atol=1.0), f"Expected 54936.40 canonical realized savings, got {canonical_savings}"
+
+    # 2. Historical zero-deposit-friction anchor -> Rs 69,786.08
+    legacy_savings = compute_realized_savings(test, proba, deposit_friction=0.0)
+    assert np.isclose(legacy_savings, 69786.08, atol=1.0), f"Expected 69786.08 legacy realized savings, got {legacy_savings}"

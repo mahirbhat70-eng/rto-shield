@@ -21,9 +21,9 @@ Some teams will pitch you COD intelligence. Great — intelligence is table stak
 
 🖥 **SHOW:**
 - Slow pan down the KPI cards. Hover in THIS order, synced to speech:
-- ₹71,741 as you say "costs about ₹150" region → expected-savings card
-- ₹69,786 → realized card
-- 2.0× → routing uplift card
+- ₹56,872 as you say "costs about ₹150" region → expected-savings card (₹71,741 under zero-friction anchor)
+- ₹54,936 → realized card (₹69,786 under zero-friction anchor)
+- 1.58× → routing uplift card (2.0× under zero-friction anchor)
 - 94.7% → Bayes-ceiling card
 - On "four moves": rest cursor on the panel "How a decision is priced — four moves, one argmin".
 - On "An argmin": one final hover on the hero line. Stop.
@@ -56,7 +56,7 @@ And it shows its work: TreeSHAP says the COD charge and pincode history push ris
 ## BEAT 4 · 2:45–3:30 · NOTHING BEATS THE LINE — View 03
 🎙 **SAY (verbatim):**
 
-The obvious question: why not just pick a threshold? So we swept every cutoff on 3,673 calibration-window orders. The best single line you could ever find — a VERIFY cutoff at 0.20 — still loses to per-order pricing by ₹18,326. That's 6% better than the best threshold, ever. And it generalizes: on the untouched test window, argmin routing earns 2.0× the savings of the best single-threshold policy.
+The obvious question: why not just pick a threshold? So we swept every cutoff on 3,673 calibration-window orders. The best single line you could ever find — a VERIFY cutoff at 0.20 — still loses to per-order pricing by ₹18,326. That's 6% better than the best threshold, ever. And it generalizes: on the untouched test window, argmin routing earns 1.58× the savings of the best single-threshold policy under canonical ₹7 deposit friction (and 2.0× under the zero-friction anchor).
 High-value, low-risk orders get allowed. Small risky orders get a ₹2 phone call. Big risky orders get a deposit. A single line can't do all three at once. A price menu can — because risk isn't a label, it's a surface.
 
 🖥 **SHOW:**
@@ -70,13 +70,13 @@ High-value, low-risk orders get allowed. Small risky orders get a ₹2 phone cal
 ## BEAT 5 · 3:30–4:25 · PROOF IT'S REAL — View 04
 🎙 **SAY (verbatim):**
 
-Forecasts are cheap — so we paid for evidence. On 7,174 test COD orders, expected savings: ₹71,741. Realized savings — scoring actual outcomes through the same cost engine: ₹69,786. Within 2.7% of forecast. And in 5,000 Monte Carlo draws, every single draw stayed profitable — the worst 5th percentile is ₹63,935. Profit uplift: 13.1%, inside the pass band we pre-registered before looking: 8 to 18.
+Forecasts are cheap — so we paid for evidence. On 7,174 test COD orders, canonical expected savings is ₹56,872. Realized savings — scoring actual ground-truth labels through the same cost engine with ₹7 deposit friction: ₹54,936. Within 3.4% of forecast. (Under the zero-friction anchor, expected was ₹71,741 and realized was ₹69,786, with Monte Carlo 5th percentile at ₹63,935). Portfolio profit uplift: 10.4% (13.1% under zero friction), comfortably inside our pre-registered pass band.
 Now, precision at the operating point is 0.30 — and that's fine, because a false positive here is a ₹2 phone call, not a lost customer. Recall is 0.86 — we catch 86% of returns. And the model itself? It extracts 94.7% of the Bayes ceiling — the theoretical maximum signal on this problem. No model family does meaningfully better. The value lives in the decision layer. So that's where we built ours.
 
 🖥 **SHOW (hover chain, no clicks):**
-- Expected ₹71,741 card → 2. Realized ₹69,786 card (rest on "2.7%") →
+- Expected ₹56,872 card → 2. Realized ₹54,936 card (rest on "3.4%") →
 - Panel "Monte Carlo · 5,000 draws on intervention effects" — point at the P5 ₹63,935 band →
-- Panel "Operating point · VERIFY + DEPOSIT = positive" — rest here for 13.1% / pre-registered [8, 18] →
+- Panel "Operating point · VERIFY + DEPOSIT = positive" — rest here for 10.4% / pre-registered [8, 18] →
 - Panel "Per-action calibration · the price is honest per shelf" — rest for precision 0.30 / recall 0.86.
 - "94.7% of the Bayes ceiling" is said VERBALLY here — don't navigate back to View 01 mid-beat; stay on calibration table.
 - If time feels tight: the provenance panel is NOT spoken — skip it, don't scroll it.
@@ -84,7 +84,7 @@ Now, precision at the operating point is 0.30 — and that's fine, because a fal
 ## BEAT 6 · 4:25–5:00 · CLOSE + THE ASK — View 01 (hero)
 🎙 **SAY (verbatim):**
 
-Under the hood: a calibrated LightGBM, an 18-signal contract where every feature is knowable at order time — no leakage — 244 tests green in CI, median latency 3 milliseconds raw (~15 ms with TreeSHAP). And every number I've said today is reproducible from the repo — each claim maps to a test.
+Under the hood: a calibrated LightGBM, a 13-signal contract (resolving to 14 model features) where every feature is knowable at order time — no leakage — 271 tests green in CI, median latency 5.5 milliseconds raw (~9.7 ms with TreeSHAP). And every number I've said today is reproducible from the repo — each claim maps to a test.
 Razorpay — this is a routing layer you can drop behind checkout. Order comes in. A rupee-priced decision goes out. An audit trail goes to the ledger.
 Everyone else will tell you which orders are risky. We tell you what to do with each one — and what it's worth.
 We don't predict the coin flip. We price it.
