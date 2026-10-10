@@ -25,6 +25,7 @@ from src.shopify.adapter import (
     verify_shopify_hmac,
     parse_shopify_order,
     format_shopify_tags_and_metafields,
+    sync_tags_to_shopify,
     IdempotencyTracker,
 )
 from src.shopify.actions import (
@@ -65,6 +66,7 @@ class WebhookResponse(BaseModel):
     fulfillment_hold_applied: bool
     processing_time_ms: float
     idempotent_replay: bool = False
+    tags_synced_to_shopify: bool = False
 
 class WhatsAppCallbackRequest(BaseModel):
     order_id: str
@@ -174,6 +176,13 @@ async def handle_order_created_webhook(
         hold_applied = True
         tags.append("fp_hold:DEPOSIT_REQUIRED")
 
+    # Optional live write-back of tags to Shopify Admin
+    tags_synced = sync_tags_to_shopify(
+        shop_domain=x_shopify_shop_domain,
+        raw_order_id=raw_json.get("id") or order_id,
+        tags_to_add=tags,
+    )
+
     lat_ms = (time.perf_counter() - t0) * 1000.0
 
     # Log to SQLite audit ledger
@@ -200,6 +209,7 @@ async def handle_order_created_webhook(
         "fulfillment_hold_applied": hold_applied,
         "processing_time_ms": round(lat_ms, 2),
         "idempotent_replay": False,
+        "tags_synced_to_shopify": tags_synced,
     }
 
     # Store for idempotency

@@ -274,3 +274,54 @@ class IdempotencyTracker:
             expired = [k for k, (ts, _) in self._seen.items() if now - ts > self.ttl]
             for k in expired:
                 del self._seen[k]
+
+
+def sync_tags_to_shopify(
+    shop_domain: Optional[str],
+    raw_order_id: Any,
+    tags_to_add: List[str],
+    access_token: Optional[str] = None,
+) -> bool:
+    """
+    Optional active tag write-back to Shopify Admin API.
+    Gracefully no-ops if SHOPIFY_ADMIN_ACCESS_TOKEN is unset or order_id is mock.
+    """
+    token = access_token or os.environ.get("SHOPIFY_ADMIN_ACCESS_TOKEN")
+    if not token or not shop_domain:
+        return False
+    order_id_str = str(raw_order_id).replace("#", "").strip()
+    if not order_id_str.isdigit():
+        return False
+    try:
+        import urllib.request
+        import json
+        url = f"https://{shop_domain}/admin/api/2024-10/orders/{order_id_str}.json"
+        req_get = urllib.request.Request(
+            url,
+            headers={
+                "X-Shopify-Access-Token": token,
+                "Content-Type": "application/json",
+            },
+            method="GET",
+        )
+        with urllib.request.urlopen(req_get, timeout=3.0) as resp:
+            data = json.loads(resp.read().decode())
+            existing_tags = data.get("order", {}).get("tags", "")
+
+        current_tag_list = [t.strip() for t in existing_tags.split(",") if t.strip()]
+        new_tag_list = list(dict.fromkeys(current_tag_list + tags_to_add))
+        new_tags_str = ", ".join(new_tag_list)
+
+        req_put = urllib.request.Request(
+            url,
+            data=json.dumps({"order": {"id": int(order_id_str), "tags": new_tags_str}}).encode(),
+            headers={
+                "X-Shopify-Access-Token": token,
+                "Content-Type": "application/json",
+            },
+            method="PUT",
+        )
+        with urllib.request.urlopen(req_put, timeout=3.0) as resp:
+            return resp.status in (200, 201)
+    except Exception:
+        return False
